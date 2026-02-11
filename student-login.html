@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Login - School ERP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        secondary: "#F43F5E",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #ffffff;
+        }
+        .ios-input {
+            @apply w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all outline-none text-base mb-4;
+        }
+        .dark .ios-input {
+            @apply bg-slate-800 text-white focus:ring-primary/40;
+        }
+        .login-card {
+            @apply w-full max-w-sm px-8 pt-4 pb-8;
+        }
+        .illustration-container {
+            @apply w-full flex justify-center mb-8 relative;
+        }
+        .blob {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
+            filter: blur(40px);
+            opacity: 0.15;
+            z-index: -1;
+            border-radius: 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden">
+<div class="fixed top-6 right-6 z-50">
+<button class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-200">contrast</span>
+</button>
+</div>
+<main class="flex flex-col items-center min-h-screen pt-12 pb-20 px-6">
+<div class="illustration-container">
+<div class="blob"></div>
+<div class="relative">
+<div class="flex items-center justify-center bg-white dark:bg-slate-800 rounded-3xl w-32 h-32 shadow-2xl border-4 border-slate-50 dark:border-slate-700">
+<span class="material-symbols-outlined text-primary text-7xl">auto_stories</span>
+<div class="absolute -top-2 -right-2 bg-secondary text-white rounded-full p-2 shadow-lg">
+<span class="material-symbols-outlined text-base">rocket_launch</span>
+</div>
+<div class="absolute -bottom-4 -left-4 bg-primary text-white rounded-full p-3 shadow-lg">
+<span class="material-symbols-outlined text-xl">star</span>
+</div>
+</div>
+</div>
+</div>
+<div class="text-center mb-10">
+<h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Student Login</h1>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Unlock your academic journey</p>
+</div>
+<div class="login-card">
+<div class="mb-6">
+<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Student ID</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">badge</span>
+<input class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="e.g. STU-2024-001" type="text"/>
+</div>
+</div>
+<div class="mb-2">
+<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">lock</span>
+<input class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-4 text-slate-400">
+<span class="material-symbols-outlined text-xl">visibility_off</span>
+</button>
+</div>
+</div>
+<div class="flex justify-end mb-8">
+<button class="text-sm font-semibold text-primary/80 hover:text-primary transition-colors">Forgot Password?</button>
+</div>
+<button class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            Sign In
+            <span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+</div>
+<div class="mt-auto text-center">
+<p class="text-slate-400 dark:text-slate-500 text-sm">Having trouble? <button class="text-primary font-bold">Help Desk</button></p>
+<button class="mt-8 flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mx-auto" onclick="window.history.back()">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span class="text-xs font-bold uppercase tracking-wider">Change Role</span>
+</button>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 h-8 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md flex justify-center items-end pb-2 pointer-events-none">
+<div class="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+</div>
+
+</body></html>
