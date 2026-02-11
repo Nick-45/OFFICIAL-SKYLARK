@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Super Admin Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1d4ed8",
+                        "background-light": "#ffffff",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #ffffff;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+        .input-group:focus-within .icon-box {
+            color: #1d4ed8;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen">
+<header class="flex items-center justify-between px-6 pt-12 pb-6">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">arrow_back_ios_new</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-200">contrast</span>
+</button>
+</header>
+<main class="px-8 pt-6">
+<div class="mb-12">
+<div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 mb-6">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-4xl">shield_person</span>
+</div>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Super Admin Login</h1>
+<p class="text-slate-500 dark:text-slate-400">Welcome back. Please enter your credentials to access the management dashboard.</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-4">
+<div class="input-group">
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Username</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none icon-box">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
+</div>
+<input class="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-sm" placeholder="Enter username" type="text"/>
+</div>
+</div>
+<div class="input-group">
+<div class="flex items-center justify-between mb-2">
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none icon-box">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">lock</span>
+</div>
+<input class="w-full pl-11 pr-12 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-sm" placeholder="••••••••" type="password"/>
+<div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+<button class="text-slate-400 hover:text-slate-600" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-end">
+<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" type="button">Forgot Password?</button>
+</div>
+<button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98] mt-4" type="submit">
+                Login
+            </button>
+</form>
+<div class="mt-12 text-center">
+<p class="text-sm text-slate-400 dark:text-slate-500">
+                Authorized Personnel Only
+            </p>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 h-8 flex justify-center items-end pb-2 pointer-events-none">
+<div class="w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+</div>
+
+</body></html>
