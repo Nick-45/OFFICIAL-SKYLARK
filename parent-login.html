@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parent Login - School ERP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3b82f6",
+                        "ios-bg": "#F2F2F7",
+                        "background-light": "#ffffff",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #F2F2F7;
+        }
+        .dark body {
+            background-color: #000000;
+        }
+        .ios-input {
+            @apply w-full bg-white dark:bg-[#1C1C1E] border-none px-4 py-4 rounded-xl text-base focus:ring-2 focus:ring-primary transition-all duration-200;
+        }
+        .ios-button {
+            @apply w-full bg-primary text-white font-semibold py-4 rounded-xl active:opacity-80 transition-all duration-200 flex items-center justify-center gap-2;
+        }
+        .ios-secondary-button {
+            @apply w-full bg-white dark:bg-[#1C1C1E] text-primary font-medium py-4 rounded-xl active:bg-slate-50 dark:active:bg-[#2C2C2E] transition-all duration-200 text-center;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="h-12 w-full flex justify-between items-end px-6 pb-2">
+<span class="text-sm font-semibold">9:41</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[18px]">wifi</span>
+<span class="material-symbols-outlined text-[20px]">battery_full</span>
+</div>
+</div>
+<div class="fixed top-14 right-6 z-50">
+<button class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-200 text-[20px]">contrast</span>
+</button>
+</div>
+<main class="px-6 pt-12 pb-24 max-w-md mx-auto">
+<div class="flex flex-col items-center mb-10">
+<div class="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-[48px]">family_restroom</span>
+</div>
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Parent Login</h1>
+<p class="text-slate-500 dark:text-slate-400 mt-2 text-center">Stay updated with your child's academic progress and school activities.</p>
+</div>
+<form class="space-y-4" onsubmit="event.preventDefault();">
+<div>
+<label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1 mb-2">Email or Phone Number</label>
+<input class="ios-input shadow-sm" placeholder="name@example.com" required="" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1 mb-2">Password</label>
+<div class="relative">
+<input class="ios-input shadow-sm" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex justify-end pt-1">
+<button class="text-sm font-medium text-primary" type="button">Forgot Password?</button>
+</div>
+<div class="pt-4 space-y-4">
+<button class="ios-button shadow-lg shadow-primary/20" type="submit">
+                    Sign In
+                </button>
+<div class="relative flex items-center py-4">
+<div class="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+<span class="flex-shrink mx-4 text-xs font-medium text-slate-400 uppercase tracking-widest">or</span>
+<div class="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+</div>
+<button class="ios-secondary-button border border-slate-200 dark:border-slate-800" type="button">
+                    Login with OTP
+                </button>
+</div>
+</form>
+<div class="mt-16 text-center">
+<div class="bg-white dark:bg-[#1C1C1E] p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm inline-block w-full">
+<span class="material-symbols-outlined text-slate-400 mb-2">help_center</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm">Need help accessing your parent account?</p>
+<button class="text-primary font-semibold mt-2 text-sm">Visit Parent Help Center</button>
+</div>
+<button class="mt-8 text-slate-400 text-sm flex items-center justify-center gap-1 mx-auto" onclick="window.history.back()">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Change Role
+            </button>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 h-8 bg-transparent flex justify-center items-end pb-2 pointer-events-none">
+<div class="w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+</div>
+
+</body></html>
