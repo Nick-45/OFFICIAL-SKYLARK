@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>School ERP · Role Login</title>
+  <title>School ERP · Role Ring with Logo Only</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
@@ -41,15 +41,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 0 auto;
     }
     .center-focal {
       position: absolute;
-      width: 45%;
+      width: 38%;
       z-index: 10;
     }
     .role-button {
       position: absolute;
-      width: 32%;
+      width: 28%;
       aspect-ratio: 1 / 1;
       border-radius: 9999px;
       display: flex;
@@ -63,21 +64,49 @@
       transition: all 0.2s ease;
       text-align: center;
       cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
     .role-button:active {
       transform: scale(0.92);
       background-color: #f8fafc;
     }
-    /* position ring — 8 points */
-    .role-pos-1 { top: -2%; left: 50%; transform: translateX(-50%); }
-    .role-pos-2 { top: 10%; right: 2%; }
-    .role-pos-3 { top: 44%; right: -5%; }
-    .role-pos-4 { bottom: 8%; right: 5%; }
-    .role-pos-5 { bottom: -5%; left: 50%; transform: translateX(-50%); }
-    .role-pos-6 { bottom: 8%; left: 5%; }
-    .role-pos-7 { top: 44%; left: -5%; }
-    .role-pos-8 { top: 10%; left: 2%; }
 
+    /* ----- PERFECT CIRCLE POSITIONING - NO OVERLAP ----- */
+    .role-pos-1 { top: 0%; left: 50%; transform: translate(-50%, -50%); }                 /* 0° */
+    .role-pos-2 { top: 14.65%; right: 14.65%; transform: translate(50%, -50%); }          /* 45° */
+    .role-pos-3 { right: 0%; top: 50%; transform: translate(50%, -50%); }                 /* 90° */
+    .role-pos-4 { bottom: 14.65%; right: 14.65%; transform: translate(50%, 50%); }        /* 135° */
+    .role-pos-5 { bottom: 0%; left: 50%; transform: translate(-50%, 50%); }               /* 180° */
+    .role-pos-6 { bottom: 14.65%; left: 14.65%; transform: translate(-50%, 50%); }        /* 225° */
+    .role-pos-7 { left: 0%; top: 50%; transform: translate(-50%, -50%); }                 /* 270° */
+    .role-pos-8 { top: 14.65%; left: 14.65%; transform: translate(-50%, -50%); }          /* 315° */
+
+    /* ----- SUPER ADMIN: LOGO ONLY, NO TEXT ----- */
+    .role-super-admin {
+      background-image: url('logo.png');
+      border: 2px solid #3b82f6;
+      padding: 0; /* Remove padding to maximize logo area */
+    }
+    /* Hide all text and icon inside super admin button */
+    .role-super-admin .material-symbols-outlined,
+    .role-super-admin .role-title,
+    .role-super-admin .role-sub {
+      display: none;
+    }
+    /* Ensure background covers full circle */
+    .role-super-admin {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .dark .role-super-admin {
+      border-color: #60a5fa;
+      box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+    }
+
+    /* Regular role button styles */
     .role-title {
       font-size: 10px;
       font-weight: 700;
@@ -93,23 +122,33 @@
       line-height: 1.1;
       max-width: 80%;
     }
-    .dark .role-button {
+    .dark .role-button:not(.role-super-admin) {
       background-color: #1e293b;
       border-color: #334155;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    .dark .role-title { color: #f8fafc; }
-    .dark .role-sub { color: #94a3b8; }
+    .dark .role-title:not(.role-super-admin .role-title) { color: #f8fafc; }
+    .dark .role-sub:not(.role-super-admin .role-sub) { color: #94a3b8; }
 
+    @media (max-width: 500px) {
+      .role-button { width: 26%; }
+      .role-title { font-size: 9px; }
+    }
     @media (max-width: 400px) {
       .role-title { font-size: 8px; }
       .role-sub { display: none; }
-      .role-button { width: 30%; }
+      .role-button { width: 24%; }
     }
   </style>
   <style>
     body {
       min-height: max(884px, 100dvh);
+    }
+    /* Fallback in case logo.png is missing */
+    .role-super-admin {
+      background-color: #3b82f6;
+      background-image: url('logo.png'), linear-gradient(135deg, #3b82f6, #1e40af);
+      background-blend-mode: overlay;
     }
   </style>
 </head>
@@ -130,11 +169,11 @@
       <p class="text-slate-500 dark:text-slate-400 mt-2">Select Your Access Level</p>
     </div>
 
-    <!-- ring container -->
-    <div class="w-full max-w-[500px] px-8">
+    <!-- ring container - perfectly spaced -->
+    <div class="w-full max-w-[600px] px-4">
       <div class="role-ring">
 
-        <!-- center dashboard preview (focal point) -->
+        <!-- center dashboard preview -->
         <div class="center-focal flex items-center justify-center">
           <div class="relative w-full aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg shadow-xl overflow-hidden border-4 border-slate-200 dark:border-slate-700">
             <img alt="school dashboard abstract preview" class="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnB82U7RqCZG1UmOw-VX7WJUXIUO6w0ZO-AH54DXcMAm383AhIGGw5PsMjIAC1unjjl4D_cTzsna-WtoOcsBEyMA5EglqnxS3kFM9WA1VlTRYW_Tu9EiQ0wnpim8w_Rur3_thPKTFWrA1xIYhYpfy-V9sTzqu83ibn7z2mFtTanlTheYIcvATPgcGEmVqpp5AFo2heawLvPZHfYyjDj5rXL8HmuWhoQN2T2DpUN_flPs1I7DmLA0Sw0EscTYidretj-lbI7QvtiZaM"/>
@@ -144,52 +183,58 @@
           </div>
         </div>
 
-        <!-- 8 role buttons – arranged radially. Each redirects to role-specific login.html -->
-        <button class="role-button role-pos-1" onclick="window.location.href='super-admin-login.html';" aria-label="Super Admin">
-          <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">person</span>
-          <span class="role-title">Super Admin</span>
-          <span class="role-sub">Take full control with all features</span>
+        <!-- SUPER ADMIN - logo only, no text, no icon, still redirects -->
+        <button class="role-button role-pos-1 role-super-admin" onclick="window.location.href='super-admin-login.html';" aria-label="Super Admin">
+          <!-- No content - just the logo background -->
         </button>
+        
+        <!-- Other roles - standard appearance with icons and labels -->
         <button class="role-button role-pos-2" onclick="window.location.href='admin-login.html';" aria-label="Admin">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">admin_panel_settings</span>
           <span class="role-title">Admin</span>
-          <span class="role-sub">Manage day to day activities</span>
+          <span class="role-sub">Day to day ops</span>
         </button>
+        
         <button class="role-button role-pos-3" onclick="window.location.href='receptionist-login.html';" aria-label="Receptionist">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">support_agent</span>
           <span class="role-title">Receptionist</span>
-          <span class="role-sub">Manage all front office relative activities</span>
+          <span class="role-sub">Front office</span>
         </button>
+        
         <button class="role-button role-pos-4" onclick="window.location.href='librarian-login.html';" aria-label="Librarian">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">menu_book</span>
           <span class="role-title">Librarian</span>
-          <span class="role-sub">Systematic management of library</span>
+          <span class="role-sub">Library mgmt</span>
         </button>
+        
         <button class="role-button role-pos-5" onclick="window.location.href='parent-login.html';" aria-label="Parent">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">family_restroom</span>
           <span class="role-title">Parent</span>
-          <span class="role-sub">Get child all academic updates</span>
+          <span class="role-sub">Child updates</span>
         </button>
+        
         <button class="role-button role-pos-6" onclick="window.location.href='student-login.html';" aria-label="Student">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">school</span>
           <span class="role-title">Student</span>
-          <span class="role-sub">Collaborate with school activities</span>
+          <span class="role-sub">Collaborate</span>
         </button>
+        
         <button class="role-button role-pos-7" onclick="window.location.href='accountant-login.html';" aria-label="Accountant">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">payments</span>
           <span class="role-title">Accountant</span>
-          <span class="role-sub">Trace student fees and expenses</span>
+          <span class="role-sub">Fees & expenses</span>
         </button>
+        
         <button class="role-button role-pos-8" onclick="window.location.href='teacher-login.html';" aria-label="Teacher">
           <span class="material-symbols-outlined text-slate-800 dark:text-slate-200">co_present</span>
           <span class="role-title">Teacher</span>
-          <span class="role-sub">Manage student &amp; academic activities</span>
+          <span class="role-sub">Academic mgmt</span>
         </button>
 
       </div>
     </div>
 
-    <!-- footer support (no redirect, just a contact trigger) -->
+    <!-- footer support -->
     <div class="mt-20 text-center">
       <p class="text-slate-400 dark:text-slate-500 text-sm">Need help logging in?</p>
       <button class="text-primary font-medium mt-1" onclick="window.location.href='contact-support.html';">Contact Support</button>
