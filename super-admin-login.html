@@ -1,20 +1,32 @@
 <!DOCTYPE html>
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Super Admin Login</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<script>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>EDUSKYLARK · Super Admin Login</title>
+    <!-- Tailwind + Icons -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Firebase SDK (v8 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#1d4ed8",
-                        "background-light": "#ffffff",
-                        "background-dark": "#0f172a",
+                        primary: "#3498db",
+                        secondary: "#e67e22",
+                        accent: "#e74c3c",
+                        "dark-blue": "#2c3e50",
+                        gold: "#f1c40f",
+                        green: "#27ae60",
+                        purple: "#9b59b6",
+                        "light-blue": "#ecf0f1",
                     },
                     fontFamily: {
                         sans: ["Inter", "sans-serif"],
@@ -23,85 +35,390 @@
             },
         };
     </script>
-<style type="text/tailwindcss">
+    <style>
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: #ffffff;
+            background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        .dark body {
+            background: linear-gradient(135deg, #1a2530 0%, #2c3e50 100%);
         }
         .input-group:focus-within .icon-box {
-            color: #1d4ed8;
+            color: #3498db;
         }
+        .card-shadow {
+            box-shadow: 0 15px 35px rgba(52, 152, 219, 0.15);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        .animate-float {
+            animation: float 15s ease-in-out infinite;
+        }
+        /* Loading overlay */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  </head>
-<body class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen">
-<header class="flex items-center justify-between px-6 pt-12 pb-6">
-<button class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 active:scale-95 transition-transform">
-<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">arrow_back_ios_new</span>
-</button>
-<button class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-symbols-outlined text-slate-700 dark:text-slate-200">contrast</span>
-</button>
-</header>
-<main class="px-8 pt-6">
-<div class="mb-12">
-<div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 mb-6">
-<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-4xl">shield_person</span>
-</div>
-<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Super Admin Login</h1>
-<p class="text-slate-500 dark:text-slate-400">Welcome back. Please enter your credentials to access the management dashboard.</p>
-</div>
-<form class="space-y-6">
-<div class="space-y-4">
-<div class="input-group">
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Username</label>
-<div class="relative">
-<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none icon-box">
-<span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
-</div>
-<input class="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-sm" placeholder="Enter username" type="text"/>
-</div>
-</div>
-<div class="input-group">
-<div class="flex items-center justify-between mb-2">
-<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
-</div>
-<div class="relative">
-<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none icon-box">
-<span class="material-symbols-outlined text-slate-400 text-[20px]">lock</span>
-</div>
-<input class="w-full pl-11 pr-12 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-sm" placeholder="••••••••" type="password"/>
-<div class="absolute inset-y-0 right-0 pr-4 flex items-center">
-<button class="text-slate-400 hover:text-slate-600" type="button">
-<span class="material-symbols-outlined text-[20px]">visibility</span>
-</button>
-</div>
-</div>
-</div>
-</div>
-<div class="flex justify-end">
-<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" type="button">Forgot Password?</button>
-</div>
-<button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98] mt-4" type="submit">
-                Login
-            </button>
-</form>
-<div class="mt-12 text-center">
-<p class="text-sm text-slate-400 dark:text-slate-500">
-                Authorized Personnel Only
-            </p>
-</div>
-</main>
-<div class="fixed bottom-0 left-0 right-0 h-8 flex justify-center items-end pb-2 pointer-events-none">
-<div class="w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
-</div>
+</head>
+<body class="bg-transparent text-slate-900 dark:text-slate-100 p-4">
+    <!-- animated background bubbles -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute w-20 h-20 rounded-full bg-blue-200/20 dark:bg-blue-500/5 top-1/4 left-1/5 animate-float"></div>
+        <div class="absolute w-32 h-32 rounded-full bg-orange-200/20 dark:bg-orange-500/5 bottom-1/4 right-1/6 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute w-16 h-16 rounded-full bg-red-200/20 dark:bg-red-500/5 top-2/3 left-2/3 animate-float" style="animation-delay: 4s;"></div>
+        <div class="absolute w-40 h-40 rounded-full bg-dark-blue/10 dark:bg-slate-600/10 bottom-10 left-10 animate-float" style="animation-delay: 6s;"></div>
+    </div>
 
-</body></html>
+    <!-- Error toast -->
+    <div id="errorToast" class="error-toast">
+        <span class="material-symbols-outlined text-white">error</span>
+        <span id="errorMessage">Invalid credentials</span>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl flex flex-col items-center shadow-2xl">
+            <div class="spinner border-blue-600 dark:border-orange-500 mb-3"></div>
+            <p class="text-slate-700 dark:text-white font-medium">Authenticating...</p>
+        </div>
+    </div>
+
+    <!-- main login card -->
+    <div class="relative z-10 w-full max-w-md">
+        <div class="bg-white/90 dark:bg-dark-blue/90 backdrop-blur-sm rounded-3xl shadow-2xl border-t-4 border-t-primary p-8 md:p-10 card-shadow">
+            
+            <!-- header -->
+            <div class="flex flex-col items-center text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-br from-primary to-dark-blue rounded-2xl flex items-center justify-center shadow-lg mb-5">
+                    <span class="material-symbols-outlined text-white text-5xl">school</span>
+                </div>
+                <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    EDUSKYLARK<span class="text-secondary dark:text-gold">.</span>
+                </h1>
+                <p class="text-sm font-semibold uppercase tracking-wider text-primary dark:text-secondary mt-1">
+                    Super Admin Portal
+                </p>
+            </div>
+
+            <!-- greeting -->
+            <div class="mb-8 text-center">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-secondary">shield_person</span>
+                    Platform Owner
+                </h2>
+                <p class="text-slate-500 dark:text-slate-300 text-sm mt-2">
+                    Enter your credentials to manage schools, subscriptions & global settings.
+                </p>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="loginForm" class="space-y-6">
+                <div class="space-y-5">
+                    <!-- Email field (we use email, not username - super-admin identified by email) -->
+                    <div class="input-group">
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5 ml-1">
+                            Email
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none icon-box transition-colors">
+                                <span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[22px]">person</span>
+                            </div>
+                            <input id="email" type="email" required
+                                class="w-full pl-12 pr-5 py-4 bg-slate-50/80 dark:bg-slate-800/80 border-2 border-transparent rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 dark:focus:ring-secondary/30 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all shadow-sm"
+                                placeholder="superadmin@eduskyark.com" />
+                        </div>
+                    </div>
+                    <!-- Password field -->
+                    <div class="input-group">
+                        <div class="flex items-center justify-between mb-1.5 ml-1">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none icon-box">
+                                <span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[22px]">lock</span>
+                            </div>
+                            <input id="password" type="password" required
+                                class="w-full pl-12 pr-14 py-4 bg-slate-50/80 dark:bg-slate-800/80 border-2 border-transparent rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 dark:focus:ring-secondary/30 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-sm"
+                                placeholder="••••••••" />
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                                <button type="button" id="togglePassword" class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-secondary transition-colors">
+                                    <span class="material-symbols-outlined text-[22px]">visibility</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="button" id="forgotPassword" class="text-sm font-semibold text-primary dark:text-gold hover:text-dark-blue dark:hover:text-secondary transition-colors flex items-center gap-1 group">
+                        Forgot password?
+                        <span class="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                    </button>
+                </div>
+
+                <button type="submit" id="loginButton"
+                    class="w-full bg-gradient-to-r from-primary to-dark-blue hover:from-dark-blue hover:to-[#1a2530] text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 dark:shadow-black/30 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 text-base">
+                    <span class="material-symbols-outlined text-[22px]">login</span>
+                    Access Super Dashboard
+                </button>
+            </form>
+
+            <!-- footer -->
+            <div class="mt-10 text-center border-t border-slate-200 dark:border-slate-700 pt-6">
+                <p class="text-xs text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">verified</span>
+                    Authorized personnel · EDUSKYLARK v2.0
+                </p>
+                <p class="text-[10px] text-slate-400 dark:text-slate-600 mt-2">
+                    Secure platform | <span class="inline-flex items-center"><span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span> system online</span>
+                </p>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-center">
+            <div class="w-32 h-1 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+        </div>
+    </div>
+
+    <!-- Dark mode toggle & back button (restyled) -->
+    <button onclick="document.documentElement.classList.toggle('dark')" 
+        class="fixed top-6 right-6 z-20 w-11 h-11 rounded-full bg-white/70 dark:bg-dark-blue/80 backdrop-blur-sm shadow-md flex items-center justify-center border border-white/20 dark:border-slate-700 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-slate-700 dark:text-slate-200 text-2xl">contrast</span>
+    </button>
+    <button onclick="window.location.href='index.html'" 
+        class="fixed top-6 left-6 z-20 w-11 h-11 rounded-full bg-white/70 dark:bg-dark-blue/80 backdrop-blur-sm shadow-md flex items-center justify-center border border-white/20 dark:border-slate-700 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-slate-700 dark:text-slate-200 text-2xl">arrow_back_ios_new</span>
+    </button>
+
+    <!-- Firebase Configuration -->
+    <script>
+        // -------------------- FIREBASE INIT --------------------
+        const firebaseConfig = {
+  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+  authDomain: "toplink-edu.firebaseapp.com",
+  projectId: "toplink-edu",
+  storageBucket: "toplink-edu.firebasestorage.app",
+  messagingSenderId: "35786900143",
+  appId: "1:35786900143:web:9e612336393d29324c0a5a",
+  measurementId: "G-3VSBS7R11D"
+};
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // -------------------- DOM elements --------------------
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginButton');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const togglePassword = document.getElementById('togglePassword');
+
+        // ---------- TOGGLE PASSWORD VISIBILITY ----------
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('.material-symbols-outlined').textContent = 
+                type === 'password' ? 'visibility' : 'visibility_off';
+        });
+
+        // ---------- FORGOT PASSWORD (real implementation) ----------
+        document.getElementById('forgotPassword').addEventListener('click', function() {
+            const email = emailInput.value.trim();
+            if (!email) {
+                showError('Please enter your email address first.');
+                return;
+            }
+            loadingOverlay.style.display = 'flex';
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    loadingOverlay.style.display = 'none';
+                    showSuccessToast('Password reset email sent! Check your inbox.');
+                })
+                .catch(error => {
+                    loadingOverlay.style.display = 'none';
+                    showError(error.message);
+                });
+        });
+
+        // ---------- HELPER: show error toast ----------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        function showSuccessToast(msg) {
+            // temporary success indicator (can use same toast but green)
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 right-6 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50 animate-[slideIn_0.3s]';
+            toast.innerHTML = `<span class="material-symbols-outlined">check_circle</span>${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // ---------- AUTH STATE CHANGE: redirect if already logged in ----------
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // User is signed in, verify super-admin role before redirect
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        // role must be exactly 'super-admin' (or 'admin'? we enforce super-admin)
+                        if (userData.role === 'super-admin' || userData.role === 'superadmin' || userData.isSuperAdmin === true) {
+                            window.location.href = 'super-admin-dashboard.html'; // REAL DASHBOARD
+                        } else {
+                            // Not super admin, sign out and show error
+                            await auth.signOut();
+                            showError('Access denied. You do not have super-admin privileges.');
+                        }
+                    } else {
+                        // No user document – sign out
+                        await auth.signOut();
+                        showError('Account not properly configured. Contact support.');
+                    }
+                } catch (error) {
+                    console.error('Auth state check error:', error);
+                    await auth.signOut();
+                }
+            }
+        });
+
+        // ---------- LOGIN SUBMISSION (REAL FIREBASE + ROLE CHECK) ----------
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showError('Please enter both email and password.');
+                return;
+            }
+
+            // Show loading
+            loadingOverlay.style.display = 'flex';
+            loginBtn.disabled = true;
+
+            try {
+                // 1. Authenticate with Firebase Auth
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // 2. Fetch user document from Firestore 'users' collection
+                const userDoc = await db.collection('users').doc(user.uid).get();
+
+                if (!userDoc.exists) {
+                    // No user profile – rollback, sign out and error
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('User profile not found. Please contact system administrator.');
+                    return;
+                }
+
+                const userData = userDoc.data();
+                console.log('User data:', userData);
+
+                // 3. CHECK FOR SUPER-ADMIN ROLE (case-insensitive, variations)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || role === 'superadmin' || userData.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    // Valid credentials but not super-admin – sign out and reject
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Access restricted to super administrators only.');
+                    return;
+                }
+
+                // 4. ✅ SUPER ADMIN CONFIRMED – redirect to real dashboard
+                // Optional: update lastLogin timestamp
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(err => console.warn('Could not update lastLogin', err));
+
+                // Redirect to the actual super admin dashboard (must exist)
+                window.location.href = 'super-admin-dashboard.html'; 
+
+            } catch (error) {
+                // Handle specific auth errors
+                loadingOverlay.style.display = 'none';
+                loginBtn.disabled = false;
+
+                let friendlyMessage = 'Authentication failed.';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        friendlyMessage = 'No account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        friendlyMessage = 'Incorrect password.';
+                        break;
+                    case 'auth/invalid-email':
+                        friendlyMessage = 'Invalid email format.';
+                        break;
+                    case 'auth/user-disabled':
+                        friendlyMessage = 'This account has been disabled.';
+                        break;
+                    case 'auth/too-many-requests':
+                        friendlyMessage = 'Too many failed attempts. Try again later.';
+                        break;
+                    default:
+                        friendlyMessage = error.message;
+                }
+                showError(friendlyMessage);
+                console.error('Login error:', error);
+            }
+        });
+
+        // Pre-fill for demo convenience – but real app, remove or keep for testing? 
+        // We'll leave empty to be production-ready. No default credentials.
+
+    </script>
+</body>
+</html>
