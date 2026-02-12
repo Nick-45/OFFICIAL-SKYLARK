@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Super Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-100 antialiased">
+<!-- Mobile Screen Wrapper (iPhone 14/15 size approx) -->
+<div class="max-w-[430px] mx-auto min-h-screen bg-background-light dark:bg-background-dark relative pb-24 border-x border-slate-200 dark:border-slate-800">
+<!-- Status Bar Spacer (iOS Style) -->
+<div class="h-12 w-full"></div>
+<!-- Header / Identity Section -->
+<header class="px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<img alt="School Logo" class="w-full h-full rounded-xl object-cover" data-alt="School logo emblem with academic crest" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuOIcjNTATASsOqOLLC50qwKf9TyKnS2h1FWBUKj2dbe3vuxUBMVjGfLOvjb7-SDnhxTNdIPZFeXCxD63o1lLEV6OrhA4WqTm8ZQ4Qfi_68rQwvnRvh-kCiUfnVsbWxYfJMn47G1o8GA3moKtZiFuyCWo6NW_GfgzGtuflkrUEkorLhHp5IBKSEf_A673-YKlZ36XRYjC-NGRE5rWXX-bl-rd-qlV947URE0vvUYKY86EA9GQN4zMh4R5R_lykkioZHJy9O4TAVizG"/>
+</div>
+<div>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Greenwood Intl.</h1>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400">ID: SCH-2024-01</p>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
+<span class="material-icons-round text-slate-600 dark:text-slate-300">notifications_none</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="px-6 py-2">
+<!-- Greeting -->
+<div class="mb-6">
+<h2 class="text-2xl font-bold">Welcome, Super Admin</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">System Overview • Feb 24, 2024</p>
+</div>
+<!-- KPI Stats Grid -->
+<section class="grid grid-cols-2 gap-4 mb-8">
+<!-- Total Students -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center justify-between mb-3">
+<div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+<span class="material-icons-round text-blue-600 dark:text-blue-400 text-lg">school</span>
+</div>
+<span class="text-[10px] font-bold text-green-500 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded-full">+4%</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Total Students</p>
+<p class="text-xl font-bold mt-1">1,250</p>
+</div>
+<!-- Total Staff -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center justify-between mb-3">
+<div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+<span class="material-icons-round text-purple-600 dark:text-purple-400 text-lg">badge</span>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Total Staff</p>
+<p class="text-xl font-bold mt-1">85</p>
+</div>
+<!-- Revenue -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center justify-between mb-3">
+<div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+<span class="material-icons-round text-green-600 dark:text-green-400 text-lg">payments</span>
+</div>
+<span class="material-icons-round text-slate-400 text-sm cursor-pointer">visibility</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Revenue (MTD)</p>
+<p class="text-xl font-bold mt-1">$45,200</p>
+</div>
+<!-- Pending Notifications -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center justify-between mb-3">
+<div class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+<span class="material-icons-round text-orange-600 dark:text-orange-400 text-lg">priority_high</span>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Alerts</p>
+<p class="text-xl font-bold mt-1 text-orange-600 dark:text-orange-400">12</p>
+</div>
+</section>
+<!-- Quick Access -->
+<section class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold">Quick Access</h3>
+<button class="text-primary text-sm font-semibold">View All</button>
+</div>
+<div class="space-y-3">
+<!-- User Management -->
+<button class="w-full bg-primary text-white p-4 rounded-xl flex items-center justify-between shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+<div class="flex items-center gap-3">
+<div class="bg-white/20 p-2 rounded-lg">
+<span class="material-icons-round">group_add</span>
+</div>
+<div class="text-left">
+<p class="font-bold">User Management</p>
+<p class="text-[10px] text-white/80">Manage staff, students &amp; parents</p>
+</div>
+</div>
+<span class="material-icons-round">chevron_right</span>
+</button>
+<!-- Reports -->
+<button class="w-full bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center justify-between border border-slate-100 dark:border-slate-700 shadow-sm active:scale-95 transition-transform">
+<div class="flex items-center gap-3">
+<div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">
+<span class="material-icons-round text-slate-600 dark:text-slate-300">analytics</span>
+</div>
+<div class="text-left text-slate-900 dark:text-white">
+<p class="font-bold">System Reports</p>
+<p class="text-[10px] text-slate-500 dark:text-slate-400">Academic &amp; financial insights</p>
+</div>
+</div>
+<span class="material-icons-round text-slate-400">chevron_right</span>
+</button>
+<!-- Settings -->
+<button class="w-full bg-white dark:bg-slate-800 p-4 rounded-xl flex items-center justify-between border border-slate-100 dark:border-slate-700 shadow-sm active:scale-95 transition-transform">
+<div class="flex items-center gap-3">
+<div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">
+<span class="material-icons-round text-slate-600 dark:text-slate-300">settings</span>
+</div>
+<div class="text-left text-slate-900 dark:text-white">
+<p class="font-bold">General Settings</p>
+<p class="text-[10px] text-slate-500 dark:text-slate-400">Security &amp; app configuration</p>
+</div>
+</div>
+<span class="material-icons-round text-slate-400">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Activity Log (Subtle) -->
+<section class="mb-4">
+<h3 class="text-base font-bold mb-3">Recent Activity</h3>
+<div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
+<div class="p-3 border-b border-slate-50 dark:border-slate-700 flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<p class="text-xs text-slate-600 dark:text-slate-400 font-medium flex-1">New staff member added by Registrar</p>
+<p class="text-[10px] text-slate-400">2m ago</p>
+</div>
+<div class="p-3 border-b border-slate-50 dark:border-slate-700 flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<p class="text-xs text-slate-600 dark:text-slate-400 font-medium flex-1">Annual fee report generated</p>
+<p class="text-[10px] text-slate-400">1h ago</p>
+</div>
+<div class="p-3 flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-orange-500"></div>
+<p class="text-xs text-slate-600 dark:text-slate-400 font-medium flex-1">System update scheduled for 12:00 AM</p>
+<p class="text-[10px] text-slate-400">3h ago</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons-round">grid_view</span>
+<span class="text-[10px] font-bold">Dashboard</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</button>
+<div class="relative -top-6">
+<button class="w-14 h-14 bg-primary rounded-full flex items-center justify-center text-white shadow-xl shadow-primary/40 border-4 border-background-light dark:border-background-dark">
+<span class="material-icons-round text-3xl">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round text-slate-400">chat_bubble_outline</span>
+<span class="text-[10px] font-medium">Messages</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round text-slate-400">person_outline</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</nav>
+<!-- Home Indicator (iOS Style) -->
+<div class="fixed bottom-1 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full z-50"></div>
+</div>
+</body></html>
