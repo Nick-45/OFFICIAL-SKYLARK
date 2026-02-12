@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parent Dashboard - EduConnect</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-100 antialiased selection:bg-primary/30">
+<!-- Mobile Container (Simulating iOS) -->
+<div class="max-w-[430px] mx-auto min-h-screen bg-background-light dark:bg-background-dark relative pb-24 shadow-2xl overflow-hidden">
+<!-- Status Bar Mockup -->
+<div class="flex justify-between items-center px-8 pt-4 pb-2 text-xs font-semibold">
+<span>9:41</span>
+<div class="flex items-center gap-1.5">
+<span class="material-icons-round text-[14px]">signal_cellular_alt</span>
+<span class="material-icons-round text-[14px]">wifi</span>
+<span class="material-icons-round text-[14px]">battery_full</span>
+</div>
+</div>
+<!-- Header Section -->
+<header class="px-6 pt-4 pb-6">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<img alt="Parent Profile" class="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover" data-alt="A profile photo of a smiling father" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmQh5EXDk9CPc_LiVtYwS1tKyVGALo7skVKeGZKESGR_D2fMCYuC_fw7o2sBQBRreC0V96e80uQxZPjVE6_dunlCyYn1Gg59JW5vhtfHX7tPFYS6qh7M5a_KNun8ezLIWVbkbDiBRmtDCBmPswo2HJ56osRuq5A6ngJ_06Xoq-gU03MrHtK0t6Mjw_a7DwsMlaxmu6B1MFom7GhLGBoDnNG8xJwMHruY68v0Pqsh4Gf02i1MWghh8MLaD_SG-hRE2vI_csbrP6bG3q"/>
+<div>
+<p class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Welcome back</p>
+<h2 class="text-sm font-semibold">Mr. Jonathan Doe</h2>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-600 dark:text-slate-300">
+<span class="material-icons-round text-xl">notifications</span>
+</button>
+</div>
+<!-- Child Profile Selector / Card -->
+<div class="bg-primary p-5 rounded-xl text-white shadow-lg shadow-primary/20 relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+<div class="flex items-center gap-4 relative z-10">
+<img alt="Child Profile" class="w-14 h-14 rounded-lg object-cover border-2 border-white/20" data-alt="A profile photo of a young elementary student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXcFtSFjR3X53X-_-HAmBUJ_gEe5VU1zlpjDxH2fm9KBIMkzngq2-JwbRoqEXue9J9b37GxInDerp328STM83EoqoUl17mdKpH3M9_jEhjKb_FhPm80k0VzKY7rN1hn2TnMKBo6yuAip7wp0MHIzQzgeRwqbcqHGxuoN0l0KAn_3nJCRRJuR04ZfTd64qfp7jcbCT0LSSPbbtCNKz6apNhOFC3_IhAD6gXK0si1mmfhLAAmTr2reGC1b6Mw37mC8XQF0YGUl2EGALT"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h1 class="text-lg font-bold leading-tight">Liam Johnson</h1>
+<p class="text-xs text-white/80">Grade 4-B • ID: SCH-2024-089</p>
+</div>
+<span class="material-icons-round text-sm bg-white/20 p-1 rounded-full">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<main class="px-6 space-y-4">
+<!-- Quick Stats Grid -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Attendance Card -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+<span class="material-icons-round text-lg">event_available</span>
+</div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Attendance</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold">94%</span>
+<span class="text-[10px] text-emerald-500 font-medium mb-1">+2% vs last month</span>
+</div>
+</div>
+<!-- Results Card -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
+<span class="material-icons-round text-lg">auto_graph</span>
+</div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Avg. Grade</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold uppercase">A-</span>
+<span class="text-[10px] text-slate-400 font-medium mb-1">Term 2</span>
+</div>
+</div>
+</div>
+<!-- Fee Status Card -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-round text-lg">account_balance_wallet</span>
+</div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Fee Status</span>
+</div>
+<span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase">Pending</span>
+</div>
+<div class="flex items-center justify-between mb-5">
+<div>
+<p class="text-2xl font-bold">$1,250.00</p>
+<p class="text-xs text-slate-400">Due by April 15, 2024</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors">
+                        Pay Fees
+                        <span class="material-icons-round text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%] rounded-full"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-2">65% of annual fees paid</p>
+</div>
+<!-- Teacher Notices Section -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+<span class="material-icons-round text-lg">campaign</span>
+</div>
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Latest Notices</span>
+</div>
+<button class="text-primary text-xs font-medium">View all</button>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 overflow-hidden">
+<img alt="Teacher" class="w-full h-full object-cover" data-alt="A portrait of a professional school teacher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_7oK0liafSibO0Ei4SgU5rWcdY_RVuGZyUu-Za_PcVqSnM1uE0iHMp86KpjfhFEyaE7Lr8Sj8FmiEKHg05HwGsICIYZPIr-5G1IzePyLY44444JOcZ0OWRkf4uPtG2zyzi9Qnglua4_oKTHxzddnTeBRNZMWKpHDdweO_39tfCAUFlUD21xybfLSD1BmEOESyozgDAt66Tda0EeAil_CJrP5XAKMnYRCh0Hsj2IbTNkl2tZZG4x3P0zY6rdmVtfsCpQt75XVqVtZg"/>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-semibold">Ms. Sarah Collins</h4>
+<span class="text-[10px] text-slate-400">2h ago</span>
+</div>
+<p class="text-xs text-slate-500 line-clamp-2 mt-1">Don't forget the Science Fair project submission tomorrow morning. All students must...</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Academic Performance Shortcut -->
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600">
+<span class="material-icons-round">history_edu</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold">Exam Results</h4>
+<p class="text-[11px] text-slate-400">Mid-term reports available</p>
+</div>
+</div>
+<span class="material-icons-round text-slate-300">chevron_right</span>
+</div>
+</main>
+<!-- iOS Style Tab Bar -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-6 py-3 pb-8 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-icons-round">grid_view</span>
+<span class="text-[10px] font-medium leading-none">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-icons-round">chat_bubble_outline</span>
+<span class="text-[10px] font-medium leading-none">Messages</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-icons-round">calendar_today</span>
+<span class="text-[10px] font-medium leading-none">Calendar</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-icons-round">person_outline</span>
+<span class="text-[10px] font-medium leading-none">Profile</span>
+</a>
+</nav>
+<!-- Home Indicator (iOS) -->
+<div class="fixed bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full z-50"></div>
+</div>
+</body></html>
