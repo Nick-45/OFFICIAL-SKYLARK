@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Subscriptions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* Same CSS as previous pages - consistent design */
+        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --white: #ffffff; --light-blue: #ecf0f1; --green: #27ae60; --purple: #9b59b6; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); min-height: 100vh; color: var(--dark-blue); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(52,152,219,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; font-weight: 700; }
+        .admin-badge { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #f1c40f, #f39c12); color: var(--dark-blue); padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .plan-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-bottom: 40px;
+        }
+        .plan-detail-card {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border-top: 5px solid; transition: transform 0.3s; position: relative;
+        }
+        .plan-detail-card:hover { transform: translateY(-5px); }
+        .plan-detail-card.basic { border-color: var(--blue); }
+        .plan-detail-card.standard { border-color: var(--orange); }
+        .plan-detail-card.premium { border-color: var(--green); }
+        
+        .subscription-table { background: white; border-radius: 20px; padding: 30px; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #e9ecef; }
+        td { padding: 15px 10px; border-bottom: 1px solid #f1f1f1; }
+        
+        .renewal-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .renewal-urgent { background: rgba(231,76,60,0.15); color: var(--red); }
+        .renewal-warning { background: rgba(230,126,34,0.15); color: var(--orange); }
+        .renewal-ok { background: rgba(39,174,96,0.15); color: var(--green); }
+    </style>
+</head>
+<body>
+    <div class="background-animation"><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div></div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · SUBSCRIPTIONS <span class="admin-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
+                    <p>Manage Plans & Billing</p>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:20px;">
+                <span style="color:white;" id="userNameDisplay">Super Admin</span>
+                <button class="logout-btn" id="logoutBtn" style="padding:8px 16px; background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); border-radius:30px; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <h2 style="font-size:28px; display:flex; align-items:center; gap:15px;"><i class="fas fa-credit-card" style="color:var(--blue);"></i> Subscription Plans</h2>
+            <button class="btn-primary" style="padding:12px 25px; background:linear-gradient(135deg, var(--blue), var(--dark-blue)); color:white; border:none; border-radius:30px; font-weight:600; cursor:pointer;" onclick="alert('Create new plan modal')"><i class="fas fa-plus"></i> Create Plan</button>
+        </div>
+
+        <div class="plan-cards">
+            <div class="plan-detail-card basic">
+                <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Basic</h3>
+                <div style="font-size:36px; font-weight:800; color:var(--blue); margin-bottom:20px;">KES 5K<span style="font-size:16px; font-weight:400; color:#666;">/mo</span></div>
+                <ul style="list-style:none; margin-bottom:25px;">
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Up to 300 students</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> 5 staff accounts</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Basic analytics</li>
+                </ul>
+                <div style="display:flex; gap:10px;">
+                    <span style="background:rgba(52,152,219,0.1); padding:8px 16px; border-radius:20px; font-size:13px;"><i class="fas fa-school"></i> 8 schools</span>
+                    <button style="background:var(--blue); color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Edit</button>
+                </div>
+            </div>
+            <div class="plan-detail-card standard">
+                <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Standard</h3>
+                <div style="font-size:36px; font-weight:800; color:var(--orange); margin-bottom:20px;">KES 12K<span style="font-size:16px; font-weight:400; color:#666;">/mo</span></div>
+                <ul style="list-style:none; margin-bottom:25px;">
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Up to 1,000 students</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> 15 staff accounts</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Advanced analytics</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Priority support</li>
+                </ul>
+                <div style="display:flex; gap:10px;">
+                    <span style="background:rgba(230,126,34,0.1); padding:8px 16px; border-radius:20px; font-size:13px;"><i class="fas fa-school"></i> 12 schools</span>
+                    <button style="background:var(--orange); color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Edit</button>
+                </div>
+            </div>
+            <div class="plan-detail-card premium">
+                <span style="position:absolute; top:-12px; right:20px; background:var(--orange); color:white; padding:4px 16px; border-radius:20px; font-size:12px; font-weight:700;">POPULAR</span>
+                <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Premium</h3>
+                <div style="font-size:36px; font-weight:800; color:var(--green); margin-bottom:20px;">KES 25K<span style="font-size:16px; font-weight:400; color:#666;">/mo</span></div>
+                <ul style="list-style:none; margin-bottom:25px;">
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Unlimited students</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Unlimited staff</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Real-time analytics</li>
+                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> 24/7 support</li>
+                </ul>
+                <div style="display:flex; gap:10px;">
+                    <span style="background:rgba(39,174,96,0.1); padding:8px 16px; border-radius:20px; font-size:13px;"><i class="fas fa-school"></i> 4 schools</span>
+                    <button style="background:var(--green); color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Edit</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="subscription-table">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                <h3 style="font-size:22px; font-weight:700;"><i class="fas fa-list" style="color:var(--blue); margin-right:10px;"></i> Active Subscriptions</h3>
+                <div>
+                    <select class="filter-select" style="padding:10px 20px; border-radius:30px; border:2px solid #e9ecef;">
+                        <option>All Schools</option>
+                        <option>Expiring Soon</option>
+                        <option>Overdue</option>
+                    </select>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>School</th><th>Plan</th><th>Amount</th><th>Start Date</th><th>Renewal</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Nairobi Adventist Academy</td><td>Premium</td><td>KES 25,000</td><td>12 Mar 2026</td><td>12 Apr 2026</td><td><span class="renewal-badge renewal-ok">Active</span></td><td><button style="color:var(--blue); background:none; border:none; cursor:pointer;"><i class="fas fa-edit"></i></button></td></tr>
+                    <tr><td>Kisumu Junior School</td><td>Standard</td><td>KES 12,000</td><td>10 Mar 2026</td><td>10 Apr 2026</td><td><span class="renewal-badge renewal-ok">Active</span></td><td><button style="color:var(--blue); background:none; border:none;"><i class="fas fa-edit"></i></button></td></tr>
+                    <tr><td>Mombasa Hill Academy</td><td>Basic</td><td>KES 5,000</td><td>8 Mar 2026</td><td>8 Apr 2026</td><td><span class="renewal-badge renewal-warning">Pending</span></td><td><button style="color:var(--blue);"><i class="fas fa-edit"></i></button></td></tr>
+                    <tr><td>Eldoret Bright Scholars</td><td>Premium</td><td>KES 25,000</td><td>5 Mar 2026</td><td>5 Apr 2026</td><td><span class="renewal-badge renewal-ok">Active</span></td><td><button style="color:var(--blue);"><i class="fas fa-edit"></i></button></td></tr>
+                    <tr><td>Nakuru Central School</td><td>Standard</td><td>KES 12,000</td><td>1 Feb 2026</td><td>1 Apr 2026</td><td><span class="renewal-badge renewal-urgent">Expiring (7d)</span></td><td><button style="color:var(--blue);"><i class="fas fa-edit"></i></button></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+       const firebaseConfig = {
+  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+  authDomain: "toplink-edu.firebaseapp.com",
+  projectId: "toplink-edu",
+  storageBucket: "toplink-edu.firebasestorage.app",
+  messagingSenderId: "35786900143",
+  appId: "1:35786900143:web:9e612336393d29324c0a5a",
+  measurementId: "G-3VSBS7R11D"
+};
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        auth.onAuthStateChanged((user) => { if (!user) window.location.href = 'super-admin-login.html'; });
+        document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'super-admin-login.html'; });
+    </script>
+</body>
+</html>
