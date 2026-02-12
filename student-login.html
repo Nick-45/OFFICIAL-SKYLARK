@@ -1,125 +1,362 @@
 <!DOCTYPE html>
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Student Login - School ERP</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#4F46E5",
-                        secondary: "#F43F5E",
-                        "background-light": "#FFFFFF",
-                        "background-dark": "#0f172a",
-                    },
-                    fontFamily: {
-                        sans: ["Inter", "sans-serif"],
-                    },
-                },
-            },
-        };
-    </script>
-<style type="text/tailwindcss">
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: #ffffff;
-        }
-        .ios-input {
-            @apply w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all outline-none text-base mb-4;
-        }
-        .dark .ios-input {
-            @apply bg-slate-800 text-white focus:ring-primary/40;
-        }
-        .login-card {
-            @apply w-full max-w-sm px-8 pt-4 pb-8;
-        }
-        .illustration-container {
-            @apply w-full flex justify-center mb-8 relative;
-        }
-        .blob {
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
-            filter: blur(40px);
-            opacity: 0.15;
-            z-index: -1;
-            border-radius: 50%;
-        }
-    </style>
-<style>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Student Login - School ERP</title>
+  <!-- Tailwind + fonts -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <!-- Firebase JS SDK (modular) -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"></script>
+  <!-- Custom firebase config (DO NOT HARDCODE) — sourced from ./firebase.js -->
+  <script type="module" src="./firebase.js"></script>
+  <style>
     body {
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #ffffff;
       min-height: max(884px, 100dvh);
     }
+    .ios-input {
+      @apply w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 focus:ring-2 focus:ring-primary/20 transition-all outline-none text-base mb-4;
+    }
+    .dark .ios-input {
+      @apply bg-slate-800 text-white focus:ring-primary/40;
+    }
+    .login-card {
+      @apply w-full max-w-sm px-8 pt-4 pb-8;
+    }
+    .illustration-container {
+      @apply w-full flex justify-center mb-8 relative;
+    }
+    .blob {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
+      filter: blur(40px);
+      opacity: 0.15;
+      z-index: -1;
+      border-radius: 50%;
+    }
   </style>
-  </head>
+</head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden">
-<div class="fixed top-6 right-6 z-50">
-<button class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-symbols-outlined text-slate-700 dark:text-slate-200">contrast</span>
-</button>
-</div>
-<main class="flex flex-col items-center min-h-screen pt-12 pb-20 px-6">
-<div class="illustration-container">
-<div class="blob"></div>
-<div class="relative">
-<div class="flex items-center justify-center bg-white dark:bg-slate-800 rounded-3xl w-32 h-32 shadow-2xl border-4 border-slate-50 dark:border-slate-700">
-<span class="material-symbols-outlined text-primary text-7xl">auto_stories</span>
-<div class="absolute -top-2 -right-2 bg-secondary text-white rounded-full p-2 shadow-lg">
-<span class="material-symbols-outlined text-base">rocket_launch</span>
-</div>
-<div class="absolute -bottom-4 -left-4 bg-primary text-white rounded-full p-3 shadow-lg">
-<span class="material-symbols-outlined text-xl">star</span>
-</div>
-</div>
-</div>
-</div>
-<div class="text-center mb-10">
-<h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Student Login</h1>
-<p class="text-slate-500 dark:text-slate-400 font-medium">Unlock your academic journey</p>
-</div>
-<div class="login-card">
-<div class="mb-6">
-<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Student ID</label>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">badge</span>
-<input class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="e.g. STU-2024-001" type="text"/>
-</div>
-</div>
-<div class="mb-2">
-<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Password</label>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">lock</span>
-<input class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="••••••••" type="password"/>
-<button class="absolute right-4 top-4 text-slate-400">
-<span class="material-symbols-outlined text-xl">visibility_off</span>
-</button>
-</div>
-</div>
-<div class="flex justify-end mb-8">
-<button class="text-sm font-semibold text-primary/80 hover:text-primary transition-colors">Forgot Password?</button>
-</div>
-<button class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-            Sign In
-            <span class="material-symbols-outlined text-xl">arrow_forward</span>
-</button>
-</div>
-<div class="mt-auto text-center">
-<p class="text-slate-400 dark:text-slate-500 text-sm">Having trouble? <button class="text-primary font-bold">Help Desk</button></p>
-<button class="mt-8 flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mx-auto" onclick="window.history.back()">
-<span class="material-symbols-outlined text-sm">arrow_back</span>
-<span class="text-xs font-bold uppercase tracking-wider">Change Role</span>
-</button>
-</div>
-</main>
-<div class="fixed bottom-0 left-0 right-0 h-8 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md flex justify-center items-end pb-2 pointer-events-none">
-<div class="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
-</div>
 
-</body></html>
+  <!-- dark mode toggle -->
+  <div class="fixed top-6 right-6 z-50">
+    <button id="darkModeToggle" class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700">
+      <span class="material-symbols-outlined text-slate-700 dark:text-slate-200">contrast</span>
+    </button>
+  </div>
+
+  <main class="flex flex-col items-center min-h-screen pt-12 pb-20 px-6">
+    
+    <!-- LOGO.PNG -->
+    <div class="illustration-container">
+      <div class="blob"></div>
+      <div class="relative">
+        <div class="flex items-center justify-center bg-white dark:bg-slate-800 rounded-3xl w-32 h-32 shadow-2xl border-4 border-slate-50 dark:border-slate-700 overflow-hidden p-2">
+          <img 
+            src="./logo.png" 
+            alt="School Logo" 
+            class="w-full h-full object-contain"
+            onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'%234F46E5\' d=\'M12 2L2 7l10 5 10-5-10-5zm0 12c-3.9 0-7-3.1-7-7H3c0 4.4 3.6 8 8 8s8-3.6 8-8h-2c0 3.9-3.1 7-7 7zm0 2c-4.4 0-8-3.6-8-8H2c0 5.5 4.5 10 10 10s10-4.5 10-10h-2c0 4.4-3.6 8-8 8z\'/%3E%3C/svg%3E'; this.classList.add('p-2')"
+          />
+        </div>
+        <div class="absolute -top-2 -right-2 bg-secondary text-white rounded-full p-2 shadow-lg">
+          <span class="material-symbols-outlined text-base">rocket_launch</span>
+        </div>
+        <div class="absolute -bottom-4 -left-4 bg-primary text-white rounded-full p-3 shadow-lg">
+          <span class="material-symbols-outlined text-xl">star</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mb-6">
+      <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Student Login</h1>
+      <p class="text-slate-500 dark:text-slate-400 font-medium">Enter your credentials</p>
+    </div>
+
+    <!-- LOGIN FORM with School Code, Admission No, Password (Firestore auth) -->
+    <div class="login-card">
+      
+      <!-- School Code Field -->
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">School Code</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">apartment</span>
+          <input id="schoolCode" class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="e.g. SPRINGFIELD" type="text" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Student Admission Number -->
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Admission Number</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">badge</span>
+          <input id="admissionNo" class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="e.g. ADM-2025-001" type="text" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="mb-2">
+        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Password</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-4 top-4 text-slate-400 text-xl">lock</span>
+          <input id="password" class="ios-input pl-12 shadow-sm border border-slate-100 dark:border-slate-700" placeholder="••••••••" type="password" autocomplete="current-password">
+          <button id="togglePassword" type="button" class="absolute right-4 top-4 text-slate-400">
+            <span id="toggleIcon" class="material-symbols-outlined text-xl">visibility_off</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Forgot password & error message container -->
+      <div class="flex justify-between items-center mb-8">
+        <div id="loginError" class="text-xs text-red-500 font-medium hidden"></div>
+        <button id="forgotPasswordBtn" class="text-sm font-semibold text-primary/80 hover:text-primary transition-colors ml-auto">Forgot Password?</button>
+      </div>
+
+      <!-- Sign in button (triggers Firestore validation) -->
+      <button id="signInBtn" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+        Sign In
+        <span class="material-symbols-outlined text-xl">arrow_forward</span>
+      </button>
+    </div>
+
+    <!-- Help desk & back navigation -->
+    <div class="mt-auto text-center">
+      <p class="text-slate-400 dark:text-slate-500 text-sm">Having trouble? <button id="helpDeskBtn" class="text-primary font-bold">Help Desk</button></p>
+      <button id="backBtn" class="mt-8 flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mx-auto">
+        <span class="material-symbols-outlined text-sm">arrow_back</span>
+        <span class="text-xs font-bold uppercase tracking-wider">Change Role</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- bottom bar -->
+  <div class="fixed bottom-0 left-0 right-0 h-8 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md flex justify-center items-end pb-2 pointer-events-none">
+    <div class="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+  </div>
+
+  <!-- ========== FIREBASE AUTH + FIRESTORE LOGIC ========== -->
+  <!-- Config imported from firebase.js; we use auth, db, and Firestore queries -->
+  <script type="module">
+    // ----- Import Firebase and initialized instances from firebase.js -----
+    import { auth, db } from './firebase.js';
+    import { 
+      signInWithEmailAndPassword,
+      sendPasswordResetEmail,
+      onAuthStateChanged 
+    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      limit
+    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+    // ----- DOM elements -----
+    const schoolCodeInput = document.getElementById('schoolCode');
+    const admissionNoInput = document.getElementById('admissionNo');
+    const passwordInput = document.getElementById('password');
+    const signInBtn = document.getElementById('signInBtn');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const loginError = document.getElementById('loginError');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const helpDeskBtn = document.getElementById('helpDeskBtn');
+    const backBtn = document.getElementById('backBtn');
+
+    // ----- Dark mode persistence -----
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    darkModeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+
+    // ----- Toggle password visibility -----
+    togglePasswordBtn.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
+    });
+
+    // ----- Helper to show/hide error -----
+    function showError(message) {
+      loginError.textContent = message;
+      loginError.classList.remove('hidden');
+    }
+    function hideError() {
+      loginError.classList.add('hidden');
+    }
+
+    // ----- SIGN IN using School Code + Admission No + Password (Firestore) -----
+    async function handleSignIn() {
+      const schoolCode = schoolCodeInput.value.trim();
+      const admissionNo = admissionNoInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      // Validate fields
+      if (!schoolCode || !admissionNo || !password) {
+        showError('Please enter school code, admission number, and password.');
+        return;
+      }
+
+      hideError();
+      
+      // Disable button
+      signInBtn.disabled = true;
+      signInBtn.innerHTML = `<span class="material-symbols-outlined animate-spin text-xl">progress_activity</span> Verifying...`;
+
+      try {
+        // 1. Query Firestore 'students' collection where schoolCode and admissionNo match
+        const studentsRef = collection(db, 'students');
+        const q = query(
+          studentsRef, 
+          where('schoolCode', '==', schoolCode),
+          where('admissionNo', '==', admissionNo),
+          limit(1)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          // No student found with that school code + admission number
+          showError('Invalid school code or admission number.');
+          return;
+        }
+
+        // Student document found
+        const studentDoc = querySnapshot.docs[0];
+        const studentData = studentDoc.data();
+        
+        // 2. Verify password (stored as plain text? Should be hashed. 
+        // For demo we assume password field exists in document.
+        // In production, use bcrypt or Firebase Auth custom tokens. 
+        // Here we do direct comparison (only for educational purpose).
+        if (studentData.password !== password) {
+          showError('Incorrect password.');
+          return;
+        }
+
+        // 3. --- Authentication successful ---
+        // Since we don't have email/password auth via Firebase Auth with these custom fields,
+        // we simulate a successful login and could store session.
+        console.log('Login successful for:', studentData);
+        
+        // Show success message (in real app, set session, redirect)
+        alert(`Welcome ${studentData.name || 'Student'}! Login successful. Redirecting to dashboard...`);
+        
+        // Optional: Sign in anonymously to Firebase Auth to create user session?
+        // For now, we just celebrate success.
+        
+        // In a real app you might generate a custom token or use email/password 
+        // if email is stored in the student doc. But per spec: we authenticate via Firestore.
+        
+        // Clear any error and redirect (simulated)
+        hideError();
+        
+        // Example redirect (uncomment in production):
+        // window.location.href = '/student-dashboard';
+
+      } catch (error) {
+        console.error('Firestore login error:', error);
+        showError('Login failed. Please try again later.');
+      } finally {
+        // Re-enable button
+        signInBtn.disabled = false;
+        signInBtn.innerHTML = `Sign In <span class="material-symbols-outlined text-xl">arrow_forward</span>`;
+      }
+    }
+
+    // ----- Sign in button click -----
+    signInBtn.addEventListener('click', handleSignIn);
+
+    // Allow Enter key in inputs
+    [schoolCodeInput, admissionNoInput, passwordInput].forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleSignIn();
+        }
+      });
+    });
+
+    // ----- Forgot Password (Firestore based) -----
+    forgotPasswordBtn.addEventListener('click', async function() {
+      const schoolCode = schoolCodeInput.value.trim();
+      const admissionNo = admissionNoInput.value.trim();
+
+      if (!schoolCode || !admissionNo) {
+        showError('Please enter school code and admission number to reset password.');
+        return;
+      }
+
+      try {
+        // Query student by schoolCode + admissionNo
+        const studentsRef = collection(db, 'students');
+        const q = query(
+          studentsRef,
+          where('schoolCode', '==', schoolCode),
+          where('admissionNo', '==', admissionNo),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          showError('No account found with these credentials.');
+          return;
+        }
+
+        const studentData = querySnapshot.docs[0].data();
+        
+        // If student has an email field, send password reset via Firebase Auth
+        if (studentData.email) {
+          await sendPasswordResetEmail(auth, studentData.email);
+          alert(`Password reset email sent to ${studentData.email}. Check your inbox.`);
+          hideError();
+        } else {
+          // No email on record – show manual reset instruction
+          alert('No email registered. Please contact school administration to reset your password.');
+        }
+
+      } catch (error) {
+        console.error('Reset error:', error);
+        showError('Could not process password reset. Contact help desk.');
+      }
+    });
+
+    // ----- Help Desk button -----
+    helpDeskBtn.addEventListener('click', () => {
+      alert('Help desk: Contact your school administrator or IT support.');
+    });
+
+    // ----- Back / Change Role -----
+    backBtn.addEventListener('click', () => {
+      window.history.back();
+    });
+
+    // ----- Monitor auth state (optional) -----
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('Firebase Auth user signed in:', user.email);
+        // If needed, redirect
+      }
+    });
+
+  </script>
+</body>
+</html>
