@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Learning Materials</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --student-blue: #3498db;
+            --student-blue-dark: #2980b9;
+            --dark-blue: #2c3e50;
+            --green: #27ae60;
+            --orange: #e67e22;
+            --purple: #9b59b6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .categories {
+            display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;
+        }
+        .category-btn {
+            padding: 12px 25px; border-radius: 30px; background: white; border: 2px solid #e9ecef;
+            font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .category-btn.active {
+            background: var(--student-blue); color: white; border-color: var(--student-blue);
+        }
+        
+        .materials-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;
+        }
+        .material-card {
+            background: white; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: all 0.3s;
+        }
+        .material-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .material-icon {
+            width: 60px; height: 60px; border-radius: 12px; background: rgba(52,152,219,0.1);
+            display: flex; align-items: center; justify-content: center; color: var(--student-blue); font-size: 24px;
+        }
+        .material-info { flex: 1; }
+        .material-title { font-weight: 700; color: var(--dark-blue); margin-bottom: 5px; }
+        .material-meta { font-size: 12px; color: #666; display: flex; gap: 15px; }
+        .material-size { background: #f1f1f1; padding: 2px 8px; border-radius: 12px; }
+        .btn-download {
+            width: 40px; height: 40px; border-radius: 50%; background: rgba(52,152,219,0.1);
+            display: flex; align-items: center; justify-content: center; color: var(--student-blue); cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>EDUSKYLARK · MATERIALS <span style="background:linear-gradient(135deg,#3498db,#2980b9); padding:3px 10px; border-radius:15px;">STUDENT</span></h1>
+            <button id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h2 style="font-size:28px; margin-bottom:30px;"><i class="fas fa-book-open" style="color: var(--student-blue);"></i> Learning Materials</h2>
+        
+        <div class="categories">
+            <span class="category-btn active">All</span>
+            <span class="category-btn">Mathematics</span>
+            <span class="category-btn">Physics</span>
+            <span class="category-btn">Chemistry</span>
+            <span class="category-btn">Biology</span>
+            <span class="category-btn">English</span>
+            <span class="category-btn">History</span>
+            <span class="category-btn">Kiswahili</span>
+        </div>
+
+        <div class="materials-grid">
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Quadratic Equations - Complete Notes</div>
+                    <div class="material-meta">
+                        <span>Mathematics</span>
+                        <span class="material-size">2.4 MB</span>
+                        <span>Mr. Mwangi</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-download"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-video"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Newton's Laws - Video Tutorial</div>
+                    <div class="material-meta">
+                        <span>Physics</span>
+                        <span class="material-size">45 MB</span>
+                        <span>Ms. Odhiambo</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-play"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Periodic Table - Study Guide</div>
+                    <div class="material-meta">
+                        <span>Chemistry</span>
+                        <span class="material-size">1.8 MB</span>
+                        <span>Dr. Kimani</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-download"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-powerpoint"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Cell Structure - PPT Presentation</div>
+                    <div class="material-meta">
+                        <span>Biology</span>
+                        <span class="material-size">5.2 MB</span>
+                        <span>Dr. Muthoni</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-download"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Poetry Analysis - Study Notes</div>
+                    <div class="material-meta">
+                        <span>English</span>
+                        <span class="material-size">1.2 MB</span>
+                        <span>Mrs. Wanjiku</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-download"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-audio"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Kiswahili - Sarufi Audio Lesson</div>
+                    <div class="material-meta">
+                        <span>Kiswahili</span>
+                        <span class="material-size">12 MB</span>
+                        <span>Mr. Hassan</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-play"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-archive"></i></div>
+                <div class="material-info">
+                    <div class="material-title">History - World Wars Bundle</div>
+                    <div class="material-meta">
+                        <span>History</span>
+                        <span class="material-size">8.3 MB</span>
+                        <span>Mr. Kiprop</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-download"></i></div>
+            </div>
+            
+            <div class="material-card">
+                <div class="material-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="material-info">
+                    <div class="material-title">Geography - Map Reading</div>
+                    <div class="material-meta">
+                        <span>Geography</span>
+                        <span class="material-size">3.7 MB</span>
+                        <span>Mrs. Wambui</span>
+                    </div>
+                </div>
+                <div class="btn-download"><i class="fas fa-download"></i></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = 'student-login.html';
+        });
+    </script>
+</body>
+</html>
