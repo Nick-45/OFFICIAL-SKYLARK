@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --student-blue: #3498db;
+            --student-blue-dark: #2980b9;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --red: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .settings-grid {
+            display: grid; grid-template-columns: 280px 1fr; gap: 30px;
+        }
+        .settings-sidebar {
+            background: white; border-radius: 20px; padding: 25px; height: fit-content;
+        }
+        .settings-sidebar-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px;
+            margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .settings-sidebar-item:hover { background: rgba(52,152,219,0.1); }
+        .settings-sidebar-item.active { background: rgba(52,152,219,0.15); color: var(--student-blue); font-weight: 600; }
+        
+        .settings-content {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .settings-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .settings-header h2 { font-size: 24px; font-weight: 700; color: var(--dark-blue); }
+        
+        .form-group { margin-bottom: 25px; }
+        .form-label {
+            display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark-blue);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .form-label i { color: var(--student-blue); width: 20px; }
+        .form-control {
+            width: 100%; padding: 14px 20px; border: 2px solid #e9ecef; border-radius: 12px;
+            font-size: 15px; transition: all 0.3s; background: #f9f9f9;
+        }
+        .form-control:focus {
+            border-color: var(--student-blue); outline: none; background: white; box-shadow: 0 0 0 4px rgba(52,152,219,0.1);
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, var(--student-blue), var(--student-blue-dark));
+            color: white; border: none; padding: 14px 35px; border-radius: 30px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; margin-top: 20px;
+        }
+        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(52,152,219,0.4); }
+        
+        .profile-upload {
+            display: flex; align-items: center; gap: 30px; margin-bottom: 30px;
+        }
+        .profile-preview {
+            width: 100px; height: 100px; border-radius: 50%; background: rgba(52,152,219,0.1);
+            display: flex; align-items: center; justify-content: center; color: var(--student-blue); font-size: 36px;
+            border: 3px solid var(--student-blue); overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>EDUSKYLARK · SETTINGS <span style="background:linear-gradient(135deg,#3498db,#2980b9); padding:3px 10px; border-radius:15px;">STUDENT</span></h1>
+            <button id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="settings-grid">
+            <div class="settings-sidebar">
+                <div class="settings-sidebar-item active">
+                    <i class="fas fa-user"></i> Profile Settings
+                </div>
+                <div class="settings-sidebar-item">
+                    <i class="fas fa-lock"></i> Security
+                </div>
+                <div class="settings-sidebar-item">
+                    <i class="fas fa-bell"></i> Notifications
+                </div>
+                <div class="settings-sidebar-item">
+                    <i class="fas fa-palette"></i> Appearance
+                </div>
+                <div class="settings-sidebar-item">
+                    <i class="fas fa-language"></i> Language
+                </div>
+                <div class="settings-sidebar-item">
+                    <i class="fas fa-shield-alt"></i> Privacy
+                </div>
+            </div>
+            
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2>Profile Settings</h2>
+                </div>
+                
+                <div class="profile-upload">
+                    <div class="profile-preview">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <button style="background: var(--student-blue); color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                            <i class="fas fa-camera"></i> Upload New Photo
+                        </button>
+                        <p style="margin-top: 10px; font-size: 13px; color: #666;">JPG, PNG or GIF. Max 2MB.</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" class="form-control" value="John Mwangi" placeholder="Your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" class="form-control" value="john.mwangi@student.edu" placeholder="Your email">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-phone"></i> Phone Number</label>
+                    <input type="tel" class="form-control" value="+254 712 345 678" placeholder="Your phone number">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth</label>
+                        <input type="date" class="form-control" value="2008-05-15">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-venus-mars"></i> Gender</label>
+                        <select class="form-control">
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-map-marker-alt"></i> Address</label>
+                    <input type="text" class="form-control" value="123 Church Road, Nairobi" placeholder="Your address">
+                </div>
+                
+                <button class="btn-save"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = 'student-login.html';
+        });
+    </script>
+</body>
+</html>
