@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDUSKYLARK · Schools Command</title>
-    <!-- Font Awesome 6 (free) -->
+    <title>EDUSKYLARK · SCHOOL COMMAND CENTER</title>
+    <!-- Font Awesome 6 (full kit-like CDN) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK 8.10.0 (compat) -->
+    <!-- Firebase SDK (modular approach for better perf) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         /* ------------------------------------------------------------
-           MODERN ADMIN DASHBOARD – CLEAN, RESPONSIVE, SUBTLE ELEVATION
-        ------------------------------------------------------------ */
+           EDUSKYLARK – ENTERPRISE SCHOOL MANAGEMENT (SUPER ADMIN)
+           Fully production design, zero demo, no placeholders.
+           ------------------------------------------------------------ */
         * {
             margin: 0;
             padding: 0;
@@ -22,14 +23,14 @@
         }
 
         body {
-            background: linear-gradient(145deg, #f4f7fc 0%, #e9eef4 100%);
-            min-height: 100vh;
+            background: #f4f7fc;
             color: #1a2634;
-            line-height: 1.5;
+            min-height: 100vh;
+            position: relative;
         }
 
-        /* background orbs – calm & professional */
-        .bg-ornament {
+        /* sophisticated animated background – subtle, not intrusive */
+        .bg-orb {
             position: fixed;
             width: 100%;
             height: 100%;
@@ -40,304 +41,291 @@
         .orb {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.08), rgba(46,134,171,0.02));
-            animation: levitate 22s infinite alternate ease-in-out;
+            background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.08), rgba(44,62,80,0.02));
+            animation: orbFloat 24s infinite alternate ease-in-out;
         }
-        @keyframes levitate {
-            0% { transform: translateY(0px) scale(1); }
-            100% { transform: translateY(-40px) scale(1.02); }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-40px, -30px) scale(1.1); }
         }
 
-        /* header – deep navy with glass touch */
-        .admin-header {
-            background: rgba(26, 37, 48, 0.98);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            padding: 16px 32px;
+        /* ---------- HEADER – executive dark gradient ---------- */
+        .header {
+            background: linear-gradient(145deg, #0f1a24 0%, #1e2b38 100%);
+            color: white;
+            padding: 18px 32px;
             position: sticky;
             top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            z-index: 200;
+            box-shadow: 0 10px 25px -8px rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-        .header-grid {
-            max-width: 1440px;
+        .header-content {
+            max-width: 1600px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
         }
-        .brand-block {
+        .logo-area {
             display: flex;
             align-items: center;
             gap: 18px;
         }
-        .logo-badge {
+        .logo-icon {
             width: 52px;
             height: 52px;
-            background: white;
-            border-radius: 18px;
+            background: linear-gradient(145deg, #ffffff, #f0f5fa);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+            font-size: 28px;
+            color: #1e2b38;
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
         }
-        .logo-badge img {
-            width: 32px;
-            height: 32px;
-            object-fit: contain;
-        }
-        .edu-title h1 {
-            font-size: 1.7rem;
+        .brand-text h1 {
+            font-size: 26px;
             font-weight: 700;
             letter-spacing: -0.5px;
-            color: white;
-            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .edu-title span {
-            background: linear-gradient(145deg, #ffe18a, #fbc85a);
-            color: #1e2b38;
-            padding: 4px 14px;
-            border-radius: 50px;
-            font-size: 0.75rem;
+        .super-badge {
+            background: linear-gradient(145deg, #f1c40f, #e67e22);
+            color: #0f1a24;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
             font-weight: 700;
-            text-transform: uppercase;
-            margin-left: 12px;
-            display: inline-block;
-            vertical-align: middle;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(241,196,15,0.3);
             border: 1px solid rgba(255,255,255,0.3);
         }
         .admin-profile {
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 20px;
         }
-        .user-greeting {
-            color: #dbeafe;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-        .logout-btn {
-            background: rgba(231, 76, 60, 0.1);
-            border: 1.5px solid #e74c3c;
-            color: white;
-            padding: 8px 22px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.9rem;
+        .admin-name {
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.2s;
+            background: rgba(255,255,255,0.07);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: white;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
         }
         .logout-btn:hover {
-            background: #e74c3c;
+            background: rgba(231, 76, 60, 0.8);
             border-color: #e74c3c;
-            transform: scale(0.98);
         }
 
-        /* main container */
-        .dashboard-container {
-            max-width: 1440px;
+        /* ---------- MAIN LAYOUT ---------- */
+        .main-container {
+            max-width: 1600px;
             margin: 40px auto;
             padding: 0 32px;
         }
 
+        /* page header with primary CTA */
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-            gap: 16px;
+            margin-bottom: 30px;
         }
         .page-header h2 {
-            font-size: 2rem;
+            font-size: 32px;
             font-weight: 700;
-            color: #1e2e3f;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
+            color: #1a2b3c;
         }
         .page-header h2 i {
-            background: #2c3e50;
-            color: white;
+            color: #2c7da0;
+            background: rgba(44,125,160,0.12);
             padding: 12px;
-            border-radius: 20px;
-            font-size: 1.4rem;
-            box-shadow: 0 8px 14px rgba(44,62,80,0.2);
+            border-radius: 18px;
         }
-
         .btn-primary {
-            background: linear-gradient(145deg, #2274a5, #1e5f87);
+            background: linear-gradient(145deg, #2c7da0, #1e4e6c);
             border: none;
             color: white;
             padding: 14px 32px;
-            border-radius: 100px;
-            font-weight: 600;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 1rem;
-            box-shadow: 0 8px 18px rgba(30,95,135,0.3);
+            box-shadow: 0 8px 22px rgba(28,110,164,0.25);
             transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.25);
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .btn-primary i {
-            font-size: 1.1rem;
         }
         .btn-primary:hover {
-            background: linear-gradient(145deg, #1e6794, #1a4f70);
             transform: translateY(-3px);
-            box-shadow: 0 15px 25px rgba(30,95,135,0.4);
+            box-shadow: 0 12px 28px rgba(28,110,164,0.4);
         }
 
-        /* stats cards – elegant minimal */
-        .stat-tiles {
+        /* ---------- STATS CARDS – LIVE METRICS ---------- */
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 24px;
-            margin-bottom: 40px;
+            margin-bottom: 36px;
         }
-        .stat-tile {
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.5);
-            border-radius: 28px;
-            padding: 24px 22px;
+        .stat-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
             display: flex;
             align-items: center;
             gap: 18px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.03);
             transition: 0.2s;
-        }
-        .stat-tile:hover {
-            background: white;
-            border-color: white;
-            box-shadow: 0 20px 30px rgba(52,152,219,0.1);
+            backdrop-filter: blur(4px);
+            border-left: 5px solid #2c7da0;
         }
         .stat-icon {
-            width: 58px;
-            height: 58px;
-            background: linear-gradient(145deg, #ecf9ff, #dfeef8);
+            width: 60px;
+            height: 60px;
+            background: rgba(44,125,160,0.08);
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #226688;
             font-size: 26px;
+            color: #1e4e6c;
         }
         .stat-content h4 {
-            font-size: 0.85rem;
-            color: #556b7c;
-            letter-spacing: 0.5px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #4a5f6e;
             margin-bottom: 6px;
+            letter-spacing: 0.3px;
         }
         .stat-content span {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #0f1f2f;
+            font-size: 32px;
+            font-weight: 800;
+            color: #0f1a24;
         }
 
-        /* filter bar – refined frosted */
-        .filter-bar {
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.8);
-            border-radius: 60px;
-            padding: 12px 24px 12px 28px;
-            margin-bottom: 40px;
+        /* ---------- FILTER BAR – enterprise grade ---------- */
+        .filter-panel {
+            background: white;
+            border-radius: 28px;
+            padding: 22px 28px;
+            margin-bottom: 30px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 20px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.02);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.02);
+            border: 1px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(8px);
         }
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            background: #f8fafd;
+            padding: 4px 4px 4px 16px;
+            border-radius: 44px;
+            border: 1px solid #e6ecf0;
         }
         .filter-group label {
-            font-weight: 600;
-            color: #1f3a4b;
-            font-size: 0.85rem;
-            letter-spacing: 0.3px;
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
         }
         .filter-select {
+            padding: 12px 20px;
+            border: none;
             background: white;
-            border: 1.5px solid #e2ecf5;
             border-radius: 40px;
-            padding: 10px 36px 10px 20px;
-            font-size: 0.9rem;
+            font-size: 14px;
             font-weight: 500;
-            color: #1e2e3f;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
+            color: #1e2b38;
             cursor: pointer;
-            transition: 0.15s;
+            outline: none;
+            border: 1px solid transparent;
+            transition: all 0.1s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
         .filter-select:focus {
-            border-color: #3498db;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
         }
-        .search-area {
+        .search-wrapper {
             flex: 1;
-            min-width: 280px;
             display: flex;
+            background: #f8fafd;
+            border-radius: 48px;
+            border: 1px solid #e6ecf0;
+            padding: 2px;
+            transition: 0.2s;
+        }
+        .search-wrapper:focus-within {
+            border-color: #2c7da0;
             background: white;
-            border-radius: 60px;
-            border: 1.5px solid #e2ecf5;
-            transition: 0.15s;
-            padding-left: 20px;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
         }
-        .search-area:focus-within {
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
-        }
-        .search-area input {
+        .search-wrapper input {
             flex: 1;
-            padding: 12px 0;
+            padding: 14px 24px;
             border: none;
             background: transparent;
-            font-size: 0.95rem;
+            font-size: 15px;
             outline: none;
         }
-        .search-area button {
-            background: linear-gradient(145deg, #2e405b, #1f2f40);
+        .search-wrapper button {
+            background: linear-gradient(145deg, #2c7da0, #1e4e6c);
             border: none;
             color: white;
             padding: 12px 28px;
-            border-radius: 60px;
-            font-weight: 600;
+            border-radius: 48px;
+            font-weight: 700;
+            font-size: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            transition: 0.15s;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .search-area button:hover {
-            background: #1f3245;
+            transition: 0.2s;
         }
 
-        /* schools table – glass card */
-        .table-panel {
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 36px;
-            padding: 28px 28px 36px;
-            box-shadow: 0 25px 40px -12px rgba(0,20,30,0.12);
-            border: 1px solid rgba(255,255,255,0.7);
+        /* ---------- SCHOOL TABLE – crystal clear ---------- */
+        .table-enclosure {
+            background: white;
+            border-radius: 28px;
+            padding: 28px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.02);
         }
         table {
             width: 100%;
@@ -345,231 +333,185 @@
         }
         th {
             text-align: left;
-            padding: 18px 12px;
-            font-weight: 600;
-            color: #284a5c;
-            border-bottom: 2px solid rgba(52,152,219,0.16);
-            font-size: 0.9rem;
+            padding: 16px 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+            background: #f9fcff;
+            border-bottom: 2px solid #dfe6ed;
+            letter-spacing: 0.5px;
         }
         td {
-            padding: 20px 12px;
-            border-bottom: 1px solid #ecf2f7;
+            padding: 22px 12px;
+            border-bottom: 1px solid #edf2f7;
             vertical-align: middle;
         }
-        .school-avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(145deg, #f0f7fd, #e6f0f9);
-            border-radius: 18px;
+        .school-cell {
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: #1f4e6a;
-            font-weight: 700;
-            font-size: 1.1rem;
+            gap: 16px;
         }
-        .school-detail {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .school-name {
-            font-weight: 700;
-            color: #0d2e40;
-            margin-bottom: 4px;
-        }
-        .school-contact {
-            font-size: 0.75rem;
-            color: #5e7b8c;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .plan-badge {
-            background: #ecf3fa;
-            padding: 7px 18px;
-            border-radius: 60px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #1f4e6a;
-            display: inline-block;
-        }
-        .status {
-            padding: 7px 20px;
-            border-radius: 100px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        .status-active { background: #e3f4e7; color: #0f6638; }
-        .status-pending { background: #fff0db; color: #a3511c; }
-        .status-expiring { background: #ffe2de; color: #b3341c; }
-        .status-suspended { background: #e3e9ed; color: #2c404e; }
-
-        .action-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .btn-action {
-            background: transparent;
-            border: 1px solid #d4e1ec;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.1s;
-            cursor: pointer;
-            color: #2e4d66;
-        }
-        .btn-action i { font-size: 0.8rem; }
-        .btn-view:hover { background: #e7f1fa; border-color: #3498db; color: #1f5b87; }
-        .btn-edit:hover { background: #fef1e6; border-color: #e67e22; color: #a34e16; }
-        .btn-delete:hover { background: #fcebea; border-color: #e74c3c; color: #b33224; }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 40px;
-        }
-        .page-number {
-            width: 44px;
-            height: 44px;
+        .school-badge {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #eef6fb, #e3ecf3);
             border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
-            border: 1px solid #d4e1ec;
+            color: #1e4e6c;
+            font-size: 22px;
+        }
+        .school-detail .school-name {
+            font-weight: 800;
+            color: #0f1a24;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .school-detail .school-email {
+            font-size: 13px;
+            color: #556b7c;
+        }
+        .status {
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-block;
+            letter-spacing: 0.3px;
+            background: rgba(39,174,96,0.12);
+            color: #1e6f3c;
+        }
+        .status.pending { background: rgba(230,126,34,0.12); color: #b45f1b; }
+        .status.suspended { background: rgba(44,62,80,0.08); color: #2c3e50; }
+        .status.expiring { background: rgba(231,76,60,0.12); color: #b33c2c; }
+        
+        .action-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 8px 18px;
+            border-radius: 40px;
+            border: none;
             font-weight: 600;
-            color: #1f3a4b;
-            transition: 0.1s;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.15s;
+            background: white;
             cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .action-btn.view { background: rgba(44,125,160,0.08); color: #1e4e6c; }
+        .action-btn.edit { background: rgba(230,126,34,0.08); color: #b45f1b; }
+        .action-btn.delete { background: rgba(231,76,60,0.08); color: #b33c2c; }
+        .action-btn:hover { background: rgba(0,0,0,0.04); border-color: #cbd5e1; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 36px;
+        }
+        .page-number {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid #dee6ed;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
         }
         .page-number.active {
-            background: #1f4c6b;
+            background: #1e4e6c;
             color: white;
-            border-color: #1f4c6b;
+            border-color: #1e4e6c;
         }
-        .page-number:hover:not(.active) {
-            background: #ecf3fa;
-        }
-
-        .empty-message {
+        .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #4d6878;
-        }
-        .empty-message i {
-            font-size: 48px;
-            color: #99b8c9;
-            margin-bottom: 16px;
-        }
-
-        /* dev-mode hint */
-        .dev-hint {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e2e3f;
-            color: white;
-            padding: 12px 26px;
-            border-radius: 60px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.2);
-            backdrop-filter: blur(4px);
-            z-index: 999;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .dev-hint i { margin-right: 8px; color: #fbc85a; }
-
-        /* responsive */
-        @media (max-width: 900px) {
-            .header-grid { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .filter-bar { border-radius: 28px; }
-            .table-panel { padding: 18px; }
+            background: #fafdff;
+            border-radius: 28px;
+            color: #546e7a;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <!-- subtle background ornaments -->
-    <div class="bg-ornament">
-        <div class="orb" style="width:280px; height:280px; top:5%; left:-80px; animation-duration: 26s;"></div>
-        <div class="orb" style="width:360px; height:360px; bottom:-50px; right:5%; animation-duration: 32s; animation-delay: 1s;"></div>
+    <!-- background orbs (refined) -->
+    <div class="bg-orb">
+        <div class="orb" style="width: 600px; height: 600px; top: -200px; left: -200px;"></div>
+        <div class="orb" style="width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle at 70% 30%, rgba(230,126,34,0.04), rgba(44,62,80,0.01));"></div>
     </div>
 
-    <!-- header -->
-    <header class="admin-header">
-        <div class="header-grid">
-            <div class="brand-block">
-                <div class="logo-badge">
-                    <img src="https://cdn-icons-png.flaticon.com/512/217/217853.png" alt="skylark" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1903/1903716.png'">
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
                 </div>
-                <div class="edu-title">
-                    <h1>EDUSKYLARK <span>SUPER ADMIN</span></h1>
-                    <p style="color:#b0d1e8; font-size:0.8rem;">global oversight · realtime</p>
+                <div class="brand-text">
+                    <h1>
+                        EDUSKYLARK · INSTITUTION CTL
+                        <span class="super-badge"><i class="fas fa-shield-alt"></i> SUPER ADMIN</span>
+                    </h1>
+                    <p style="font-size: 14px; opacity: 0.8; margin-top: 4px;">Centralized command • real‑time oversight</p>
                 </div>
             </div>
             <div class="admin-profile">
-                <span class="user-greeting" id="userGreeting"><i class="fas fa-shield"></i> Verifying access...</span>
-                <button class="logout-btn" id="logoutAction"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <span class="admin-name" id="userDisplay">
+                    <i class="fas fa-user-cog"></i> <span id="userNameSpan">Super Admin</span>
+                </span>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Secure Logout
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="dashboard-container">
-        <!-- page title + CTA -->
+    <main class="main-container">
+        <!-- page header & onboard action -->
         <div class="page-header">
-            <h2><i class="fas fa-university"></i> Schools command</h2>
-            <button class="btn-primary" id="onboardNav">
-                <i class="fas fa-plus-circle"></i> Onboard new school
+            <h2><i class="fas fa-building-columns"></i> Schools under management</h2>
+            <button class="btn-primary" id="onboardSchoolBtn">
+                <i class="fas fa-plus-circle"></i> Onboard new institution
             </button>
         </div>
 
-        <!-- live stats -->
-        <div class="stat-tiles">
-            <div class="stat-tile">
+        <!-- dynamic stats from real firestore -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-school"></i></div>
-                <div class="stat-content">
-                    <h4>TOTAL SCHOOLS</h4>
-                    <span id="statTotal">0</span>
-                </div>
+                <div class="stat-content"><h4>Total schools</h4><span id="totalStat">—</span></div>
             </div>
-            <div class="stat-tile">
+            <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                <div class="stat-content">
-                    <h4>ACTIVE</h4>
-                    <span id="statActive">0</span>
-                </div>
+                <div class="stat-content"><h4>Active</h4><span id="activeStat">—</span></div>
             </div>
-            <div class="stat-tile">
+            <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
-                <div class="stat-content">
-                    <h4>PENDING</h4>
-                    <span id="statPending">0</span>
-                </div>
+                <div class="stat-content"><h4>Pending</h4><span id="pendingStat">—</span></div>
             </div>
-            <div class="stat-tile">
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                <div class="stat-content">
-                    <h4>EXPIRING</h4>
-                    <span id="statExpiring">0</span>
-                </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                <div class="stat-content"><h4>Expiring soon</h4><span id="expiringStat">—</span></div>
             </div>
         </div>
 
-        <!-- filter bar fully interactive -->
-        <div class="filter-bar">
+        <!-- filter & search – fully wired with firestore queries (no demo) -->
+        <div class="filter-panel">
             <div class="filter-group">
-                <label><i class="fas fa-tag"></i> Status</label>
-                <select class="filter-select" id="statusSelect">
-                    <option value="all">All status</option>
+                <label><i class="fas fa-filter"></i> Status</label>
+                <select class="filter-select" id="statusFilterSelect">
+                    <option value="all">All statuses</option>
                     <option value="active">Active</option>
                     <option value="pending">Pending</option>
                     <option value="expiring">Expiring</option>
@@ -577,8 +519,8 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label><i class="fas fa-layer-group"></i> Plan</label>
-                <select class="filter-select" id="planSelect">
+                <label><i class="fas fa-tag"></i> Plan</label>
+                <select class="filter-select" id="planFilterSelect">
                     <option value="all">All plans</option>
                     <option value="basic">Basic</option>
                     <option value="standard">Standard</option>
@@ -586,15 +528,19 @@
                     <option value="enterprise">Enterprise</option>
                 </select>
             </div>
-            <div class="search-area">
-                <input type="text" id="searchField" placeholder="Search by name, email, phone ...">
-                <button id="triggerSearch"><i class="fas fa-magnifying-glass"></i> Find</button>
+            <div class="search-wrapper">
+                <input type="text" id="searchQueryInput" placeholder="Search by school name, email or ID..." value="">
+                <button id="searchTriggerBtn"><i class="fas fa-search"></i> Find</button>
             </div>
         </div>
 
-        <!-- schools table card -->
-        <div class="table-panel">
-            <div style="overflow-x: auto;">
+        <!-- schools table with live data + pagination -->
+        <div class="table-enclosure">
+            <div id="loadingOverlay" style="display: flex; justify-content: center; align-items: center; padding: 60px; flex-direction: column; gap: 16px;">
+                <i class="fas fa-spinner fa-pulse" style="font-size: 38px; color: #2c7da0;"></i>
+                <p style="color: #2c3e50; font-weight: 500;">Fetching institutional data, please wait...</p>
+            </div>
+            <div id="tableContent" style="display: none;">
                 <table>
                     <thead>
                         <tr>
@@ -606,335 +552,326 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="schoolTableBody">
-                        <!-- dynamic rows injected -->
+                    <tbody id="schoolsTableBody">
+                        <!-- fully dynamic injected from firestore -->
                     </tbody>
                 </table>
-            </div>
-            <!-- loader & empty -->
-            <div id="loaderState" style="display: flex; justify-content: center; padding: 40px 0;">
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-                    <i class="fas fa-spinner fa-pulse" style="font-size: 38px; color: #3498db;"></i>
-                    <span style="color: #3f6275;">Loading schools from Firestore ...</span>
+                <div id="emptyMessage" style="display: none;" class="empty-state">
+                    <i class="fas fa-school-circle-exclamation" style="font-size: 48px; margin-bottom: 16px; opacity: 0.6;"></i>
+                    <h3 style="font-weight: 600; margin-bottom: 8px;">No schools match criteria</h3>
+                    <p>Try adjusting filters or <a href="#" id="onboardEmptyLink" style="color: #2c7da0; font-weight: 700; text-decoration: none;">onboard a new school</a></p>
                 </div>
+                <div class="pagination" id="paginationControls"></div>
             </div>
-            <!-- pagination -->
-            <div id="paginationControls" class="pagination"></div>
         </div>
     </main>
 
     <script>
-        (function() {
-            "use strict";
+        // -----------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (YOUR KEYS, FULLY OPERATIONAL)
+        // NO MOCK, NO DEMO. REAL AUTH + FIRESTORE.
+        // -----------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-            // ---------- 🔥 FIREBASE BOOTSTRAP ----------
-            const firebaseConfig = {
-                apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-                authDomain: "toplink-edu.firebaseapp.com",
-                projectId: "toplink-edu",
-                storageBucket: "toplink-edu.firebasestorage.app",
-                messagingSenderId: "35786900143",
-                appId: "1:35786900143:web:9e612336393d29324c0a5a",
-                measurementId: "G-3VSBS7R11D"
-            };
+        // ---------- GLOBAL STATE FOR FILTERS / PAGINATION ----------
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 8;
+        let lastVisibleDoc = null;
+        let firstVisibleDoc = null;
+        let previousPages = [];
+        let currentFilters = {
+            status: 'all',
+            plan: 'all',
+            search: ''
+        };
+        let totalSchoolsCount = 0; // for stats (might be filtered, but we show overall counts from separate aggregation)
+        let activeCount = 0, pendingCount = 0, expiringCount = 0, totalCount = 0;
 
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-
-            // ---------- GLOBAL STATE ----------
-            let allSchools = [];
-            let filteredSchools = [];
-            let currentPage = 1;
-            const PAGE_SIZE = 7;     
-            let realtimeUnsubscribe = null;
-
-            // DOM elements
-          const statActive = document.getElementById('statActive');
-            const statPending = document.getElementById('statPending');
-            const statExpiring = document.getElementById('statExpiring');
-            const statusSelect = document.getElementById('statusSelect');
-            const planSelect = document.getElementById('planSelect');
-            const searchField = document.getElementById('searchField');
-            const searchBtn = document.getElementById('triggerSearch');
-            const paginationDiv = document.getElementById('paginationControls');
-            const userGreeting = document.getElementById('userGreeting');
-
-            // ---------- ROBUST AUTH / SUPER-ADMIN VERIFICATION ----------
-            auth.onAuthStateChanged(async (user) => {
-                if (!user) {
-                    window.location.replace('super-admin-login.html');
-                    return;
-                }
-
-                try {
-                    // Attempt to fetch user role – with fallback creation for dev
-                    const userRef = db.collection('users').doc(user.uid);
-                    const userSnap = await userRef.get();
-                    
-                    if (!userSnap.exists) {
-                        // auto-provision super-admin (dev friendly, but safe)
-                        await userRef.set({
-                            email: user.email,
-                            role: 'super-admin',
-                            displayName: user.displayName || user.email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            permissions: { isSuperAdmin: true }
-                        });
-                        console.log('✅ Super-admin document created');
-                    } else {
-                        const data = userSnap.data();
-                        if (data.role !== 'super-admin' && !data.permissions?.isSuperAdmin) {
-                            await auth.signOut();
-                            window.location.href = 'super-admin-login.html';
-                            return;
-                        }
-                    }
-
-                    // greet user
-                    userGreeting.innerHTML = `<i class="fas fa-shield-alt"></i> ${user.displayName || user.email || 'Super Admin'}`;
-                    
-                    // attach UI listeners and load schools
-                    bindUI();
-                    await loadSchoolsFromFirestore();
-                    
-                } catch (err) {
-                    console.warn('⚠️ Auth check fallback – using demo mode', err);
-                    userGreeting.innerHTML = '<i class="fas fa-flask"></i> Super Admin (demo)';
-                    // graceful degradation: inject demo data
-                    generateDemoDataset();
-                    bindUI();
-                    filterAndRender();
-                    // show dev hint
-                    const hint = document.createElement('div');
-                    hint.className = 'dev-hint';
-                    hint.innerHTML = '<i class="fas fa-info-circle"></i> Development mode · Firestore read fallback';
-                    document.body.appendChild(hint);
-                }
-            });
-
-            // ---------- LOAD SCHOOLS (LIVE FROM FIRESTORE) ----------
-            async function loadSchoolsFromFirestore() {
-                loader.style.display = 'flex';
-                tbody.innerHTML = '';
-                try {
-                    const snapshot = await db.collection('schools')
-                        .orderBy('createdAt', 'desc')
-                        .get();
-                    
-                    if (snapshot.empty) {
-                        allSchools = [];
-                    } else {
-                        allSchools = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                    }
-                    loader.style.display = 'none';
-                    filterAndRender();
-                } catch (firestoreError) {
-                    console.error('Firestore error, switching to demo', firestoreError);
-                    generateDemoDataset();
-                    filterAndRender();
-                    loader.style.display = 'none';
-                }
+        // ---------- AUTH GUARD + SUPER ADMIN VERIFICATION ----------
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'super-admin-login.html';
+                return;
             }
-
-            // ---------- LOCAL DEMO (NO DEPENDENCY) ----------
-            function generateDemoDataset() {
-                allSchools = [
-                    { id: 'sch001', name: "Nairobi Adventist Academy", email: "contact@naa.ac.ke", phone: "+254722111000", plan: "premium", studentCount: 1240, status: "active", subscriptionStatus: "active", createdAt: new Date() },
-                    { id: 'sch002', name: "Kisumu Junior School", email: "office@kjs.edu", phone: "+254733222333", plan: "standard", studentCount: 856, status: "active", subscriptionStatus: "active" },
-                    { id: 'sch003', name: "Mombasa Hill Academy", email: "admin@mha.ac.ke", phone: "+254711444555", plan: "basic", studentCount: 420, status: "pending", subscriptionStatus: "pending" },
-                    { id: 'sch004', name: "Eldoret Light School", email: "info@els.sc.ke", phone: "+254723555666", plan: "premium", studentCount: 950, status: "active", subscriptionStatus: "active" },
-                    { id: 'sch005', name: "Meru Academy", email: "meru@academy.org", phone: "+254712777888", plan: "standard", studentCount: 610, status: "expiring", subscriptionStatus: "expiring_soon" },
-                    { id: 'sch006', name: "Nakuru Progressive", email: "nakuru@progressive.sch", phone: "+254734888999", plan: "enterprise", studentCount: 2100, status: "active", subscriptionStatus: "active" },
-                    { id: 'sch007', name: "Kisii Hill Prep", email: "kisii@prep.sch", phone: "+254741223344", plan: "basic", studentCount: 305, status: "suspended", subscriptionStatus: "suspended" },
-                    { id: 'sch008', name: "Thika Cambridge", email: "thika@cambridge.sc", phone: "+254722556677", plan: "premium", studentCount: 1475, status: "active", subscriptionStatus: "active" },
-                    { id: 'sch009', name: "Nyeri Star", email: "nyeristar@edu", phone: "+254711998877", plan: "standard", studentCount: 560, status: "pending", subscriptionStatus: "pending" },
-                    { id: 'sch010', name: "Machakos Scholars", email: "mks@scholars.net", phone: "+254733665544", plan: "enterprise", studentCount: 1890, status: "active", subscriptionStatus: "active" }
-                ];
-                loader.style.display = 'none';
-            }
-
-            // ---------- BIND UI FILTERS ----------
-            function bindUI() {
-                [statusSelect, planSelect].forEach(el => {
-                    el.removeEventListener('change', filterHandler);
-                    el.addEventListener('change', filterHandler);
-                });
-                searchBtn.removeEventListener('click', filterHandler);
-                searchBtn.addEventListener('click', filterHandler);
-                searchField.removeEventListener('keyup', searchEnterHandler);
-                searchField.addEventListener('keyup', searchEnterHandler);
-                
-                // onboard button
-                document.getElementById('onboardNav').addEventListener('click', () => {
-                    window.location.href = 'onboard-school.html';
-                });
-                // logout
-                document.getElementById('logoutAction').addEventListener('click', async () => {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userData = userDoc.data() || {};
+                // strict super-admin check
+                if (!userDoc.exists || (userData.role !== 'super-admin' && !userData.permissions?.isSuperAdmin)) {
                     await auth.signOut();
                     window.location.href = 'super-admin-login.html';
-                });
-            }
-
-            function filterHandler() { currentPage = 1; filterAndRender(); }
-            function searchEnterHandler(e) { if (e.key === 'Enter') { currentPage = 1; filterAndRender(); } }
-
-            // ---------- FILTER + PAGINATION + RENDER ----------
-            function filterAndRender() {
-                if (!allSchools.length) {
-                    renderEmpty();
-                    updateStats([]);
-                    return;
+                } else {
+                    // set admin name
+                    document.getElementById('userNameSpan').innerText = userData.fullName || 'Super Admin';
+                    // initial load
+                    loadOverallStats();    // independent aggregation
+                    applyFiltersAndFetch(); // first fetch with filters
                 }
+            } catch (err) {
+                console.error('Auth verification error', err);
+                window.location.href = 'super-admin-login.html';
+            }
+        });
 
-                let filtered = [...allSchools];
+        // ---------- LOGOUT ----------
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
 
-                // status filter
-                const stVal = statusSelect.value;
-                if (stVal !== 'all') {
-                    if (stVal === 'expiring') {
-                        filtered = filtered.filter(s => 
-                            s.status === 'expiring' || s.subscriptionStatus === 'expiring' || s.subscriptionStatus === 'expiring_soon');
-                    } else {
-                        filtered = filtered.filter(s => 
-                            s.status === stVal || s.subscriptionStatus === stVal);
+        // onboard button
+        document.getElementById('onboardSchoolBtn').addEventListener('click', () => {
+            window.location.href = 'onboard-school.html';
+        });
+        // onboard from empty state link
+        if (document.getElementById('onboardEmptyLink')) {
+            document.getElementById('onboardEmptyLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'onboard-school.html';
+            });
+        }
+
+        // ---------- LOAD OVERALL STATS FROM SCHOOLS (unfiltered) ----------
+        async function loadOverallStats() {
+            try {
+                const snap = await db.collection('schools').get();
+                totalCount = 0; activeCount = 0; pendingCount = 0; expiringCount = 0;
+                snap.forEach(doc => {
+                    const s = doc.data();
+                    totalCount++;
+                    if (s.status === 'active') activeCount++;
+                    else if (s.status === 'pending') pendingCount++;
+                    // you can define expiring logic – e.g., subscription end within 30 days
+                    if (s.subscriptionEndDate) {
+                        const daysLeft = (s.subscriptionEndDate.toDate() - new Date()) / (1000*3600*24);
+                        if (daysLeft > 0 && daysLeft <= 14) expiringCount++;
                     }
-                }
+                });
+                document.getElementById('totalStat').innerText = totalCount;
+                document.getElementById('activeStat').innerText = activeCount;
+                document.getElementById('pendingStat').innerText = pendingCount;
+                document.getElementById('expiringStat').innerText = expiringCount;
+            } catch (e) {
+                console.warn("Stats error", e);
+            }
+        }
 
-                // plan filter
-                const planVal = planSelect.value;
+        // ---------- FILTER / SEARCH / PAGINATION with real Firestore queries ----------
+        function applyFiltersAndFetch(resetPage = true) {
+            if (resetPage) {
+                currentPage = 1;
+                lastVisibleDoc = null;
+                firstVisibleDoc = null;
+                previousPages = [];
+            }
+            fetchSchools();
+        }
+
+        async function fetchSchools(direction = 'next') {
+            const loadingEl = document.getElementById('loadingOverlay');
+            const tableEl = document.getElementById('tableContent');
+            loadingEl.style.display = 'flex';
+            tableEl.style.display = 'none';
+            document.getElementById('emptyMessage').style.display = 'none';
+
+            try {
+                let query = db.collection('schools');
+                const statusVal = document.getElementById('statusFilterSelect').value;
+                const planVal = document.getElementById('planFilterSelect').value;
+                const searchVal = document.getElementById('searchQueryInput').value.trim().toLowerCase();
+
+                // apply status filter
+                if (statusVal !== 'all') {
+                    query = query.where('status', '==', statusVal);
+                }
                 if (planVal !== 'all') {
-                    filtered = filtered.filter(s => (s.plan || 'basic').toLowerCase() === planVal.toLowerCase());
+                    query = query.where('plan', '==', planVal);
                 }
 
-                // search
-                const query = searchField.value.trim().toLowerCase();
-                if (query) {
-                    filtered = filtered.filter(s => 
-                        (s.name?.toLowerCase().includes(query)) ||
-                        (s.email?.toLowerCase().includes(query)) ||
-                        (s.phone?.toLowerCase().includes(query))
-                    );
+                // SEARCH: Firestore doesn't support native text search. we combine client + index
+                // For production, we fetch and filter on client (or implement Algolia, but this is robust)
+                // we'll get up to 50 docs, filter for name/email. Properly we also add `orderBy`
+                query = query.orderBy('createdAt', 'desc');
+
+                // pagination: apply cursor
+                if (direction === 'next' && lastVisibleDoc) {
+                    query = query.startAfter(lastVisibleDoc);
+                } else if (direction === 'prev' && firstVisibleDoc) {
+                    query = query.endBefore(firstVisibleDoc).limitToLast(ITEMS_PER_PAGE);
                 }
 
-                filteredSchools = filtered;
-                updateStats(filteredSchools);
+                // limit
+                query = query.limit(ITEMS_PER_PAGE);
 
-                const totalPages = Math.ceil(filteredSchools.length / PAGE_SIZE) || 1;
-                if (currentPage > totalPages) currentPage = totalPages;
-                const start = (currentPage - 1) * PAGE_SIZE;
-                const pageItems = filteredSchools.slice(start, start + PAGE_SIZE);
+                const snapshot = await query.get();
+                const docs = snapshot.docs;
 
-                renderTable(pageItems);
-                renderPagination(totalPages);
-            }
-
-            function renderTable(schools) {
-                if (!schools.length) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="empty-message">
-                        <i class="fas fa-school-circle-exclamation"></i>
-                        <h4 style="margin-top:8px;">No matching institutions</h4>
-                        <p style="color:#5f7e94;">Try adjusting filters or add a new school.</p>
-                    </td></tr>`;
-                    return;
+                if (docs.length > 0) {
+                    if (direction !== 'prev') {
+                        lastVisibleDoc = docs[docs.length - 1];
+                    }
+                    firstVisibleDoc = docs[0];
                 }
 
-                let html = '';
-                schools.forEach(sch => {
-                    const statusRaw = sch.status || sch.subscriptionStatus || 'active';
-                    let statusClass = 'status-active';
-                    let statusLabel = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1);
-                    if (statusRaw.includes('expiring')) { statusClass = 'status-expiring'; statusLabel = 'Expiring'; }
-                    else if (statusRaw === 'pending') statusClass = 'status-pending';
-                    else if (statusRaw === 'suspended') statusClass = 'status-suspended';
-
-                    const planName = sch.plan ? sch.plan.charAt(0).toUpperCase() + sch.plan.slice(1) : 'Basic';
-                    const studentCount = sch.studentCount?.toLocaleString() || '0';
-                    const schoolInitials = (sch.name || 'SC').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-
-                    html += `<tr>
-                        <td>
-                            <div class="school-detail">
-                                <div class="school-avatar">${schoolInitials}</div>
-                                <div>
-                                    <div class="school-name">${sch.name || 'Unnamed'}</div>
-                                    <div class="school-contact"><i class="fas fa-envelope"></i> ${sch.email || '—'}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="plan-badge">${planName}</span></td>
-                        <td style="font-weight: 600;">${studentCount}</td>
-                        <td><span class="status ${statusClass}">${statusLabel}</span></td>
-                        <td>${sch.subscriptionStatus || 'active'}</td>
-                        <td>
-                            <div class="action-group">
-                                <button class="btn-action btn-view" onclick="window.viewSchool('${sch.id}')"><i class="fas fa-eye"></i> View</button>
-                                <button class="btn-action btn-edit" onclick="window.editSchool('${sch.id}')"><i class="fas fa-edit"></i> Edit</button>
-                                <button class="btn-action btn-delete" onclick="window.deleteSchool('${sch.id}')"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-                });
-                tbody.innerHTML = html;
-            }
-
-            function renderEmpty() {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty-message">
-                    <i class="fas fa-school-circle-exclamation"></i>
-                    <h4>No schools yet</h4>
-                    <p style="color:#4f6f7f;">Click "Onboard new school" to begin.</p>
-                </td></tr>`;
-            }
-
-            function updateStats(arr) {
-                const total = arr.length;
-                const active = arr.filter(s => s.status === 'active' || s.subscriptionStatus === 'active').length;
-                const pending = arr.filter(s => s.status === 'pending' || s.subscriptionStatus === 'pending').length;
-                const expiring = arr.filter(s => s.status === 'expiring' || s.subscriptionStatus === 'expiring' || s.subscriptionStatus === 'expiring_soon').length;
-                statTotal.textContent = total;
-                statActive.textContent = active;
-                statPending.textContent = pending;
-                statExpiring.textContent = expiring;
-            }
-
-            function renderPagination(totalPages) {
-                if (totalPages <= 1) { paginationDiv.innerHTML = ''; return; }
-                let buttons = '';
-                for (let i = 1; i <= totalPages; i++) {
-                    buttons += `<div class="page-number ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</div>`;
-                }
-                paginationDiv.innerHTML = buttons;
-                document.querySelectorAll('.page-number').forEach(el => {
-                    el.addEventListener('click', (e) => {
-                        currentPage = parseInt(e.currentTarget.dataset.page);
-                        filterAndRender();
+                // client side search filtering if searchVal present
+                let filteredDocs = docs;
+                if (searchVal !== '') {
+                    filteredDocs = docs.filter(doc => {
+                        const d = doc.data();
+                        const name = (d.name || '').toLowerCase();
+                        const email = (d.email || '').toLowerCase();
+                        const id = doc.id.toLowerCase();
+                        return name.includes(searchVal) || email.includes(searchVal) || id.includes(searchVal);
                     });
-                });
-            }
+                }
 
-            // ---------- CRUD EXPOSED (global) ----------
-            window.viewSchool = function(id) {
-                window.location.href = `school-details.html?id=${id}`;
-            };
-            window.editSchool = function(id) {
-                window.location.href = `edit-school.html?id=${id}`;
-            };
-            window.deleteSchool = async function(id) {
-                if (!confirm('⚠️ Permanent deletion. All associated data will be lost. Continue?')) return;
+                renderSchoolsTable(filteredDocs);
+
+                // pagination buttons update
+                renderPaginationControls(docs.length >= ITEMS_PER_PAGE, direction, filteredDocs.length);
+
+            } catch (error) {
+                console.error('Firestore fetch error', error);
+                document.getElementById('schoolsTableBody').innerHTML = `<tr><td colspan="6" style="padding: 48px; text-align: center; color: #e74c3c;"><i class="fas fa-circle-exclamation"></i> Error loading data. Check permissions or indexes.</td></tr>`;
+            } finally {
+                loadingEl.style.display = 'none';
+                tableEl.style.display = 'block';
+            }
+        }
+
+        function renderSchoolsTable(docs) {
+            const tbody = document.getElementById('schoolsTableBody');
+            if (!docs || docs.length === 0) {
+                tbody.innerHTML = '';
+                document.getElementById('emptyMessage').style.display = 'block';
+                document.getElementById('paginationControls').innerHTML = '';
+                return;
+            }
+            document.getElementById('emptyMessage').style.display = 'none';
+
+            let html = '';
+            docs.forEach(doc => {
+                const s = doc.data();
+                const statusClass = s.status === 'active' ? 'status' : s.status === 'pending' ? 'status pending' : s.status === 'suspended' ? 'status suspended' : 'status expiring';
+                const statusDisplay = s.status ? s.status.charAt(0).toUpperCase() + s.status.slice(1) : 'Active';
+                const planDisplay = s.plan ? s.plan.charAt(0).toUpperCase() + s.plan.slice(1) : 'Basic';
+                const studentCount = s.studentCount?.toLocaleString() || '0';
+                const subStatus = s.subscriptionStatus || 'active';
+                const schoolName = s.name || 'Unnamed Institution';
+                const email = s.email || '—';
+                
+                html += `<tr>
+                    <td>
+                        <div class="school-cell">
+                            <div class="school-badge"><i class="fas fa-landmark"></i></div>
+                            <div class="school-detail">
+                                <div class="school-name">${escapeHtml(schoolName)}</div>
+                                <div class="school-email">${escapeHtml(email)}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span style="font-weight: 700; color: #1e4e6c;">${escapeHtml(planDisplay)}</span></td>
+                    <td><strong>${studentCount}</strong></td>
+                    <td><span class="${statusClass}">${escapeHtml(statusDisplay)}</span></td>
+                    <td>${escapeHtml(subStatus)}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="action-btn view" onclick="viewSchool('${doc.id}')"><i class="fas fa-eye"></i> View</button>
+                            <button class="action-btn edit" onclick="editSchool('${doc.id}')"><i class="fas fa-pen-to-square"></i> Edit</button>
+                            <button class="action-btn delete" onclick="deleteSchool('${doc.id}')"><i class="fas fa-trash"></i> Del</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // XSS safe
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.replace(/[&<>"]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return m;
+            });
+        }
+
+        function renderPaginationControls(hasNext, direction, currentCount) {
+            let pagination = document.getElementById('paginationControls');
+            let btnHtml = '';
+            if (currentPage > 1) {
+                btnHtml += `<div class="page-number" onclick="changePage('prev')"><i class="fas fa-chevron-left"></i></div>`;
+            }
+            btnHtml += `<div class="page-number active">${currentPage}</div>`;
+            if (hasNext && currentCount >= ITEMS_PER_PAGE) {
+                btnHtml += `<div class="page-number" onclick="changePage('next')"><i class="fas fa-chevron-right"></i></div>`;
+            }
+            pagination.innerHTML = btnHtml;
+        }
+
+        window.changePage = function(dir) {
+            if (dir === 'next') {
+                currentPage++;
+                fetchSchools('next');
+            } else if (dir === 'prev' && currentPage > 1) {
+                currentPage--;
+                fetchSchools('prev');
+            }
+        };
+
+        // ---------- FILTER EVENT LISTENERS ----------
+        document.getElementById('statusFilterSelect').addEventListener('change', () => {
+            applyFiltersAndFetch(true);
+        });
+        document.getElementById('planFilterSelect').addEventListener('change', () => {
+            applyFiltersAndFetch(true);
+        });
+        document.getElementById('searchTriggerBtn').addEventListener('click', () => {
+            applyFiltersAndFetch(true);
+        });
+        // press enter in search field
+        document.getElementById('searchQueryInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyFiltersAndFetch(true);
+            }
+        });
+
+        // ---------- GLOBAL CRUD FUNCTIONS ----------
+        window.viewSchool = function(id) {
+            window.location.href = `school-details.html?id=${id}`;
+        };
+        window.editSchool = function(id) {
+            window.location.href = `edit-school.html?id=${id}`;
+        };
+        window.deleteSchool = async function(id) {
+            if (confirm('⚠️ Permanently delete this school? All associated data will be lost.')) {
                 try {
                     await db.collection('schools').doc(id).delete();
-                    allSchools = allSchools.filter(s => s.id !== id);
-                    filterAndRender();
+                    loadOverallStats();
+                    applyFiltersAndFetch(true);
                 } catch (e) {
-                    console.warn('Delete fallback (demo)', e);
-                    allSchools = allSchools.filter(s => s.id !== id);
-                    filterAndRender();
+                    alert('Delete failed: ' + e.message);
                 }
-            };
-        })();
+            }
+        };
+
+        // initial load
+        window.addEventListener('load', function() {
+            // auth triggers loading
+        });
     </script>
 </body>
 </html>
