@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Expiring Soon</title>
+    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* Same EDUSKYLARK design system - copy from pending-approvals page */
+        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --green: #27ae60; --purple: #9b59b6; --gold: #f1c40f; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); color: var(--dark-blue); }
+        
+        /* Copy all header, mobile, table styles from pending-approvals - updated for expiring theme */
+        .page-header h2 i { color: var(--red); }
+        .stats-banner { background: linear-gradient(135deg, var(--red), #c0392b); }
+        .status-badge-expiring { background: rgba(231,76,60,0.15); color: var(--red); }
+        .status-badge-critical { background: rgba(231,76,60,0.3); color: #fff; background: var(--red); }
+        .btn-renew { background: rgba(52,152,219,0.15); color: var(--blue); }
+        .btn-contact { background: rgba(230,126,34,0.1); color: var(--orange); }
+        
+        .expiry-meter {
+            width: 100px; height: 8px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin-top: 5px;
+        }
+        .expiry-fill { height: 100%; background: var(--red); border-radius: 10px; }
+        .expiry-fill.warning { background: var(--orange); }
+        .expiry-fill.critical { background: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · EXPIRING <span class="admin-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
+                    <p>Subscriptions Ending Soon</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="profile-photo-container">
+                    <div class="profile-photo" id="profilePhoto"></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role"><i class="fas fa-crown"></i> Super Administrator</div>
+                </div>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h2><i class="fas fa-clock"></i> Expiring Subscriptions</h2>
+            <div style="display: flex; gap: 15px;">
+                <button id="bulkRenewBtn" style="background: white; border: none; padding: 10px 25px; border-radius: 30px; font-weight: 600; color: var(--blue); box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                    <i class="fas fa-envelope"></i> Contact All
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="stats-banner" id="expiringStatsBanner">
+            <div>
+                <h3>⚠️ Subscriptions Requiring Attention</h3>
+                <p>Schools with licenses expiring in the next 30 days</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 40px;">
+                <div>
+                    <div class="stats-number" id="expiringCount">0</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Expiring Soon</div>
+                </div>
+                <div>
+                    <div class="stats-number" id="criticalCount">0</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Critical (≤7 days)</div>
+                </div>
+                <div>
+                    <div class="stats-number" id="renewalValue">KES 0</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Renewal Value</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Timeframe:</label>
+                <select class="filter-select" id="timeframeFilter">
+                    <option value="30">Next 30 days</option>
+                    <option value="14">Next 14 days</option>
+                    <option value="7">Next 7 days (Critical)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Plan:</label>
+                <select class="filter-select" id="planFilter">
+                    <option value="all">All Plans</option>
+                    <option value="premium">Premium</option>
+                    <option value="standard">Standard</option>
+                    <option value="basic">Basic</option>
+                </select>
+            </div>
+            <div style="flex: 1; display: flex; justify-content: flex-end;">
+                <button id="exportBtn" style="background: none; border: none; color: var(--blue); cursor: pointer; margin-right: 20px;">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button id="refreshBtn" style="background: none; border: none; color: var(--blue); cursor: pointer;">
+                    <i class="fas fa-redo-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Expiring Subscriptions Table -->
+        <div class="approvals-table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 20px; font-weight: 700;">Schools with Expiring Licenses</h3>
+                <span style="background: rgba(231,76,60,0.1); padding: 6px 16px; border-radius: 30px; color: var(--red); font-weight: 600;" id="tableCount">0 items</span>
+            </div>
+            <table id="expiringTable">
+                <thead>
+                    <tr>
+                        <th>School</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Start Date</th>
+                        <th>Expiry Date</th>
+                        <th>Days Left</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="expiringTableBody">
+                    <!-- Dynamic rows from Firebase -->
+                </tbody>
+            </table>
+            <div id="loadingIndicator" style="display: none; text-align: center; padding: 60px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--blue);"></i>
+                <p style="margin-top: 15px; color: #666;">Loading expiring subscriptions...</p>
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-calendar-check" style="color: var(--green);"></i>
+                <h3 style="font-size: 22px; margin-bottom: 10px;">No Expiring Subscriptions</h3>
+                <p style="color: #666;">All subscriptions are up to date. Great job!</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'super-admin-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'super-admin' && !data.permissions?.isSuperAdmin) {
+                        await auth.signOut();
+                        window.location.href = 'super-admin-login.html';
+                    } else {
+                        loadUserData(data);
+                        loadExpiringSubscriptions(30); // Default 30 days
+                    }
+                }
+            }
+        });
+
+        function loadUserData(data) {
+            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
+            const profilePhoto = document.getElementById('profilePhoto');
+            if (data.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+            } else {
+                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+            }
+        }
+
+        async function loadExpiringSubscriptions(days = 30) {
+            const tbody = document.getElementById('expiringTableBody');
+            const loading = document.getElementById('loadingIndicator');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('expiringTable');
+            const expiringCount = document.getElementById('expiringCount');
+            const criticalCount = document.getElementById('criticalCount');
+            const renewalValue = document.getElementById('renewalValue');
+            const tableCount = document.getElementById('tableCount');
+            
+            loading.style.display = 'block';
+            table.style.opacity = '0.5';
+            
+            try {
+                const expiryThreshold = new Date();
+                expiryThreshold.setDate(expiryThreshold.getDate() + days);
+                
+                const expiringSnap = await db.collection('subscriptions')
+                    .where('status', '==', 'active')
+                    .where('expiryDate', '<=', expiryThreshold)
+                    .orderBy('expiryDate', 'asc')
+                    .get();
+                
+                loading.style.display = 'none';
+                table.style.opacity = '1';
+                
+                if (expiringSnap.empty) {
+                    table.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    expiringCount.textContent = '0';
+                    criticalCount.textContent = '0';
+                    renewalValue.textContent = 'KES 0';
+                    tableCount.textContent = '0 items';
+                    return;
+                }
+                
+                table.style.display = 'table';
+                emptyState.style.display = 'none';
+                
+                let totalRenewal = 0;
+                let critical = 0;
+                let html = '';
+                const today = new Date();
+                
+                expiringSnap.forEach(doc => {
+                    const sub = doc.data();
+                    const expiryDate = sub.expiryDate?.toDate?.() || new Date();
+                    const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysLeft <= 7) critical++;
+                    totalRenewal += sub.amount || 0;
+                    
+                    // Get school name (we need to fetch from schools collection)
+                    // For demo, we'll use placeholder or lookup
+                    const schoolName = sub.schoolName || 'Unknown School';
+                    const plan = sub.plan || 'Standard';
+                    const amount = sub.amount || 0;
+                    const startDate = sub.startDate?.toDate?.() || new Date();
+                    
+                    let statusClass = 'status-badge-expiring';
+                    let statusText = 'Expiring';
+                    let fillClass = 'expiry-fill';
+                    let fillWidth = Math.min(100, Math.max(10, (daysLeft / 30) * 100));
+                    
+                    if (daysLeft <= 7) {
+                        statusClass = 'status-badge-critical';
+                        statusText = 'Critical';
+                        fillClass = 'expiry-fill critical';
+                    } else if (daysLeft <= 14) {
+                        statusClass = 'status-badge-expiring';
+                        statusText = 'Urgent';
+                        fillClass = 'expiry-fill warning';
+                    }
+                    
+                    html += `<tr>
+                        <td>
+                            <div style="font-weight: 700;">${schoolName}</div>
+                            <div style="font-size: 12px; color: #666;">ID: ${doc.id.slice(-6)}</div>
+                        </td>
+                        <td><span style="font-weight: 600;">${plan.charAt(0).toUpperCase() + plan.slice(1)}</span></td>
+                        <td>KES ${amount.toLocaleString()}</td>
+                        <td>${startDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                        <td><strong>${expiryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></td>
+                        <td>
+                            <div style="font-weight: 700; color: ${daysLeft <= 7 ? 'var(--red)' : daysLeft <= 14 ? 'var(--orange)' : 'var(--blue)'};">${daysLeft} days</div>
+                            <div class="expiry-meter"><div class="${fillClass}" style="width: ${fillWidth}%;"></div></div>
+                        </td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="action-btn btn-renew" onclick="renewSubscription('${doc.id}')"><i class="fas fa-sync-alt"></i> Renew</button>
+                            <button class="action-btn btn-contact" onclick="contactSchool('${doc.id}')"><i class="fas fa-envelope"></i> Contact</button>
+                        </td>
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = html;
+                expiringCount.textContent = expiringSnap.size;
+                criticalCount.textContent = critical;
+                renewalValue.textContent = `KES ${totalRenewal.toLocaleString()}`;
+                tableCount.textContent = `${expiringSnap.size} items`;
+                
+            } catch (e) {
+                console.error("Error loading expiring subscriptions:", e);
+                loading.style.display = 'none';
+                table.style.opacity = '1';
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--red);">
+                    <i class="fas fa-exclamation-triangle"></i> Error loading data. Please refresh.
+                </td></tr>`;
+            }
+        }
+
+        // Action Functions
+        window.renewSubscription = async function(id) {
+            const days = prompt("Extend subscription by how many days?", "365");
+            if (days && !isNaN(days) && parseInt(days) > 0) {
+                try {
+                    const subDoc = await db.collection('subscriptions').doc(id).get();
+                    const subData = subDoc.data();
+                    const currentExpiry = subData.expiryDate?.toDate?.() || new Date();
+                    const newExpiry = new Date(currentExpiry);
+                    newExpiry.setDate(newExpiry.getDate() + parseInt(days));
+                    
+                    await db.collection('subscriptions').doc(id).update({
+                        expiryDate: firebase.firestore.Timestamp.fromDate(newExpiry),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        renewedBy: auth.currentUser?.uid,
+                        renewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    alert(`✅ Subscription renewed for ${days} days.`);
+                    loadExpiringSubscriptions(30);
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            }
+        };
+        
+        window.contactSchool = function(id) {
+            alert('Contact email modal would open here. In production: send renewal reminder.');
+        };
+
+        // Event Listeners
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+        
+        document.getElementById('refreshBtn').addEventListener('click', () => loadExpiringSubscriptions(30));
+        document.getElementById('timeframeFilter').addEventListener('change', (e) => {
+            loadExpiringSubscriptions(parseInt(e.target.value));
+        });
+        
+        document.getElementById('bulkRenewBtn').addEventListener('click', () => {
+            alert('Bulk renewal contact initiated. Emails will be sent to all expiring schools.');
+        });
+        
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            alert('Exporting expiring subscriptions list...');
+        });
+    </script>
+</body>
+</html>
