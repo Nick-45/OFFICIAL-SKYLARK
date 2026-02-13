@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Reports</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --blue: #3498db;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --purple: #9b59b6;
+            --teal: #1abc9c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        
+        .reports-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        
+        .report-categories {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px;
+        }
+        .category-card {
+            background: white; border-radius: 20px; padding: 30px; border-left: 5px solid var(--school-green);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s; cursor: pointer;
+        }
+        .category-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        
+        .category-icon {
+            width: 70px; height: 70px; border-radius: 50%; background: rgba(39,174,96,0.1);
+            display: flex; align-items: center; justify-content: center; color: var(--school-green); font-size: 28px; margin-bottom: 20px;
+        }
+        .category-title { font-size: 22px; font-weight: 700; color: var(--dark-blue); margin-bottom: 10px; }
+        .category-desc { color: #666; margin-bottom: 20px; }
+        
+        .report-actions {
+            background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px;
+            display: flex; align-items: center; gap: 30px; flex-wrap: wrap;
+        }
+        .report-selector {
+            flex: 1; min-width: 200px;
+        }
+        .report-selector label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark-blue); }
+        .report-selector select {
+            width: 100%; padding: 14px 20px; border: 2px solid #e9ecef; border-radius: 12px;
+            font-size: 15px; background: white;
+        }
+        
+        .btn-generate {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 14px 35px; border-radius: 30px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; gap: 10px;
+        }
+        
+        .recent-reports {
+            background: white; border-radius: 20px; padding: 30px; margin-top: 30px;
+        }
+        .report-item {
+            display: flex; align-items: center; justify-content: space-between; padding: 20px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .report-item:last-child { border-bottom: none; }
+        .report-info { display: flex; align-items: center; gap: 20px; }
+        .report-info i { font-size: 24px; color: var(--school-green); }
+        .report-details h4 { font-weight: 700; color: var(--dark-blue); margin-bottom: 5px; }
+        .report-details p { font-size: 13px; color: #666; }
+        .btn-download { background: none; border: none; color: var(--school-green); font-size: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · REPORTS <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
+                    <p>Analytics & Insights</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white;" id="schoolName">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="reports-header">
+            <h2 style="font-size: 28px;"><i class="fas fa-chart-bar" style="color: var(--school-green);"></i> School Reports</h2>
+            <span style="background: rgba(39,174,96,0.1); padding: 10px 20px; border-radius: 30px; color: var(--school-green); font-weight: 600;">
+                <i class="fas fa-calendar"></i> Term 1, 2025
+            </span>
+        </div>
+
+        <div class="report-actions">
+            <div class="report-selector">
+                <label><i class="fas fa-file-alt"></i> Report Type</label>
+                <select id="reportType">
+                    <option>Student Performance Report</option>
+                    <option>Attendance Summary</option>
+                    <option>Fee Collection Report</option>
+                    <option>Staff Performance</option>
+                    <option>Class Progress Report</option>
+                    <option>Examination Analysis</option>
+                </select>
+            </div>
+            <div class="report-selector">
+                <label><i class="fas fa-calendar"></i> Time Period</label>
+                <select id="timePeriod">
+                    <option>Term 1, 2025</option>
+                    <option>Term 2, 2025</option>
+                    <option>Term 3, 2025</option>
+                    <option>Annual 2025</option>
+                </select>
+            </div>
+            <div class="report-selector">
+                <label><i class="fas fa-flag"></i> Format</label>
+                <select id="format">
+                    <option>PDF</option>
+                    <option>Excel (CSV)</option>
+                    <option>Word (DOCX)</option>
+                </select>
+            </div>
+            <button class="btn-generate" id="generateBtn">
+                <i class="fas fa-file-export"></i> Generate Report
+            </button>
+        </div>
+
+        <div class="report-categories">
+            <div class="category-card" onclick="generateReport('academic')">
+                <div class="category-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div class="category-title">Academic Reports</div>
+                <div class="category-desc">Student grades, exam analysis, class performance, and subject summaries.</div>
+                <span style="color: var(--school-green); font-weight: 600;">Generate →</span>
+            </div>
+            <div class="category-card" onclick="generateReport('attendance')">
+                <div class="category-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="category-title">Attendance Reports</div>
+                <div class="category-desc">Daily attendance, monthly summaries, absentee lists, and trends.</div>
+                <span style="color: var(--school-green); font-weight: 600;">Generate →</span>
+            </div>
+            <div class="category-card" onclick="generateReport('fees')">
+                <div class="category-icon"><i class="fas fa-coins"></i></div>
+                <div class="category-title">Fee Reports</div>
+                <div class="category-desc">Collection summaries, outstanding balances, and payment history.</div>
+                <span style="color: var(--school-green); font-weight: 600;">Generate →</span>
+            </div>
+            <div class="category-card" onclick="generateReport('staff')">
+                <div class="category-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div class="category-title">Staff Reports</div>
+                <div class="category-desc">Teacher performance, workload distribution, and payroll summaries.</div>
+                <span style="color: var(--school-green); font-weight: 600;">Generate →</span>
+            </div>
+            <div class="category-card" onclick="generateReport('discipline')">
+                <div class="category-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="category-title">Discipline Reports</div>
+                <div class="category-desc">Student conduct, incidents, and disciplinary actions.</div>
+                <span style="color: var(--school-green); font-weight: 600;">Generate →</span>
+            </div>
+            <div class="category-card" onclick="generateReport('transport')">
+                <div class="category-icon"><i class="fas fa-bus"></i></div>
+                <div class="category-title">Transport Reports</div>
+                <div class="category-desc">Fleet usage, route efficiency, and transport expenses.</div>
+                <span style="color: var(--school-green); font-weight: 600;">Generate →</span>
+            </div>
+        </div>
+
+        <div class="recent-reports">
+            <h3 style="font-size: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-history" style="color: var(--school-green);"></i> Recently Generated Reports
+            </h3>
+            <div class="report-item">
+                <div class="report-info">
+                    <i class="fas fa-file-pdf"></i>
+                    <div class="report-details">
+                        <h4>Student_Performance_Term1_2025.pdf</h4>
+                        <p>Generated: 13 Apr 2025 · 2.4 MB</p>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn-download"><i class="fas fa-download"></i></button>
+                    <button class="btn-download" style="margin-left: 15px;"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div class="report-item">
+                <div class="report-info">
+                    <i class="fas fa-file-excel"></i>
+                    <div class="report-details">
+                        <h4>Attendance_Summary_March_2025.xlsx</h4>
+                        <p>Generated: 10 Apr 2025 · 856 KB</p>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn-download"><i class="fas fa-download"></i></button>
+                    <button class="btn-download" style="margin-left: 15px;"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div class="report-item">
+                <div class="report-info">
+                    <i class="fas fa-file-alt"></i>
+                    <div class="report-details">
+                        <h4>Fee_Collection_Term1_2025.docx</h4>
+                        <p>Generated: 08 Apr 2025 · 1.2 MB</p>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn-download"><i class="fas fa-download"></i></button>
+                    <button class="btn-download" style="margin-left: 15px;"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'school-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'school_admin' && data.role !== 'admin') {
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                    } else {
+                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
+                    }
+                }
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
+        });
+
+        function generateReport(type) {
+            const reportType = document.getElementById('reportType')?.value || type;
+            alert(`📊 Generating ${reportType}... This would connect to your reporting engine.`);
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const type = document.getElementById('reportType').value;
+            const period = document.getElementById('timePeriod').value;
+            const format = document.getElementById('format').value;
+            alert(`📄 Generating ${type} for ${period} in ${format} format.`);
+        });
+
+        window.generateReport = generateReport;
+    </script>
+</body>
+</html>
