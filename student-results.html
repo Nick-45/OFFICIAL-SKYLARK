@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --student-blue: #3498db;
+            --student-blue-dark: #2980b9;
+            --dark-blue: #2c3e50;
+            --green: #27ae60;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --purple: #9b59b6;
+            --gold: #f1c40f;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .result-summary {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 30px;
+        }
+        .result-card {
+            background: white; border-radius: 20px; padding: 25px; border-left: 5px solid var(--student-blue);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .result-value { font-size: 42px; font-weight: 800; color: var(--dark-blue); }
+        .grade-badge {
+            display: inline-block; padding: 8px 20px; border-radius: 30px; font-weight: 700;
+            background: linear-gradient(135deg, var(--gold), #f39c12); color: var(--dark-blue);
+        }
+        
+        .term-selector {
+            display: flex; gap: 15px; margin-bottom: 30px; background: white; padding: 15px;
+            border-radius: 50px; width: fit-content;
+        }
+        .term-btn {
+            padding: 10px 25px; border-radius: 30px; border: none; background: transparent;
+            font-weight: 600; cursor: pointer;
+        }
+        .term-btn.active {
+            background: var(--student-blue); color: white;
+        }
+        
+        .results-table {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #e9ecef; color: var(--dark-blue); }
+        td { padding: 15px; border-bottom: 1px solid #f1f1f1; }
+        .subject { font-weight: 600; }
+        .score { font-weight: 700; }
+        .grade-A { color: var(--green); }
+        .grade-B { color: var(--student-blue); }
+        .grade-C { color: var(--orange); }
+        .grade-D { color: var(--red); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>EDUSKYLARK · RESULTS <span style="background:linear-gradient(135deg,#3498db,#2980b9); padding:3px 10px; border-radius:15px;">STUDENT</span></h1>
+            <button id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h2 style="font-size:28px; margin-bottom:30px;"><i class="fas fa-chart-bar" style="color: var(--student-blue);"></i> My Academic Results</h2>
+        
+        <div class="result-summary">
+            <div class="result-card">
+                <div style="font-size: 14px; color: #666; text-transform: uppercase;">Overall Average</div>
+                <div class="result-value">78.5%</div>
+                <div style="margin-top: 10px;"><span class="grade-badge">B+</span></div>
+            </div>
+            <div class="result-card">
+                <div style="font-size: 14px; color: #666; text-transform: uppercase;">Class Position</div>
+                <div class="result-value">12/42</div>
+                <div style="margin-top: 10px; color: var(--green);">Top 29%</div>
+            </div>
+            <div class="result-card">
+                <div style="font-size: 14px; color: #666; text-transform: uppercase;">Points</div>
+                <div class="result-value">56</div>
+                <div style="margin-top: 10px;">Out of 84</div>
+            </div>
+            <div class="result-card">
+                <div style="font-size: 14px; color: #666; text-transform: uppercase;">Best Subject</div>
+                <div class="result-value">88%</div>
+                <div style="margin-top: 10px;">Mathematics</div>
+            </div>
+        </div>
+
+        <div class="term-selector">
+            <button class="term-btn active">Term 1, 2025</button>
+            <button class="term-btn">Term 2, 2024</button>
+            <button class="term-btn">Term 3, 2024</button>
+            <button class="term-btn">Annual 2024</button>
+        </div>
+
+        <div class="results-table">
+            <h3 style="font-size: 20px; margin-bottom: 20px;">End Term 1 Examination Results</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Grade</th>
+                        <th>Class Average</th>
+                        <th>Rank</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="subject">Mathematics</td><td class="score">88%</td><td><span class="grade-A">A-</span></td><td>72%</td><td>5/42</td><td>Excellent</td></tr>
+                    <tr><td class="subject">Physics</td><td class="score">76%</td><td><span class="grade-B">B</span></td><td>68%</td><td>15/38</td><td>Good</td></tr>
+                    <tr><td class="subject">Chemistry</td><td class="score">72%</td><td><span class="grade-B">B-</span></td><td>65%</td><td>18/40</td><td>Satisfactory</td></tr>
+                    <tr><td class="subject">Biology</td><td class="score">81%</td><td><span class="grade-B">B+</span></td><td>70%</td><td>9/42</td><td>Very Good</td></tr>
+                    <tr><td class="subject">English Literature</td><td class="score">84%</td><td><span class="grade-B">B+</span></td><td>71%</td><td>7/42</td><td>Very Good</td></tr>
+                    <tr><td class="subject">History</td><td class="score">79%</td><td><span class="grade-B">B</span></td><td>73%</td><td>12/41</td><td>Good</td></tr>
+                    <tr><td class="subject">Geography</td><td class="score">77%</td><td><span class="grade-B">B</span></td><td>69%</td><td>14/39</td><td>Good</td></tr>
+                    <tr><td class="subject">Kiswahili</td><td class="score">71%</td><td><span class="grade-C">C+</span></td><td>66%</td><td>20/40</td><td>Fair</td></tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-weight: 700;">Teacher's Comments:</span> Good performance, especially in Mathematics and English. Need to improve in Kiswahili and Chemistry practicals.
+                    </div>
+                    <button style="background: var(--student-blue); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600;">
+                        <i class="fas fa-download"></i> Download Report Card
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = 'student-login.html';
+        });
+    </script>
+</body>
+</html>
