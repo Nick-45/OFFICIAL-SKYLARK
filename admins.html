@@ -3,131 +3,434 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDUSKYLARK · Admin Management</title>
+    <title>EDUSKYLARK · SUPER ADMIN · DYNAMIC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        /* Same consistent design */
-        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --green: #27ae60; }
-        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); font-family: 'Segoe UI', sans-serif; }
+        /* consistent design + modal system */
+        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --green: #27ae60; --gray-light: #ecf0f1; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); font-family: 'Segoe UI', Roboto, sans-serif; }
         .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; }
         .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
-        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
-        .admin-card { background: white; border-radius: 20px; padding: 25px; display: flex; align-items: center; gap: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-left: 5px solid var(--blue); }
-        .admin-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--dark-blue)); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700; }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 25px; margin-top: 30px; }
+        .admin-card { background: white; border-radius: 20px; padding: 25px; display: flex; align-items: flex-start; gap: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-left: 5px solid var(--blue); transition: 0.2s; }
+        .admin-card:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .admin-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--dark-blue)); display: flex; align-items: center; justify-content: center; color: white; font-size: 26px; font-weight: 700; flex-shrink: 0; }
+        .logout-btn { background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red); padding: 8px 20px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .logout-btn:hover { background: var(--red); }
+        .btn-primary { background: linear-gradient(135deg, var(--blue), var(--dark-blue)); color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+        .filter-search { background: white; border-radius: 30px; padding: 5px 5px 5px 20px; display: flex; align-items: center; width: 100%; border: 2px solid #e9ecef; }
+        .filter-search input { flex:1; padding:12px 0; border:none; background:transparent; outline:none; }
+        .badge-active { background: rgba(39,174,96,0.15); color: var(--green); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-pending { background: rgba(230,126,34,0.15); color: var(--orange); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .icon-btn { background: none; border: none; font-size: 16px; margin-left: 5px; cursor: pointer; color: #555; }
+        .icon-btn:hover { color: var(--blue); }
+        .icon-btn.delete:hover { color: var(--red); }
+        .whatsapp-btn { background: #25D366; color: white; border-radius: 30px; padding: 6px 14px; font-size: 13px; border: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500; }
+        .whatsapp-btn i { font-size: 15px; }
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 28px; max-width: 500px; width: 90%; padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 24px; font-weight: 600; }
+        .close-modal { font-size: 28px; cursor: pointer; color: #888; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { font-weight: 600; display: block; margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 12px 18px; border: 2px solid #e9ecef; border-radius: 16px; font-size: 15px; }
+        .flex-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .flex-row .form-group { flex: 1 1 200px; }
+        .status-indicator { display: inline-flex; align-items: center; }
+        .mt-3 { margin-top: 20px; }
+        .wa-preview { background: #eafaf1; padding: 12px; border-radius: 14px; font-size: 13px; border-left: 4px solid #25D366; margin-bottom: 12px; }
+        .required:after { content:" *"; color: var(--red); }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="header-content" style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:20px;">
                 <div class="logo" style="width:60px; height:60px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center;">
                     <img src="logo.png" style="width:45px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
                 </div>
                 <div>
                     <h1 style="font-size:24px;">EDUSKYLARK · ADMINS <span style="background:linear-gradient(135deg,#f1c40f,#f39c12); color:var(--dark-blue); padding:3px 10px; border-radius:15px; font-size:12px; margin-left:10px;"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
-                    <p style="color:var(--blue);">Manage School Administrators</p>
+                    <p style="color:var(--blue);">Manage School Administrators – Live from Firestore</p>
                 </div>
             </div>
-            <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
     </header>
 
     <main class="dashboard-container">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <!-- filter & invite row -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; flex-wrap:wrap;">
             <h2 style="font-size:28px;"><i class="fas fa-user-tie" style="color:var(--blue); margin-right:15px;"></i> School Administrators</h2>
-            <button style="background:linear-gradient(135deg, var(--blue), var(--dark-blue)); color:white; border:none; padding:12px 25px; border-radius:30px; font-weight:600;" onclick="alert('Invite admin modal')"><i class="fas fa-user-plus"></i> Invite Admin</button>
+            <button id="inviteAdminBtn" class="btn-primary" style="display:flex; align-items:center; gap:8px;"><i class="fas fa-user-plus"></i> Invite Admin</button>
         </div>
 
+        <!-- filter & search (client-side dynamic) -->
         <div style="background:white; border-radius:20px; padding:25px; margin-bottom:30px; display:flex; gap:20px; flex-wrap:wrap;">
             <div style="flex:1; min-width:200px;">
                 <label style="font-weight:600; display:block; margin-bottom:8px;">Filter by School</label>
-                <select style="width:100%; padding:12px; border-radius:15px; border:2px solid #e9ecef;">
-                    <option>All Schools</option>
-                    <option>Nairobi Adventist Academy</option>
-                    <option>Kisumu Junior School</option>
-                    <option>Mombasa Hill Academy</option>
+                <select id="schoolFilterSelect" style="width:100%; padding:12px; border-radius:15px; border:2px solid #e9ecef;">
+                    <option value="all">All Schools</option>
                 </select>
             </div>
             <div style="flex:1; min-width:200px;">
                 <label style="font-weight:600; display:block; margin-bottom:8px;">Role</label>
-                <select style="width:100%; padding:12px; border-radius:15px; border:2px solid #e9ecef;">
-                    <option>All Roles</option>
+                <select id="roleFilterSelect" style="width:100%; padding:12px; border-radius:15px; border:2px solid #e9ecef;">
+                    <option value="all">All Roles</option>
                     <option>Principal</option>
                     <option>Academic Admin</option>
                     <option>Finance Admin</option>
+                    <option>Super Admin</option>
                 </select>
             </div>
             <div style="flex:1; min-width:200px; display:flex; align-items:flex-end;">
-                <div style="background:#f9f9f9; border-radius:30px; padding:5px 5px 5px 20px; display:flex; align-items:center; width:100%; border:2px solid #e9ecef;">
-                    <input type="text" placeholder="Search admins..." style="flex:1; padding:12px 0; border:none; background:transparent; outline:none;">
+                <div class="filter-search">
+                    <input type="text" id="searchInput" placeholder="Search by name or email...">
                     <button style="background:linear-gradient(135deg, var(--blue), var(--dark-blue)); border:none; color:white; padding:12px 25px; border-radius:30px; cursor:pointer;"><i class="fas fa-search"></i></button>
                 </div>
             </div>
         </div>
 
-        <div class="admin-grid">
-            <div class="admin-card">
-                <div class="admin-avatar">JM</div>
-                <div style="flex:1;">
-                    <h3 style="font-size:18px; font-weight:700;">John Mwangi</h3>
-                    <p style="color:var(--blue); font-size:14px; margin-bottom:5px;">Principal</p>
-                    <p style="color:#666; font-size:13px;"><i class="fas fa-school"></i> Nairobi Adventist Academy</p>
-                    <p style="color:#666; font-size:13px;"><i class="fas fa-envelope"></i> john@naa.edu</p>
-                    <div style="margin-top:12px; display:flex; gap:8px;">
-                        <span style="background:rgba(39,174,96,0.15); color:var(--green); padding:4px 12px; border-radius:20px; font-size:12px;">Active</span>
-                        <button style="color:var(--blue); background:none; border:none; cursor:pointer;"><i class="fas fa-edit"></i></button>
-                        <button style="color:var(--red); background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-            <div class="admin-card">
-                <div class="admin-avatar">AO</div>
-                <div>
-                    <h3 style="font-size:18px; font-weight:700;">Alice Odhiambo</h3>
-                    <p style="color:var(--blue); font-size:14px; margin-bottom:5px;">Academic Admin</p>
-                    <p style="color:#666; font-size:13px;"><i class="fas fa-school"></i> Kisumu Junior School</p>
-                    <p style="color:#666; font-size:13px;"><i class="fas fa-envelope"></i> alice@kjs.edu</p>
-                    <div style="margin-top:12px; display:flex; gap:8px;">
-                        <span style="background:rgba(39,174,96,0.15); color:var(--green); padding:4px 12px; border-radius:20px;">Active</span>
-                        <button style="color:var(--blue); background:none; border:none;"><i class="fas fa-edit"></i></button>
-                        <button style="color:var(--red); background:none; border:none;"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-            <div class="admin-card">
-                <div class="admin-avatar">MK</div>
-                <div>
-                    <h3 style="font-size:18px; font-weight:700;">Mohammed Kassim</h3>
-                    <p style="color:var(--blue); font-size:14px; margin-bottom:5px;">Finance Admin</p>
-                    <p style="color:#666; font-size:13px;"><i class="fas fa-school"></i> Mombasa Hill Academy</p>
-                    <p style="color:#666; font-size:13px;"><i class="fas fa-envelope"></i> mk@mha.ac.ke</p>
-                    <div style="margin-top:12px; display:flex; gap:8px;">
-                        <span style="background:rgba(230,126,34,0.15); color:var(--orange); padding:4px 12px; border-radius:20px;">Pending</span>
-                        <button style="color:var(--blue); background:none; border:none;"><i class="fas fa-edit"></i></button>
-                        <button style="color:var(--red); background:none; border:none;"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Admin grid injected -->
+        <div id="adminGridContainer" class="admin-grid"></div>
+        <div id="noResultMsg" style="display:none; text-align:center; padding:50px; background:white; border-radius:30px;">👨‍🏫 No admins match the filters</div>
     </main>
 
+    <!-- INVITE MODAL -->
+    <div id="inviteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-paper-plane" style="color:var(--blue);"></i> Invite Admin</h3>
+                <span class="close-modal" id="closeInviteModal">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="required">Full Name</label>
+                <input type="text" id="inviteName" class="form-control" placeholder="e.g. Mary Wambui">
+            </div>
+            <div class="form-group">
+                <label class="required">Email</label>
+                <input type="email" id="inviteEmail" class="form-control" placeholder="admin@school.edu">
+            </div>
+            <div class="flex-row">
+                <div class="form-group">
+                    <label class="required">Phone (WhatsApp)</label>
+                    <input type="text" id="invitePhone" class="form-control" placeholder="+254 712 345678">
+                </div>
+                <div class="form-group">
+                    <label class="required">Role</label>
+                    <select id="inviteRole" class="form-control">
+                        <option>Principal</option>
+                        <option>Academic Admin</option>
+                        <option>Finance Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="required">School Name</label>
+                <input type="text" id="inviteSchool" class="form-control" placeholder="e.g. Nairobi Adventist Academy">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="inviteStatus" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Pending" selected>Pending</option>
+                </select>
+            </div>
+            <button id="saveInviteBtn" class="btn-primary" style="width:100%; padding:14px; font-size:16px;"><i class="fas fa-save"></i> Create Admin</button>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL (reusable) -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-edit" style="color:var(--green);"></i> Edit Admin</h3>
+                <span class="close-modal" id="closeEditModal">&times;</span>
+            </div>
+            <input type="hidden" id="editDocId">
+            <div class="form-group">
+                <label class="required">Full Name</label>
+                <input type="text" id="editName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="required">Email</label>
+                <input type="email" id="editEmail" class="form-control">
+            </div>
+            <div class="flex-row">
+                <div class="form-group">
+                    <label class="required">Phone (WhatsApp)</label>
+                    <input type="text" id="editPhone" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="required">Role</label>
+                    <select id="editRole" class="form-control">
+                        <option>Principal</option>
+                        <option>Academic Admin</option>
+                        <option>Finance Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="required">School</label>
+                <input type="text" id="editSchool" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editStatus" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+            <button id="updateAdminBtn" class="btn-primary" style="width:100%;"><i class="fas fa-sync-alt"></i> Update</button>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRM MODAL -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 style="color:var(--red);"><i class="fas fa-trash-alt"></i> Confirm Delete</h3>
+                <span class="close-modal" id="closeDeleteModal">&times;</span>
+            </div>
+            <p style="margin:20px 0; font-size:16px;">Remove this administrator? This action cannot be undone.</p>
+            <input type="hidden" id="deleteDocId">
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button id="cancelDeleteBtn" style="padding:10px 20px; border-radius:30px; border:1px solid #ccc; background:white;">Cancel</button>
+                <button id="confirmDeleteBtn" style="padding:10px 25px; background:var(--red); color:white; border:none; border-radius:30px;">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-       const firebaseConfig = {
-  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-  authDomain: "toplink-edu.firebaseapp.com",
-  projectId: "toplink-edu",
-  storageBucket: "toplink-edu.firebasestorage.app",
-  messagingSenderId: "35786900143",
-  appId: "1:35786900143:web:9e612336393d29324c0a5a",
-  measurementId: "G-3VSBS7R11D"
-};
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        auth.onAuthStateChanged((user) => { if (!user) window.location.href = 'super-admin-login.html'; });
-        document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'super-admin-login.html'; });
+        (function() {
+            // 🔥 firebase config
+            const firebaseConfig = {
+                apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+                authDomain: "toplink-edu.firebaseapp.com",
+                projectId: "toplink-edu",
+                storageBucket: "toplink-edu.firebasestorage.app",
+                messagingSenderId: "35786900143",
+                appId: "1:35786900143:web:9e612336393d29324c0a5a",
+                measurementId: "G-3VSBS7R11D"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // 🔐 Auth guard
+            auth.onAuthStateChanged((user) => { if (!user) window.location.href = 'super-admin-login.html'; });
+
+            // logout
+            document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'super-admin-login.html'; });
+
+            // ---------- GLOBAL STATE & REFERENCES ----------
+            let allAdmins = [];         // raw from firestore
+            let schoolsSet = new Set();
+
+            const adminGrid = document.getElementById('adminGridContainer');
+            const noResult = document.getElementById('noResultMsg');
+            const schoolFilter = document.getElementById('schoolFilterSelect');
+            const roleFilter = document.getElementById('roleFilterSelect');
+            const searchInput = document.getElementById('searchInput');
+
+            // ---------- MODAL CONTROLS ----------
+            const inviteModal = document.getElementById('inviteModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+
+            // close buttons
+            document.getElementById('closeInviteModal').onclick = () => inviteModal.style.display = 'none';
+            document.getElementById('closeEditModal').onclick = () => editModal.style.display = 'none';
+            document.getElementById('closeDeleteModal').onclick = () => deleteModal.style.display = 'none';
+            document.getElementById('cancelDeleteBtn').onclick = () => deleteModal.style.display = 'none';
+
+            window.onclick = (e) => { if (e.target === inviteModal) inviteModal.style.display = 'none'; if (e.target === editModal) editModal.style.display = 'none'; if (e.target === deleteModal) deleteModal.style.display = 'none'; };
+
+            // invite button
+            document.getElementById('inviteAdminBtn').addEventListener('click', () => {
+                document.getElementById('inviteName').value = ''; document.getElementById('inviteEmail').value = ''; document.getElementById('invitePhone').value = ''; 
+                document.getElementById('inviteRole').value = 'Principal'; document.getElementById('inviteSchool').value = ''; document.getElementById('inviteStatus').value = 'Pending';
+                inviteModal.style.display = 'flex';
+            });
+
+            // save invite -> firestore add
+            document.getElementById('saveInviteBtn').addEventListener('click', async () => {
+                const name = document.getElementById('inviteName').value.trim();
+                const email = document.getElementById('inviteEmail').value.trim();
+                const phone = document.getElementById('invitePhone').value.trim();
+                const role = document.getElementById('inviteRole').value;
+                const school = document.getElementById('inviteSchool').value.trim();
+                const status = document.getElementById('inviteStatus').value;
+
+                if (!name || !email || !phone || !school) { alert('All required fields must be filled.'); return; }
+
+                try {
+                    const newAdmin = {
+                        name, email, phone, role, school, status,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        initials: name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2)
+                    };
+                    await db.collection('admins').add(newAdmin);
+                    inviteModal.style.display = 'none';
+                    fetchAdmins(); // refresh
+                } catch(e) { alert('Error: '+ e.message); }
+            });
+
+            // ---------- EDIT: populate & show ----------
+            window.openEditModal = (docId, adminData) => {
+                document.getElementById('editDocId').value = docId;
+                document.getElementById('editName').value = adminData.name || '';
+                document.getElementById('editEmail').value = adminData.email || '';
+                document.getElementById('editPhone').value = adminData.phone || '';
+                document.getElementById('editRole').value = adminData.role || 'Principal';
+                document.getElementById('editSchool').value = adminData.school || '';
+                document.getElementById('editStatus').value = adminData.status || 'Active';
+                editModal.style.display = 'flex';
+            };
+
+            document.getElementById('updateAdminBtn').addEventListener('click', async () => {
+                const docId = document.getElementById('editDocId').value;
+                const updated = {
+                    name: document.getElementById('editName').value.trim(),
+                    email: document.getElementById('editEmail').value.trim(),
+                    phone: document.getElementById('editPhone').value.trim(),
+                    role: document.getElementById('editRole').value,
+                    school: document.getElementById('editSchool').value.trim(),
+                    status: document.getElementById('editStatus').value,
+                    initials: document.getElementById('editName').value.trim().split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2)
+                };
+                if (!updated.name || !updated.email || !updated.phone || !updated.school) { alert('Fill required'); return; }
+                try {
+                    await db.collection('admins').doc(docId).update(updated);
+                    editModal.style.display = 'none';
+                    fetchAdmins();
+                } catch(e) { alert(e); }
+            });
+
+            // ---------- DELETE ----------
+            window.openDeleteModal = (docId) => {
+                document.getElementById('deleteDocId').value = docId;
+                deleteModal.style.display = 'flex';
+            };
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+                const docId = document.getElementById('deleteDocId').value;
+                try { await db.collection('admins').doc(docId).delete(); deleteModal.style.display = 'none'; fetchAdmins(); } 
+                catch(e) { alert('Delete error: '+ e); }
+            });
+
+            // ---------- WHATSAPP INTEGRATION ----------
+            window.whatsappRedirect = (phone, adminName, school, role) => {
+                let cleanPhone = phone.replace(/\D/g,'');
+                if (!cleanPhone.startsWith('254') && cleanPhone.startsWith('0')) cleanPhone = '254'+cleanPhone.substring(1);
+                else if (!cleanPhone.startsWith('254')) cleanPhone = '254'+cleanPhone; // simplify
+                const message = `Hello ${adminName},%0a%0aI'm from EDUSKYLARK Super Admin.%0aSchool: *${school}*%0aRole: *${role}*%0a%0aPlease review your admin dashboard and ensure everything is up to date. Kindly confirm your WhatsApp contact. Thank you!`;
+                window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+            };
+
+            // ---------- RENDER ADMIN CARDS (dynamic with WhatsApp & all fields) ----------
+            function renderAdmins(adminsArray) {
+                if (!adminsArray.length) { adminGrid.innerHTML = ''; noResult.style.display = 'block'; return; }
+                noResult.style.display = 'none';
+                let html = '';
+                adminsArray.forEach(admin => {
+                    const { id, data } = admin;
+                    const name = data.name || 'Admin', email = data.email || '', phone = data.phone || '+254700000000';
+                    const role = data.role || 'Admin', school = data.school || 'Unknown School', status = data.status || 'Active';
+                    const initials = data.initials || (name.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2));
+                    const statusClass = status === 'Active' ? 'badge-active' : 'badge-pending';
+                    const waIcon = '<i class="fab fa-whatsapp" style="font-size:15px;"></i>';
+                    
+                    html += `<div class="admin-card">
+                        <div class="admin-avatar">${initials}</div>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3 style="font-size:18px; font-weight:700;">${name}</h3>
+                                <button onclick="whatsappRedirect('${phone}', '${name.replace(/'/g,"\\'")}', '${school.replace(/'/g,"\\'")}', '${role}')" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> WA</button>
+                            </div>
+                            <p style="color:var(--blue); font-size:14px; margin-bottom:5px;"><i class="fas fa-badge"></i> ${role}</p>
+                            <p style="color:#666; font-size:13px;"><i class="fas fa-school"></i> ${school}</p>
+                            <p style="color:#666; font-size:13px;"><i class="fas fa-envelope"></i> ${email}</p>
+                            <p style="color:#666; font-size:13px;"><i class="fas fa-phone-alt"></i> ${phone} <span style="background:#e8f5e9; padding:2px 8px; border-radius:30px; margin-left:5px; font-size:11px;"><i class="fab fa-whatsapp" style="color:#25D366;"></i> WA</span></p>
+                            <div style="margin-top:14px; display:flex; gap:8px; align-items:center;">
+                                <span class="${statusClass}">${status}</span>
+                                <button onclick="openEditModal('${id}', ${JSON.stringify(data).replace(/"/g, '&quot;')})" class="icon-btn" style="color:var(--blue);"><i class="fas fa-edit"></i></button>
+                                <button onclick="openDeleteModal('${id}')" class="icon-btn delete" style="color:var(--red);"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                adminGrid.innerHTML = html;
+            }
+
+            // filter function
+            function filterAndRender() {
+                let filtered = allAdmins;
+                const schoolVal = schoolFilter.value;
+                const roleVal = roleFilter.value;
+                const searchVal = searchInput.value.toLowerCase();
+
+                if (schoolVal !== 'all') filtered = filtered.filter(a => a.data.school === schoolVal);
+                if (roleVal !== 'all') filtered = filtered.filter(a => a.data.role === roleVal);
+                if (searchVal) {
+                    filtered = filtered.filter(a => 
+                        a.data.name?.toLowerCase().includes(searchVal) || 
+                        a.data.email?.toLowerCase().includes(searchVal) ||
+                        a.data.phone?.includes(searchVal)
+                    );
+                }
+                renderAdmins(filtered);
+            }
+
+            // fetch from firestore & update filters
+            async function fetchAdmins() {
+                try {
+                    const snapshot = await db.collection('admins').orderBy('createdAt', 'desc').get();
+                    allAdmins = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+                    
+                    // rebuild school filter
+                    schoolsSet.clear();
+                    allAdmins.forEach(a => { if (a.data.school) schoolsSet.add(a.data.school); });
+                    let schoolOptions = '<option value="all">All Schools</option>';
+                    Array.from(schoolsSet).sort().forEach(s => schoolOptions += `<option>${s}</option>`);
+                    schoolFilter.innerHTML = schoolOptions;
+
+                    filterAndRender();
+                } catch (e) { console.warn('fetch err, but demo: seeding sample?', e); seedSample(); }
+            }
+
+            // seed sample data if empty (for demonstration, avoid blank)
+            async function seedSample() {
+                const sample = [
+                    { name: 'John Mwangi', email: 'john@naa.edu', phone: '+254722111222', role: 'Principal', school: 'Nairobi Adventist Academy', status: 'Active', initials: 'JM', createdAt: new Date() },
+                    { name: 'Alice Odhiambo', email: 'alice@kjs.edu', phone: '+254733333444', role: 'Academic Admin', school: 'Kisumu Junior School', status: 'Active', initials: 'AO', createdAt: new Date() },
+                    { name: 'Mohammed Kassim', email: 'mk@mha.ac.ke', phone: '+254711555666', role: 'Finance Admin', school: 'Mombasa Hill Academy', status: 'Pending', initials: 'MK', createdAt: new Date() }
+                ];
+                for (let s of sample) {
+                    await db.collection('admins').add(s);
+                }
+                fetchAdmins();
+            }
+
+            // event listeners filter
+            schoolFilter.addEventListener('change', filterAndRender);
+            roleFilter.addEventListener('change', filterAndRender);
+            searchInput.addEventListener('input', filterAndRender);
+
+            // initial load
+            fetchAdmins();
+
+            // expose to window for inline onclick
+            window.openEditModal = window.openEditModal;
+            window.openDeleteModal = window.openDeleteModal;
+            window.whatsappRedirect = window.whatsappRedirect;
+        })();
     </script>
 </body>
 </html>
