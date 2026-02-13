@@ -5,25 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDUSKYLARK · Subscriptions</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK 8.10.0 (exact match with auth page) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        /* Same CSS as previous pages - consistent design */
-        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --white: #ffffff; --light-blue: #ecf0f1; --green: #27ae60; --purple: #9b59b6; }
+        /* ------------------------------------------------------------
+           EDUSKYLARK · SUBSCRIPTION MANAGEMENT – AUTH-INTEGRATED
+           Dynamic Firestore data, real-time stats, edit modals
+        ------------------------------------------------------------ */
+        :root { 
+            --blue: #3498db; 
+            --orange: #e67e22; 
+            --red: #e74c3c; 
+            --dark-blue: #2c3e50; 
+            --white: #ffffff; 
+            --light-blue: #ecf0f1; 
+            --green: #27ae60; 
+            --purple: #9b59b6; 
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); min-height: 100vh; color: var(--dark-blue); }
         .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
         .bubble { position: absolute; border-radius: 50%; background: rgba(52,152,219,0.1); animation: float 15s infinite ease-in-out; }
         @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
-        .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; }
+        
+        .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; position: sticky; top: 0; z-index: 100; }
         .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
         .logo-section { display: flex; align-items: center; gap: 20px; }
         .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .logo img { width: 45px; height: 45px; object-fit: contain; }
         .church-info h1 { font-size: 24px; font-weight: 700; }
+        .church-info p { font-size: 14px; color: var(--blue); }
         .admin-badge { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #f1c40f, #f39c12); color: var(--dark-blue); padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
-        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
         
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 16px; }
+        .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
+        .page-header h2 i { color: var(--blue); background: rgba(52,152,219,0.1); padding: 12px; border-radius: 18px; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue)); 
+            color: white; border: none; padding: 14px 32px; border-radius: 40px; 
+            font-weight: 600; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 18px rgba(30,95,135,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(30,95,135,0.4); }
+        
+        /* plan cards */
         .plan-cards {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-bottom: 40px;
         }
@@ -31,132 +62,798 @@
             background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
             border-top: 5px solid; transition: transform 0.3s; position: relative;
         }
-        .plan-detail-card:hover { transform: translateY(-5px); }
+        .plan-detail-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
         .plan-detail-card.basic { border-color: var(--blue); }
         .plan-detail-card.standard { border-color: var(--orange); }
         .plan-detail-card.premium { border-color: var(--green); }
+        .plan-detail-card .popular-tag {
+            position: absolute; top: -12px; right: 20px; background: var(--orange); color: white;
+            padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;
+        }
+        .plan-price { font-size: 36px; font-weight: 800; margin-bottom: 20px; }
+        .plan-price span { font-size: 16px; font-weight: 400; color: #666; }
+        .plan-features { list-style: none; margin-bottom: 25px; }
+        .plan-features li { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; color: #555; }
+        .plan-features i { color: var(--green); font-size: 14px; }
+        .plan-stats { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .school-count {
+            background: rgba(52,152,219,0.1); padding: 8px 16px; border-radius: 20px; font-size: 13px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .edit-plan-btn {
+            border: none; padding: 8px 24px; border-radius: 20px; font-weight: 600; cursor: pointer;
+            color: white; transition: 0.2s;
+        }
+        .edit-plan-btn:hover { opacity: 0.85; transform: scale(0.98); }
         
-        .subscription-table { background: white; border-radius: 20px; padding: 30px; margin-top: 20px; }
+        /* filter bar */
+        .filter-bar {
+            background: white; border-radius: 60px; padding: 12px 28px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.8);
+        }
+        .filter-select {
+            padding: 10px 36px 10px 20px; border: 2px solid #e9ecef; border-radius: 40px;
+            font-size: 14px; font-weight: 500; color: #1e2e3f; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 16px center; cursor: pointer;
+        }
+        .filter-select:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+        
+        /* subscriptions table */
+        .subscription-table {
+            background: white; border-radius: 24px; padding: 28px; 
+            box-shadow: 0 20px 40px -12px rgba(0,20,30,0.12); border: 1px solid rgba(0,0,0,0.02);
+        }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #e9ecef; }
-        td { padding: 15px 10px; border-bottom: 1px solid #f1f1f1; }
+        th { text-align: left; padding: 16px 12px; font-weight: 600; color: #284a5c; border-bottom: 2px solid rgba(52,152,219,0.16); }
+        td { padding: 18px 12px; border-bottom: 1px solid #ecf2f7; vertical-align: middle; }
+        .school-info { display: flex; align-items: center; gap: 12px; }
+        .school-avatar {
+            width: 44px; height: 44px; background: linear-gradient(145deg, #f0f7fd, #e6f0f9);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #1f4e6a;
+        }
+        .renewal-badge { padding: 6px 16px; border-radius: 40px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .renewal-urgent { background: rgba(231,76,60,0.12); color: #b3341c; }
+        .renewal-warning { background: rgba(230,126,34,0.12); color: #a3511c; }
+        .renewal-ok { background: rgba(39,174,96,0.12); color: #0f6638; }
+        .status-active { background: rgba(39,174,96,0.12); color: #0f6638; }
+        .status-pending { background: rgba(230,126,34,0.12); color: #a3511c; }
+        .status-expired { background: rgba(44,62,80,0.08); color: #2c3e50; }
         
-        .renewal-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .renewal-urgent { background: rgba(231,76,60,0.15); color: var(--red); }
-        .renewal-warning { background: rgba(230,126,34,0.15); color: var(--orange); }
-        .renewal-ok { background: rgba(39,174,96,0.15); color: var(--green); }
+        .action-btn {
+            background: transparent; border: 1px solid #d4e1ec; padding: 8px 16px; border-radius: 30px;
+            font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;
+            transition: 0.1s; cursor: pointer; color: #2e4d66;
+        }
+        .action-btn:hover { background: #e7f1fa; border-color: var(--blue); color: #1f5b87; }
+        
+        .empty-message { text-align: center; padding: 60px 20px; color: #4d6878; }
+        .empty-message i { font-size: 48px; color: #99b8c9; margin-bottom: 16px; }
+        
+        /* modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; border-radius: 28px; padding: 40px; max-width: 500px; width: 90%;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .modal-header h3 { font-size: 24px; font-weight: 700; color: var(--dark-blue); }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+        .modal-form .form-group { margin-bottom: 20px; }
+        .modal-form label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark-blue); }
+        .modal-form input, .modal-form select {
+            width: 100%; padding: 14px 18px; border: 2px solid #e9ecef; border-radius: 14px;
+            font-size: 15px; transition: all 0.2s;
+        }
+        .modal-form input:focus, .modal-form select:focus {
+            border-color: var(--blue); outline: none; box-shadow: 0 0 0 4px rgba(52,152,219,0.1);
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 30px; }
+        
+        /* loading overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none;
+            align-items: center; justify-content: center; z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top: 4px solid white; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-toast {
+            position: fixed; top: 20px; right: 20px; background: #e74c3c; color: white;
+            padding: 12px 24px; border-radius: 30px; font-weight: 500; box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none; align-items: center; gap: 8px; z-index: 10000; animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
-    <div class="background-animation"><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div></div>
+    <!-- Loading overlay -->
+    <div id="loadingOverlay">
+        <div style="background: white; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; align-items: center;">
+            <div class="spinner" style="border-top-color: #3498db;"></div>
+            <p style="color: #2c3e50; font-weight: 500; margin-top: 16px;">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Error toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
+    <!-- Edit Subscription Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit" style="color: var(--blue); margin-right: 10px;"></i> Edit Subscription</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editSubscriptionForm" class="modal-form">
+                <input type="hidden" id="editSubscriptionId">
+                <input type="hidden" id="editSchoolId">
+                
+                <div class="form-group">
+                    <label><i class="fas fa-school"></i> School Name</label>
+                    <input type="text" id="editSchoolName" readonly style="background: #f8f9fa;">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Plan</label>
+                    <select id="editPlan" required>
+                        <option value="basic">Basic (KES 5,000/mo)</option>
+                        <option value="standard">Standard (KES 12,000/mo)</option>
+                        <option value="premium">Premium (KES 25,000/mo)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Start Date</label>
+                    <input type="date" id="editStartDate" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-flag"></i> Status</label>
+                    <select id="editStatus" required>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="expired">Expired</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-money-bill"></i> Amount (KES)</label>
+                    <input type="number" id="editAmount" required min="0" step="100">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()" style="padding: 12px 24px; border-radius: 30px; border: 2px solid #e9ecef; background: white; font-weight: 600;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 28px;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Plan Modal (for updating plan definitions) -->
+    <div id="editPlanModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-box" style="color: var(--blue); margin-right: 10px;"></i> Edit Plan</h3>
+                <button class="close-btn" onclick="closePlanModal()">&times;</button>
+            </div>
+            <form id="editPlanForm" class="modal-form">
+                <input type="hidden" id="editPlanName">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Plan Name</label>
+                    <input type="text" id="editPlanDisplayName" readonly style="background: #f8f9fa;">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-money-bill"></i> Price (KES/month)</label>
+                    <input type="number" id="editPlanPrice" required min="0" step="100">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-list"></i> Features (one per line)</label>
+                    <textarea id="editPlanFeatures" rows="5" style="width: 100%; padding: 14px 18px; border: 2px solid #e9ecef; border-radius: 14px;"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closePlanModal()" style="padding: 12px 24px; border-radius: 30px; border: 2px solid #e9ecef; background: white;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 28px;">Update Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="background-animation">
+        <div class="bubble" style="width:80px; height:80px; top:10%; left:10%;"></div>
+        <div class="bubble" style="width:120px; height:120px; top:60%; right:15%; background:rgba(230,126,34,0.1);"></div>
+        <div class="bubble" style="width:60px; height:60px; bottom:20%; left:20%; background:rgba(231,76,60,0.1);"></div>
+        <div class="bubble" style="width:100px; height:100px; top:30%; right:25%; background:rgba(44,62,80,0.1);"></div>
+    </div>
 
     <header class="header">
         <div class="header-content">
             <div class="logo-section">
-                <div class="logo"><img src="logo.png" alt="EDUSKYLARK"></div>
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
                 <div class="church-info">
                     <h1>EDUSKYLARK · SUBSCRIPTIONS <span class="admin-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
                     <p>Manage Plans & Billing</p>
                 </div>
             </div>
             <div style="display:flex; align-items:center; gap:20px;">
-                <span style="color:white;" id="userNameDisplay">Super Admin</span>
-                <button class="logout-btn" id="logoutBtn" style="padding:8px 16px; background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); border-radius:30px; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <span style="color:white; font-weight: 500;" id="userNameDisplay">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="padding:8px 20px; background:rgba(231,76,60,0.1); border:1.5px solid var(--red); color:white; border-radius:40px; cursor:pointer; display:flex; align-items:center; gap:8px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
     </header>
 
     <main class="dashboard-container">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-            <h2 style="font-size:28px; display:flex; align-items:center; gap:15px;"><i class="fas fa-credit-card" style="color:var(--blue);"></i> Subscription Plans</h2>
-            <button class="btn-primary" style="padding:12px 25px; background:linear-gradient(135deg, var(--blue), var(--dark-blue)); color:white; border:none; border-radius:30px; font-weight:600; cursor:pointer;" onclick="alert('Create new plan modal')"><i class="fas fa-plus"></i> Create Plan</button>
+        <div class="page-header">
+            <h2><i class="fas fa-credit-card"></i> Subscription Plans & Billing</h2>
+            <button class="btn-primary" onclick="alert('Plan creation wizard - coming soon')">
+                <i class="fas fa-plus-circle"></i> Create New Plan
+            </button>
         </div>
 
-        <div class="plan-cards">
-            <div class="plan-detail-card basic">
-                <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Basic</h3>
-                <div style="font-size:36px; font-weight:800; color:var(--blue); margin-bottom:20px;">KES 5K<span style="font-size:16px; font-weight:400; color:#666;">/mo</span></div>
-                <ul style="list-style:none; margin-bottom:25px;">
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Up to 300 students</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> 5 staff accounts</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Basic analytics</li>
-                </ul>
-                <div style="display:flex; gap:10px;">
-                    <span style="background:rgba(52,152,219,0.1); padding:8px 16px; border-radius:20px; font-size:13px;"><i class="fas fa-school"></i> 8 schools</span>
-                    <button style="background:var(--blue); color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Edit</button>
-                </div>
-            </div>
-            <div class="plan-detail-card standard">
-                <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Standard</h3>
-                <div style="font-size:36px; font-weight:800; color:var(--orange); margin-bottom:20px;">KES 12K<span style="font-size:16px; font-weight:400; color:#666;">/mo</span></div>
-                <ul style="list-style:none; margin-bottom:25px;">
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Up to 1,000 students</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> 15 staff accounts</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Advanced analytics</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Priority support</li>
-                </ul>
-                <div style="display:flex; gap:10px;">
-                    <span style="background:rgba(230,126,34,0.1); padding:8px 16px; border-radius:20px; font-size:13px;"><i class="fas fa-school"></i> 12 schools</span>
-                    <button style="background:var(--orange); color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Edit</button>
-                </div>
-            </div>
-            <div class="plan-detail-card premium">
-                <span style="position:absolute; top:-12px; right:20px; background:var(--orange); color:white; padding:4px 16px; border-radius:20px; font-size:12px; font-weight:700;">POPULAR</span>
-                <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Premium</h3>
-                <div style="font-size:36px; font-weight:800; color:var(--green); margin-bottom:20px;">KES 25K<span style="font-size:16px; font-weight:400; color:#666;">/mo</span></div>
-                <ul style="list-style:none; margin-bottom:25px;">
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Unlimited students</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Unlimited staff</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> Real-time analytics</li>
-                    <li style="margin-bottom:12px;"><i class="fas fa-check" style="color:var(--green); margin-right:10px;"></i> 24/7 support</li>
-                </ul>
-                <div style="display:flex; gap:10px;">
-                    <span style="background:rgba(39,174,96,0.1); padding:8px 16px; border-radius:20px; font-size:13px;"><i class="fas fa-school"></i> 4 schools</span>
-                    <button style="background:var(--green); color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Edit</button>
-                </div>
+        <!-- Dynamic Plan Cards - Loaded from Firestore -->
+        <div class="plan-cards" id="planCardsContainer">
+            <!-- Dynamically populated from firestore -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-pulse" style="font-size: 32px; color: var(--blue);"></i>
+                <p style="margin-top: 16px; color: #556b7c;">Loading subscription plans...</p>
             </div>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <label style="font-weight: 600; color: var(--dark-blue);"><i class="fas fa-filter"></i> Status:</label>
+            <select class="filter-select" id="statusFilter">
+                <option value="all">All Subscriptions</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="expired">Expired</option>
+                <option value="expiring_soon">Expiring Soon (≤7 days)</option>
+            </select>
+            
+            <label style="font-weight: 600; color: var(--dark-blue); margin-left: 16px;"><i class="fas fa-tag"></i> Plan:</label>
+            <select class="filter-select" id="planFilter">
+                <option value="all">All Plans</option>
+                <option value="basic">Basic</option>
+                <option value="standard">Standard</option>
+                <option value="premium">Premium</option>
+            </select>
+        </div>
+
+        <!-- Subscriptions Table - Dynamic from Firestore -->
         <div class="subscription-table">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
                 <h3 style="font-size:22px; font-weight:700;"><i class="fas fa-list" style="color:var(--blue); margin-right:10px;"></i> Active Subscriptions</h3>
-                <div>
-                    <select class="filter-select" style="padding:10px 20px; border-radius:30px; border:2px solid #e9ecef;">
-                        <option>All Schools</option>
-                        <option>Expiring Soon</option>
-                        <option>Overdue</option>
-                    </select>
-                </div>
+                <span style="background: rgba(52,152,219,0.1); padding: 8px 20px; border-radius: 40px; font-weight: 600;" id="subscriptionCount">Loading...</span>
             </div>
-            <table>
-                <thead>
-                    <tr><th>School</th><th>Plan</th><th>Amount</th><th>Start Date</th><th>Renewal</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Nairobi Adventist Academy</td><td>Premium</td><td>KES 25,000</td><td>12 Mar 2026</td><td>12 Apr 2026</td><td><span class="renewal-badge renewal-ok">Active</span></td><td><button style="color:var(--blue); background:none; border:none; cursor:pointer;"><i class="fas fa-edit"></i></button></td></tr>
-                    <tr><td>Kisumu Junior School</td><td>Standard</td><td>KES 12,000</td><td>10 Mar 2026</td><td>10 Apr 2026</td><td><span class="renewal-badge renewal-ok">Active</span></td><td><button style="color:var(--blue); background:none; border:none;"><i class="fas fa-edit"></i></button></td></tr>
-                    <tr><td>Mombasa Hill Academy</td><td>Basic</td><td>KES 5,000</td><td>8 Mar 2026</td><td>8 Apr 2026</td><td><span class="renewal-badge renewal-warning">Pending</span></td><td><button style="color:var(--blue);"><i class="fas fa-edit"></i></button></td></tr>
-                    <tr><td>Eldoret Bright Scholars</td><td>Premium</td><td>KES 25,000</td><td>5 Mar 2026</td><td>5 Apr 2026</td><td><span class="renewal-badge renewal-ok">Active</span></td><td><button style="color:var(--blue);"><i class="fas fa-edit"></i></button></td></tr>
-                    <tr><td>Nakuru Central School</td><td>Standard</td><td>KES 12,000</td><td>1 Feb 2026</td><td>1 Apr 2026</td><td><span class="renewal-badge renewal-urgent">Expiring (7d)</span></td><td><button style="color:var(--blue);"><i class="fas fa-edit"></i></button></td></tr>
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>School</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Start Date</th>
+                            <th>Renewal</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subscriptionTableBody">
+                        <!-- Dynamic rows from Firestore -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptySubscriptions" style="display: none;" class="empty-message">
+                <i class="fas fa-credit-card"></i>
+                <h3 style="margin-top: 12px;">No subscriptions found</h3>
+                <p style="color: #5f7e94;">Try adjusting your filters or onboard a new school.</p>
+            </div>
         </div>
     </main>
 
     <script>
-       const firebaseConfig = {
-  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-  authDomain: "toplink-edu.firebaseapp.com",
-  projectId: "toplink-edu",
-  storageBucket: "toplink-edu.firebasestorage.app",
-  messagingSenderId: "35786900143",
-  appId: "1:35786900143:web:9e612336393d29324c0a5a",
-  measurementId: "G-3VSBS7R11D"
-};
-        firebase.initializeApp(firebaseConfig);
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
+        // --------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        auth.onAuthStateChanged((user) => { if (!user) window.location.href = 'super-admin-login.html'; });
-        document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'super-admin-login.html'; });
+        const db = firebase.firestore();
+
+        // --------------------------------------------------------------
+        // GLOBAL STATE
+        // --------------------------------------------------------------
+        let allSubscriptions = [];
+        let allSchools = [];
+        let currentFilterStatus = 'all';
+        let currentFilterPlan = 'all';
+
+        // DOM Elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // --------------------------------------------------------------
+        // HELPER FUNCTIONS
+        // --------------------------------------------------------------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        function showSuccess(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.style.background = '#27ae60';
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            document.body.appendChild(toast);
+            toast.style.display = 'flex';
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function formatCurrency(amount) {
+            return `KES ${Number(amount).toLocaleString()}`;
+        }
+
+        // --------------------------------------------------------------
+        // AUTH GUARD – SUPER ADMIN VERIFICATION
+        // --------------------------------------------------------------
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.replace('super-admin-login.html');
+                return;
+            }
+
+            try {
+                loadingOverlay.style.display = 'flex';
+                
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || role === 'superadmin' || userData.isSuperAdmin === true || userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(() => {});
+
+                const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+                userNameDisplay.textContent = displayName;
+
+                // Load all data
+                await loadSchools();
+                await loadSubscriptions();
+                await loadPlanStats();
+                
+                loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error('Auth error:', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
+                setTimeout(() => window.location.href = 'super-admin-login.html', 2000);
+            }
+        });
+
+        // --------------------------------------------------------------
+        // LOAD SCHOOLS (for mapping schoolId -> school name)
+        // --------------------------------------------------------------
+        async function loadSchools() {
+            try {
+                const snapshot = await db.collection('schools').get();
+                allSchools = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (err) {
+                console.error('Error loading schools:', err);
+                allSchools = [];
+            }
+        }
+
+        // --------------------------------------------------------------
+        // LOAD SUBSCRIPTIONS FROM FIRESTORE
+        // --------------------------------------------------------------
+        async function loadSubscriptions() {
+            try {
+                let query = db.collection('subscriptions')
+                    .orderBy('createdAt', 'desc');
+                
+                const snapshot = await query.get();
+                
+                if (snapshot.empty) {
+                    allSubscriptions = [];
+                } else {
+                    allSubscriptions = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                }
+                
+                applyFilters();
+                
+            } catch (err) {
+                console.error('Error loading subscriptions:', err);
+                showError('Failed to load subscriptions: ' + err.message);
+                document.getElementById('subscriptionTableBody').innerHTML = 
+                    `<tr><td colspan="7" class="empty-message">
+                        <i class="fas fa-exclamation-triangle" style="color: var(--red);"></i>
+                        <p>Error loading subscriptions. Please refresh.</p>
+                    </td></tr>`;
+            }
+        }
+
+        // --------------------------------------------------------------
+        // LOAD PLAN STATS (count of schools per plan)
+        // --------------------------------------------------------------
+        async function loadPlanStats() {
+            try {
+                // Get all schools to count by plan
+                const schoolsSnap = await db.collection('schools').get();
+                const schools = schoolsSnap.docs.map(doc => doc.data());
+                
+                const basicCount = schools.filter(s => s.plan === 'basic').length;
+                const standardCount = schools.filter(s => s.plan === 'standard').length;
+                const premiumCount = schools.filter(s => s.plan === 'premium').length;
+                
+                renderPlanCards(basicCount, standardCount, premiumCount);
+                
+            } catch (err) {
+                console.error('Error loading plan stats:', err);
+                // Still render with zeros
+                renderPlanCards(0, 0, 0);
+            }
+        }
+
+        // --------------------------------------------------------------
+        // RENDER PLAN CARDS
+        // --------------------------------------------------------------
+        function renderPlanCards(basicCount = 0, standardCount = 0, premiumCount = 0) {
+            const container = document.getElementById('planCardsContainer');
+            
+            container.innerHTML = `
+                <div class="plan-detail-card basic">
+                    <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Basic</h3>
+                    <div class="plan-price" style="color: var(--blue);">KES 5,000<span>/mo</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Up to 300 students</li>
+                        <li><i class="fas fa-check"></i> 5 staff accounts</li>
+                        <li><i class="fas fa-check"></i> Basic analytics</li>
+                        <li><i class="fas fa-check"></i> Email support</li>
+                    </ul>
+                    <div class="plan-stats">
+                        <span class="school-count"><i class="fas fa-school"></i> ${basicCount} schools</span>
+                        <button class="edit-plan-btn" style="background: var(--blue);" onclick="openPlanModal('basic', 'Basic', 5000, 'Up to 300 students\\n5 staff accounts\\nBasic analytics\\nEmail support')">Edit Plan</button>
+                    </div>
+                </div>
+                <div class="plan-detail-card standard">
+                    <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Standard</h3>
+                    <div class="plan-price" style="color: var(--orange);">KES 12,000<span>/mo</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Up to 1,000 students</li>
+                        <li><i class="fas fa-check"></i> 15 staff accounts</li>
+                        <li><i class="fas fa-check"></i> Advanced analytics</li>
+                        <li><i class="fas fa-check"></i> Priority support</li>
+                        <li><i class="fas fa-check"></i> Custom branding</li>
+                    </ul>
+                    <div class="plan-stats">
+                        <span class="school-count" style="background: rgba(230,126,34,0.1);"><i class="fas fa-school"></i> ${standardCount} schools</span>
+                        <button class="edit-plan-btn" style="background: var(--orange);" onclick="openPlanModal('standard', 'Standard', 12000, 'Up to 1,000 students\\n15 staff accounts\\nAdvanced analytics\\nPriority support\\nCustom branding')">Edit Plan</button>
+                    </div>
+                </div>
+                <div class="plan-detail-card premium">
+                    <span class="popular-tag">POPULAR</span>
+                    <h3 style="font-size:24px; font-weight:700; margin-bottom:10px;">Premium</h3>
+                    <div class="plan-price" style="color: var(--green);">KES 25,000<span>/mo</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Unlimited students</li>
+                        <li><i class="fas fa-check"></i> Unlimited staff</li>
+                        <li><i class="fas fa-check"></i> Real-time analytics</li>
+                        <li><i class="fas fa-check"></i> 24/7 priority support</li>
+                        <li><i class="fas fa-check"></i> API access</li>
+                        <li><i class="fas fa-check"></i> Dedicated account manager</li>
+                    </ul>
+                    <div class="plan-stats">
+                        <span class="school-count" style="background: rgba(39,174,96,0.1);"><i class="fas fa-school"></i> ${premiumCount} schools</span>
+                        <button class="edit-plan-btn" style="background: var(--green);" onclick="openPlanModal('premium', 'Premium', 25000, 'Unlimited students\\nUnlimited staff\\nReal-time analytics\\n24/7 priority support\\nAPI access\\nDedicated account manager')">Edit Plan</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --------------------------------------------------------------
+        // FILTER SUBSCRIPTIONS
+        // --------------------------------------------------------------
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const planFilter = document.getElementById('planFilter').value;
+            
+            let filtered = [...allSubscriptions];
+            
+            // Status filter
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'expiring_soon') {
+                    const now = new Date();
+                    filtered = filtered.filter(sub => {
+                        if (!sub.startDate) return false;
+                        const startDate = sub.startDate.toDate ? sub.startDate.toDate() : new Date(sub.startDate);
+                        const renewalDate = new Date(startDate);
+                        renewalDate.setMonth(renewalDate.getMonth() + 1);
+                        const daysLeft = Math.ceil((renewalDate - now) / (1000 * 60 * 60 * 24));
+                        return daysLeft > 0 && daysLeft <= 7 && sub.status === 'active';
+                    });
+                } else {
+                    filtered = filtered.filter(sub => sub.status === statusFilter);
+                }
+            }
+            
+            // Plan filter
+            if (planFilter !== 'all') {
+                filtered = filtered.filter(sub => sub.plan === planFilter);
+            }
+            
+            renderSubscriptionsTable(filtered);
+        }
+
+        // --------------------------------------------------------------
+        // RENDER SUBSCRIPTIONS TABLE
+        // --------------------------------------------------------------
+        function renderSubscriptionsTable(subscriptions) {
+            const tbody = document.getElementById('subscriptionTableBody');
+            const emptyEl = document.getElementById('emptySubscriptions');
+            const countEl = document.getElementById('subscriptionCount');
+            
+            countEl.textContent = `${subscriptions.length} subscription${subscriptions.length !== 1 ? 's' : ''}`;
+            
+            if (!subscriptions || subscriptions.length === 0) {
+                tbody.innerHTML = '';
+                emptyEl.style.display = 'block';
+                return;
+            }
+            
+            emptyEl.style.display = 'none';
+            
+            let html = '';
+            subscriptions.forEach(sub => {
+                // Find school name
+                const school = allSchools.find(s => s.id === sub.schoolId);
+                const schoolName = school?.name || 'Unknown School';
+                const schoolInitials = schoolName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+                
+                // Format dates
+                const startDate = sub.startDate ? formatDate(sub.startDate) : 'N/A';
+                
+                // Calculate renewal date (30 days after start)
+                let renewalDate = 'N/A';
+                let daysLeft = 0;
+                let statusClass = 'renewal-ok';
+                let statusText = sub.status || 'active';
+                
+                if (sub.startDate && sub.status === 'active') {
+                    const start = sub.startDate.toDate ? sub.startDate.toDate() : new Date(sub.startDate);
+                    const renewal = new Date(start);
+                    renewal.setMonth(renewal.getMonth() + 1);
+                    renewalDate = formatDate(renewal);
+                    
+                    const now = new Date();
+                    daysLeft = Math.ceil((renewal - now) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysLeft <= 3) statusClass = 'renewal-urgent';
+                    else if (daysLeft <= 7) statusClass = 'renewal-warning';
+                    else statusClass = 'renewal-ok';
+                    
+                    statusText = daysLeft > 0 ? `${daysLeft} days` : 'Expired';
+                }
+                
+                // Status badge
+                let statusBadge = '';
+                if (sub.status === 'active') statusBadge = '<span class="renewal-badge renewal-ok">Active</span>';
+                else if (sub.status === 'pending') statusBadge = '<span class="renewal-badge renewal-warning">Pending</span>';
+                else if (sub.status === 'expired') statusBadge = '<span class="renewal-badge renewal-urgent">Expired</span>';
+                else statusBadge = `<span class="renewal-badge">${sub.status}</span>`;
+                
+                html += `<tr>
+                    <td>
+                        <div class="school-info">
+                            <div class="school-avatar">${schoolInitials}</div>
+                            <div style="font-weight: 600;">${schoolName}</div>
+                        </div>
+                    </td>
+                    <td><span style="font-weight: 600; text-transform: capitalize;">${sub.plan || 'Basic'}</span></td>
+                    <td style="font-weight: 600;">${formatCurrency(sub.amount || 0)}</td>
+                    <td>${startDate}</td>
+                    <td>
+                        ${renewalDate}
+                        ${daysLeft > 0 && daysLeft <= 7 && sub.status === 'active' ? 
+                            `<span style="margin-left: 8px;" class="renewal-badge ${statusClass}">${daysLeft}d</span>` : ''}
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="action-btn" onclick="openEditModal('${sub.id}', '${sub.schoolId}', '${schoolName}', '${sub.plan || 'basic'}', '${sub.startDate ? sub.startDate.toDate().toISOString().split('T')[0] : ''}', '${sub.status || 'active'}', ${sub.amount || 0})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // --------------------------------------------------------------
+        // FILTER EVENT LISTENERS
+        // --------------------------------------------------------------
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('planFilter').addEventListener('change', applyFilters);
+
+        // --------------------------------------------------------------
+        // LOGOUT
+        // --------------------------------------------------------------
+        logoutBtn.addEventListener('click', async () => {
+            loadingOverlay.style.display = 'flex';
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+
+        // --------------------------------------------------------------
+        // EDIT SUBSCRIPTION MODAL
+        // --------------------------------------------------------------
+        window.openEditModal = function(subId, schoolId, schoolName, plan, startDate, status, amount) {
+            document.getElementById('editSubscriptionId').value = subId;
+            document.getElementById('editSchoolId').value = schoolId;
+            document.getElementById('editSchoolName').value = schoolName;
+            document.getElementById('editPlan').value = plan.toLowerCase();
+            document.getElementById('editStartDate').value = startDate;
+            document.getElementById('editStatus').value = status;
+            document.getElementById('editAmount').value = amount;
+            
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('editModal').style.display = 'none';
+        };
+
+        // Save subscription changes
+        document.getElementById('editSubscriptionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const subId = document.getElementById('editSubscriptionId').value;
+            const plan = document.getElementById('editPlan').value;
+            const startDate = document.getElementById('editStartDate').value;
+            const status = document.getElementById('editStatus').value;
+            const amount = parseInt(document.getElementById('editAmount').value);
+            
+            loadingOverlay.style.display = 'flex';
+            
+            try {
+                await db.collection('subscriptions').doc(subId).update({
+                    plan,
+                    startDate: firebase.firestore.Timestamp.fromDate(new Date(startDate)),
+                    status,
+                    amount,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Also update the school's plan and status
+                const schoolId = document.getElementById('editSchoolId').value;
+                await db.collection('schools').doc(schoolId).update({
+                    plan,
+                    status: status === 'active' ? 'active' : (status === 'pending' ? 'pending' : 'suspended'),
+                    subscriptionStatus: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showSuccess('Subscription updated successfully');
+                closeEditModal();
+                
+                // Reload data
+                await loadSubscriptions();
+                await loadPlanStats();
+                
+            } catch (err) {
+                showError('Update failed: ' + err.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // --------------------------------------------------------------
+        // EDIT PLAN MODAL
+        // --------------------------------------------------------------
+        window.openPlanModal = function(planId, planName, currentPrice, featuresText) {
+            document.getElementById('editPlanName').value = planId;
+            document.getElementById('editPlanDisplayName').value = planName;
+            document.getElementById('editPlanPrice').value = currentPrice;
+            document.getElementById('editPlanFeatures').value = featuresText;
+            
+            document.getElementById('editPlanModal').style.display = 'flex';
+        };
+
+        window.closePlanModal = function() {
+            document.getElementById('editPlanModal').style.display = 'none';
+        };
+
+        // Save plan changes - updates plan definitions in Firestore
+        document.getElementById('editPlanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const planId = document.getElementById('editPlanName').value;
+            const price = parseInt(document.getElementById('editPlanPrice').value);
+            const features = document.getElementById('editPlanFeatures').value.split('\n').filter(f => f.trim() !== '');
+            
+            loadingOverlay.style.display = 'flex';
+            
+            try {
+                // Update plan in 'plans' collection
+                await db.collection('plans').doc(planId).set({
+                    name: planId.charAt(0).toUpperCase() + planId.slice(1),
+                    price,
+                    features,
+                    currency: 'KES',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                
+                showSuccess('Plan updated successfully');
+                closePlanModal();
+                
+                // Reload plan stats
+                await loadPlanStats();
+                
+            } catch (err) {
+                showError('Plan update failed: ' + err.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            const editModal = document.getElementById('editModal');
+            const planModal = document.getElementById('editPlanModal');
+            if (event.target === editModal) closeEditModal();
+            if (event.target === planModal) closePlanModal();
+        });
     </script>
 </body>
 </html>
