@@ -863,7 +863,7 @@
                 </div>
                 <div class="user-info">
                     <div class="user-name" id="userName">Loading...</div>
-                    <div class="user-role"><i class="fas fa-user-shield"></i> <span id="userRole">School Administrator</span></div>
+                    <div class="user-role"><i class="fas fa-user-shield"></i> <span id="userRoleDisplay">School Administrator</span></div>
                 </div>
                 <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
@@ -1168,7 +1168,7 @@
     </div>
 
     <script>
-        // Firebase Config
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -1178,7 +1178,6 @@
             appId: "1:35786900143:web:9e612336393d29324c0a5a"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -1186,11 +1185,10 @@
         // Enable offline persistence
         db.enablePersistence().catch(console.log);
 
-        // DOM Elements
+        // ========== DOM ELEMENTS ==========
         const profilePhoto = document.getElementById('profilePhoto');
         const uploadIndicator = document.getElementById('uploadIndicator');
         const userName = document.getElementById('userName');
-        const userRole = document.getElementById('userRole');
         const logoutBtn = document.getElementById('logoutBtn');
         const logoutMobile = document.getElementById('logoutMobile');
         const greeting = document.getElementById('greeting');
@@ -1210,164 +1208,175 @@
         const mobileUserInfo = document.getElementById('mobileUserInfo');
         const schoolNameHeader = document.getElementById('schoolNameHeader');
         const welcomeSchoolBadge = document.getElementById('welcomeSchoolBadge');
+        const userRoleDisplay = document.getElementById('userRoleDisplay');
+        const profilePhotoContainer = document.getElementById('profilePhotoContainer');
 
-        // State
+        // ========== STATE ==========
         let currentUser = null;
-        let userData = null;
+        let adminData = null;      // from 'admins' collection (not users)
         let schoolData = null;
         let selectedFile = null;
 
-        // Auth State Listener
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
-                await loadUserData(user);
+                await loadAdminData(user); // 🔥 Load from 'admins' collection using authUid
+                if (!adminData) {
+                    console.error('No admin record found for this user');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
                 setupEventListeners();
                 updateDateTime();
                 setInterval(updateDateTime, 1000);
-                await loadSchoolData();
-                await loadDashboardStats();
+                await loadSchoolData();      // Load school from adminData.school (string) or schoolId
+                await loadDashboardStats();  // Load counts from students, staff, classes
             } else {
                 window.location.href = 'school-login.html';
             }
         });
 
-        // Load User Data and Verify School Admin Role
-        async function loadUserData(user) {
+        // ========== LOAD ADMIN DATA FROM 'admins' COLLECTION ==========
+        async function loadAdminData(user) {
             try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (userDoc.exists) {
-                    userData = userDoc.data();
+                // Query admins collection where authUid matches current user uid
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
                     
-                    // Verify school_admin role
-                    const isSchoolAdmin = userData.role === 'school_admin' || userData.role === 'school-admin' || userData.role === 'admin';
+                    // Update UI with admin data
+                    const fullName = adminData.name || 'School Administrator';
+                    userName.textContent = fullName;
+                    userRoleDisplay.textContent = adminData.role || 'School Administrator';
+                    previewInitials.textContent = getInitials(fullName);
                     
-                    if (!isSchoolAdmin) {
-                        console.error('User is not a school admin');
-                        await auth.signOut();
-                        window.location.href = 'school-login.html';
-                        return;
-                    }
-
-                    // Check if user has an assigned school
-                    if (!userData.schoolId) {
-                        console.error('School admin has no assigned school');
-                        alert('Your account is not linked to any school. Please contact super admin.');
-                        await auth.signOut();
-                        window.location.href = 'school-login.html';
-                        return;
-                    }
-
-                    // Update UI with user data
-                    userName.textContent = userData.fullName || 'School Admin';
-                    userRole.innerHTML = '<i class="fas fa-user-shield"></i> School Administrator';
-                    previewInitials.textContent = getInitials(userData.fullName);
-
-                    if (userData.profilePhoto) {
-                        profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
+                    // Set profile photo or initials
+                    if (adminData.photoURL) {
+                        profilePhoto.innerHTML = `<img src="${adminData.photoURL}" alt="profile">`;
                         uploadIndicator.style.display = 'none';
                     } else {
-                        setInitials(userData.fullName);
+                        setInitials(fullName);
                     }
 
                     // Set greeting
-                    setGreeting(userData.fullName);
-
-                } else {
-                    console.error('User document not found');
-                    await auth.signOut();
-                    window.location.href = 'school-login.html';
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
-            }
-        }
-
-        // Load School Data
-        async function loadSchoolData() {
-            if (!userData?.schoolId) return;
-
-            try {
-                const schoolDoc = await db.collection('schools').doc(userData.schoolId).get();
-                
-                if (schoolDoc.exists) {
-                    schoolData = schoolDoc.data();
+                    setGreeting(fullName);
                     
-                    // Update school name in header and welcome badge
-                    schoolNameHeader.textContent = schoolData.name || 'School';
-                    welcomeSchoolBadge.innerHTML = `<i class="fas fa-school"></i> ${schoolData.name || 'School'}`;
-                    
-                    // Update mobile user info
-                    mobileUserInfo.innerHTML = `
-                        <div class="mobile-profile-photo">
-                            ${userData.profilePhoto ? 
-                                `<img src="${userData.profilePhoto}" alt="profile">` : 
-                                `<span>${getInitials(userData.fullName)}</span>`
-                            }
-                        </div>
-                        <div class="mobile-user-details">
-                            <h3>${userData.fullName || 'School Admin'}</h3>
-                            <p><i class="fas fa-school"></i> ${schoolData.name || 'School'}</p>
-                        </div>
-                    `;
-
-                    // Update subscription info
-                    document.getElementById('subscriptionPlan').textContent = schoolData.plan || 'Premium';
-                    document.getElementById('subscriptionPlanName').textContent = schoolData.plan || 'Premium';
-                    
-                    if (schoolData.subscriptionExpiry) {
-                        const expiryDate = schoolData.subscriptionExpiry.toDate();
-                        const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-                        document.getElementById('expiryWarning').textContent = `${daysLeft} days left`;
-                        document.getElementById('subscriptionExpiry').innerHTML = `<i class="far fa-calendar-alt"></i> Expires: ${expiryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                    // Check if admin is active
+                    if (adminData.status !== 'Active') {
+                        alert('Your account is not active. Please contact super admin.');
+                        await auth.signOut();
                     }
-
                 } else {
-                    console.error('School document not found');
+                    console.error('No admin document found for authUid:', user.uid);
                 }
             } catch (error) {
-                console.error('Error loading school data:', error);
+                console.error('Error loading admin data:', error);
             }
         }
 
-        // Load Dashboard Statistics
-        async function loadDashboardStats() {
-            if (!userData?.schoolId) return;
+        // ========== LOAD SCHOOL DATA ==========
+        async function loadSchoolData() {
+            if (!adminData) return;
 
+            // School can be stored as a string (school name) or as schoolId reference
+            const schoolName = adminData.school || 'Your School';
+            
+            // Update school name in header and welcome badge
+            schoolNameHeader.textContent = schoolName;
+            welcomeSchoolBadge.innerHTML = `<i class="fas fa-school"></i> ${schoolName}`;
+            
+            // Try to fetch school details if we have schoolId (optional)
+            if (adminData.schoolId) {
+                try {
+                    const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
+                    if (schoolDoc.exists) {
+                        schoolData = schoolDoc.data();
+                        // Update subscription info if available
+                        document.getElementById('subscriptionPlan').textContent = schoolData.plan || 'Premium';
+                        document.getElementById('subscriptionPlanName').textContent = schoolData.plan || 'Premium';
+                        
+                        if (schoolData.subscriptionExpiry) {
+                            const expiryDate = schoolData.subscriptionExpiry.toDate();
+                            const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+                            document.getElementById('expiryWarning').textContent = `${daysLeft} days left`;
+                            document.getElementById('subscriptionExpiry').innerHTML = `<i class="far fa-calendar-alt"></i> Expires: ${expiryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not load school details from schools collection:', error);
+                }
+            }
+
+            // Update mobile user info
+            mobileUserInfo.innerHTML = `
+                <div class="mobile-profile-photo">
+                    ${adminData.photoURL ? 
+                        `<img src="${adminData.photoURL}" alt="profile">` : 
+                        `<span>${getInitials(adminData.name || 'Admin')}</span>`
+                    }
+                </div>
+                <div class="mobile-user-details">
+                    <h3>${adminData.name || 'School Admin'}</h3>
+                    <p><i class="fas fa-school"></i> ${schoolName}</p>
+                </div>
+            `;
+        }
+
+        // ========== LOAD DASHBOARD STATISTICS ==========
+        async function loadDashboardStats() {
+            if (!adminData) return;
+
+            // Use school name as filter if no schoolId available
+            const schoolFilter = adminData.schoolId || adminData.school;
+            
             try {
-                // Get students count
-                const studentsSnap = await db.collection('students')
-                    .where('schoolId', '==', userData.schoolId)
-                    .get();
+                // Get students count - filter by school name or schoolId
+                let studentsQuery;
+                if (adminData.schoolId) {
+                    studentsQuery = db.collection('students').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    studentsQuery = db.collection('students').where('school', '==', adminData.school);
+                }
+                const studentsSnap = await studentsQuery.get();
                 document.getElementById('totalStudents').textContent = studentsSnap.size || 0;
 
                 // Get staff count
-                const staffSnap = await db.collection('staff')
-                    .where('schoolId', '==', userData.schoolId)
-                    .get();
+                let staffQuery;
+                if (adminData.schoolId) {
+                    staffQuery = db.collection('staff').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    staffQuery = db.collection('staff').where('school', '==', adminData.school);
+                }
+                const staffSnap = await staffQuery.get();
                 document.getElementById('totalStaff').textContent = staffSnap.size || 0;
 
                 // Get classes count
-                const classesSnap = await db.collection('classes')
-                    .where('schoolId', '==', userData.schoolId)
-                    .get();
+                let classesQuery;
+                if (adminData.schoolId) {
+                    classesQuery = db.collection('classes').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    classesQuery = db.collection('classes').where('school', '==', adminData.school);
+                }
+                const classesSnap = await classesQuery.get();
                 document.getElementById('totalClasses').textContent = classesSnap.size || 0;
-
-                // Set demo values for now (would come from real data)
-                document.getElementById('attendanceRate').textContent = '94%';
-                document.getElementById('feesCollected').textContent = '78%';
 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
                 // Set fallback values
-                document.getElementById('totalStudents').textContent = '1,240';
-                document.getElementById('totalStaff').textContent = '42';
-                document.getElementById('totalClasses').textContent = '18';
+                document.getElementById('totalStudents').textContent = '0';
+                document.getElementById('totalStaff').textContent = '0';
+                document.getElementById('totalClasses').textContent = '0';
             }
         }
 
-        // Helper Functions
+        // ========== HELPER FUNCTIONS ==========
         function setInitials(name) {
             const initials = getInitials(name);
             profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
@@ -1414,51 +1423,64 @@
             });
         }
 
-        // Event Listeners
+        // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
             // Mobile menu
             menuToggle.onclick = () => mobileNav.classList.add('active');
             closeMobileNav.onclick = () => mobileNav.classList.remove('active');
             
             // Profile photo modal
-            profilePhotoContainer.onclick = () => profileModal.style.display = 'flex';
-            uploadIndicator.onclick = (e) => {
-                e.stopPropagation();
-                profileModal.style.display = 'flex';
-            };
+            if (profilePhotoContainer) {
+                profilePhotoContainer.onclick = () => profileModal.style.display = 'flex';
+            }
+            if (uploadIndicator) {
+                uploadIndicator.onclick = (e) => {
+                    e.stopPropagation();
+                    profileModal.style.display = 'flex';
+                };
+            }
             
-            closeModal.onclick = () => {
-                profileModal.style.display = 'none';
-                resetUploadForm();
-            };
+            if (closeModal) {
+                closeModal.onclick = () => {
+                    profileModal.style.display = 'none';
+                    resetUploadForm();
+                };
+            }
             
-            cancelUpload.onclick = () => {
-                profileModal.style.display = 'none';
-                resetUploadForm();
-            };
+            if (cancelUpload) {
+                cancelUpload.onclick = () => {
+                    profileModal.style.display = 'none';
+                    resetUploadForm();
+                };
+            }
             
             // Photo upload preview
-            photoUpload.onchange = (e) => {
-                selectedFile = e.target.files[0];
-                if (selectedFile) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        photoPreview.innerHTML = `<img src="${e.target.result}" alt="preview" style="width:100%;height:100%;object-fit:cover;">`;
-                    };
-                    reader.readAsDataURL(selectedFile);
-                }
-            };
+            if (photoUpload) {
+                photoUpload.onchange = (e) => {
+                    selectedFile = e.target.files[0];
+                    if (selectedFile) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            photoPreview.innerHTML = `<img src="${e.target.result}" alt="preview" style="width:100%;height:100%;object-fit:cover;">`;
+                        };
+                        reader.readAsDataURL(selectedFile);
+                    }
+                };
+            }
             
-            // Save photo (simplified - would connect to Cloudinary)
-            savePhoto.onclick = async () => {
-                if (!selectedFile) {
-                    alert('Please select a photo');
-                    return;
-                }
-                alert('Profile photo updated successfully!');
-                profileModal.style.display = 'none';
-                resetUploadForm();
-            };
+            // Save photo - In production, upload to Cloudinary and update admin doc
+            if (savePhoto) {
+                savePhoto.onclick = async () => {
+                    if (!selectedFile) {
+                        alert('Please select a photo');
+                        return;
+                    }
+                    // Demo: simulate upload success
+                    alert('Profile photo updated successfully! (Demo - would upload to storage)');
+                    profileModal.style.display = 'none';
+                    resetUploadForm();
+                };
+            }
             
             // Logout
             logoutBtn.onclick = logoutMobile.onclick = async () => {
@@ -1480,8 +1502,10 @@
 
         function resetUploadForm() {
             selectedFile = null;
-            photoUpload.value = '';
-            photoPreview.innerHTML = `<div class="initials" style="font-size: 48px; font-weight: 700; color: var(--dark-blue);">${previewInitials.textContent}</div>`;
+            if (photoUpload) photoUpload.value = '';
+            if (photoPreview && previewInitials) {
+                photoPreview.innerHTML = `<div class="initials" style="font-size: 48px; font-weight: 700; color: var(--dark-blue);">${previewInitials.textContent}</div>`;
+            }
         }
 
         // Add style for modal (not in main CSS)
