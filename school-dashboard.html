@@ -1225,7 +1225,7 @@
                 if (!adminData) {
                     console.error('No admin record found for this user');
                     await auth.signOut();
-                    window.location.href = 'school-login.html';
+                    window.location.href = 'school-admin-login.html';
                     return;
                 }
                 setupEventListeners();
@@ -1234,7 +1234,7 @@
                 await loadSchoolData();      // Load school from adminData.school (string) or schoolId
                 await loadDashboardStats();  // Load counts from students, staff, classes
             } else {
-                window.location.href = 'school-login.html';
+                window.location.href = 'school-admin-login.html';
             }
         });
 
