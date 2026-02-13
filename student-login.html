@@ -1,525 +1,824 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Login · School ERP</title>
-  
-  <!-- Tailwind CSS with all plugins -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Inter font + Material Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,1" rel="stylesheet" />
-  
-  <!-- Firebase SDK (modular) -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js"></script>
-  
-  <!-- ============================================= -->
-  <!--   REAL FIREBASE CONFIG – EDIT THIS OBJECT     -->
-  <!-- ============================================= -->
-  <script type="module">
-    // 🔥🔥🔥 PASTE YOUR FIREBASE CONFIG HERE 🔥🔥🔥
-    // This is NOT hardcoded – you MUST replace with your own values
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Student Login</title>
+    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* ----- EDUSKYLARK STUDENT THEME (BLUE) ----- */
+        :root {
+            --student-blue: #3498db;
+            --student-blue-dark: #2980b9;
+            --student-blue-light: #5dade2;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --red: #e74c3c;
+            --green: #27ae60;
+        }
 
-    // Initialize Firebase and export instances
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-    import { getAuth } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-    import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-    
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    
-    // Make available globally for the rest of the app
-    window.firebaseApp = app;
-    window.firebaseAuth = auth;
-    window.firebaseDb = db;
-    
-    console.log('🔥 Firebase initialized with project:', firebaseConfig.projectId);
-  </script>
-  
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f8fafc;
-    }
-    .dark body {
-      background: #0f172a;
-    }
-    /* iOS-style input */
-    .ios-input {
-      @apply w-full px-4 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-base;
-    }
-    .dark .ios-input {
-      @apply bg-slate-800 text-white;
-    }
-    /* Ripple effect for buttons */
-    .btn-ripple {
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-ripple:after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 5px;
-      height: 5px;
-      background: rgba(255,255,255,0.5);
-      opacity: 0;
-      border-radius: 100%;
-      transform: scale(1, 1) translate(-50%);
-      transform-origin: 50% 50%;
-    }
-    .btn-ripple:focus:not(:active)::after {
-      animation: ripple 0.6s ease-out;
-    }
-    @keyframes ripple {
-      0% { transform: scale(0, 0); opacity: 0.5; }
-      100% { transform: scale(20, 20); opacity: 0; }
-    }
-    /* Smooth spinner */
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .animate-spin {
-      animation: spin 0.8s linear infinite;
-    }
-  </style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            color: var(--dark-blue);
+            position: relative;
+        }
+
+        /* Animated Background */
+        .background-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.1);
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 10%; background: rgba(52,152,219,0.15); }
+        .bubble:nth-child(2) { width: 120px; height: 120px; top: 60%; right: 15%; background: rgba(52,152,219,0.1); animation-delay: 2s; }
+        .bubble:nth-child(3) { width: 60px; height: 60px; bottom: 20%; left: 20%; background: rgba(52,152,219,0.1); animation-delay: 4s; }
+        .bubble:nth-child(4) { width: 100px; height: 100px; top: 30%; right: 25%; background: rgba(52,152,219,0.1); animation-delay: 6s; }
+        .bubble:nth-child(5) { width: 150px; height: 150px; bottom: 10%; right: 10%; background: rgba(52,152,219,0.05); animation-delay: 8s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        /* Login Container */
+        .login-container {
+            max-width: 460px;
+            width: 90%;
+            margin: 20px;
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Glass Card */
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 45px 40px;
+            box-shadow: 0 25px 50px rgba(52, 152, 219, 0.15);
+            border-top: 6px solid var(--student-blue);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(52, 152, 219, 0.03);
+            border-radius: 50%;
+            transform: translate(80px, -80px);
+        }
+
+        .login-card:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 150px;
+            height: 150px;
+            background: rgba(52, 152, 219, 0.03);
+            border-radius: 50%;
+            transform: translate(-60px, 60px);
+        }
+
+        /* Logo */
+        .logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-circle {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, var(--student-blue), var(--student-blue-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+            margin-bottom: 20px;
+            animation: gentlePulse 4s infinite ease-in-out;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(52,152,219,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(52,152,219,0.4); }
+        }
+
+        .logo-circle i {
+            font-size: 42px;
+            color: white;
+        }
+
+        .logo-wrapper h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .logo-wrapper h1 span {
+            color: var(--student-blue);
+        }
+
+        .logo-wrapper p {
+            font-size: 15px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .student-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--student-blue);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-bottom: 8px;
+            margin-left: 5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            color: #999;
+            font-size: 18px;
+            transition: all 0.3s;
+            z-index: 3;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 20px 16px 52px;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f9f9f9;
+            color: var(--dark-blue);
+        }
+
+        .form-control:focus {
+            border-color: var(--student-blue);
+            background: white;
+            box-shadow: 0 0 0 5px rgba(52, 152, 219, 0.1);
+            outline: none;
+        }
+
+        .form-control:focus + .input-icon {
+            color: var(--student-blue);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 18px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s;
+            z-index: 3;
+        }
+
+        .password-toggle:hover {
+            color: var(--student-blue);
+        }
+
+        /* Options */
+        .options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--student-blue);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--student-blue);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .forgot-link:hover {
+            color: var(--student-blue-dark);
+            text-decoration: underline;
+        }
+
+        /* Login Button */
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--student-blue), var(--student-blue-dark));
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.25);
+            position: relative;
+            z-index: 2;
+            margin-bottom: 25px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.35);
+        }
+
+        .login-btn i {
+            font-size: 18px;
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* Demo Credentials */
+        .demo-card {
+            background: rgba(52, 152, 219, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 25px;
+            border: 1px dashed rgba(52, 152, 219, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .demo-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-bottom: 15px;
+        }
+
+        .demo-title i {
+            color: var(--student-blue);
+        }
+
+        .demo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .demo-item i {
+            width: 20px;
+            color: var(--student-blue);
+            font-size: 12px;
+        }
+
+        .demo-item strong {
+            color: var(--dark-blue);
+        }
+
+        /* Help Section */
+        .help-section {
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .contact-support {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--student-blue);
+            padding: 10px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .contact-support:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Error Toast */
+        .error-toast {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: var(--red);
+            color: white;
+            padding: 16px 25px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(52, 152, 219, 0.2);
+            border-top: 4px solid var(--student-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 35px 25px; }
+            .logo-circle { width: 70px; height: 70px; }
+            .logo-circle i { font-size: 32px; }
+            .logo-wrapper h1 { font-size: 24px; }
+            .error-toast { left: 20px; right: 20px; max-width: none; }
+        }
+    </style>
 </head>
-<body class="antialiased bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 min-h-screen flex items-center justify-center p-4">
-  
-  <div class="fixed top-5 right-5 z-50">
-    <button id="darkToggle" class="w-11 h-11 rounded-full bg-white/80 dark:bg-slate-800/90 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-      <span class="material-symbols-outlined text-slate-700 dark:text-slate-200">dark_mode</span>
-    </button>
-  </div>
-
-  <!-- MAIN CARD - REAL APP LOOK -->
-  <div class="w-full max-w-md">
-    <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/30 p-8 sm:p-10">
-      
-      <!-- ===== ROUND LOGO - ABSOLUTELY CIRCULAR ===== -->
-      <div class="flex justify-center mb-6">
-        <div class="relative">
-          <!-- Glow effect -->
-          <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-          <!-- Perfect circle logo container -->
-          <div class="relative w-28 h-28 rounded-full bg-gradient-to-br from-indigo-50 to-pink-50 dark:from-indigo-900/30 dark:to-pink-900/30 p-1 shadow-2xl">
-            <div class="w-full h-full rounded-full overflow-hidden bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-700 shadow-inner flex items-center justify-center">
-              <!-- REAL LOGO - ROUND CROP -->
-              <img 
-                id="schoolLogo"
-                src="./logo.png" 
-                alt="School" 
-                class="w-full h-full object-cover"
-                onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'%234F46E5\' d=\'M12 2L2 7l10 5 10-5-10-5zm0 12c-3.9 0-7-3.1-7-7H3c0 4.4 3.6 8 8 8s8-3.6 8-8h-2c0 3.9-3.1 7-7 7zm0 2c-4.4 0-8-3.6-8-8H2c0 5.5 4.5 10 10 10s10-4.5 10-10h-2c0 4.4-3.6 8-8 8z\'/%3E%3C/svg%3E'; this.classList.add('p-4', 'object-contain');"
-              />
-            </div>
-          </div>
-          <!-- Decorative badges -->
-          <div class="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full p-2.5 shadow-xl">
-            <span class="material-symbols-outlined text-sm">school</span>
-          </div>
-          <div class="absolute -bottom-2 -left-2 bg-indigo-600 text-white rounded-full p-2.5 shadow-xl">
-            <span class="material-symbols-outlined text-sm">star</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent dark:from-indigo-400 dark:to-pink-400">Student Portal</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Sign in with your school credentials</p>
-      </div>
-      
-      <!-- ========== LOGIN FORM ========== -->
-      <div class="space-y-5">
-        <!-- School Code -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ml-1">🏫 School Code</label>
-          <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400 text-xl">domain</span>
-            <input id="schoolCode" type="text" class="ios-input pl-12" placeholder="e.g. OAKRIDGE" value="OAKRIDGE" autocomplete="off">
-          </div>
-        </div>
-        
-        <!-- Admission Number -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ml-1">🎓 Admission No.</label>
-          <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400 text-xl">badge</span>
-            <input id="admissionNo" type="text" class="ios-input pl-12" placeholder="e.g. 2025-001" value="2025-001" autocomplete="off">
-          </div>
-        </div>
-        
-        <!-- Password -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ml-1">🔒 Password</label>
-          <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400 text-xl">lock</span>
-            <input id="password" type="password" class="ios-input pl-12" placeholder="••••••••" value="password123" autocomplete="current-password">
-            <button id="togglePassword" type="button" class="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition">
-              <span id="toggleIcon" class="material-symbols-outlined text-xl">visibility_off</span>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Error message area -->
-        <div id="errorContainer" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
-          <p id="errorText" class="text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-2">
-            <span class="material-symbols-outlined text-base">error</span>
-            <span></span>
-          </p>
-        </div>
-        
-        <!-- Forgot password -->
-        <div class="flex justify-end">
-          <button id="forgotBtn" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition flex items-center gap-1">
-            <span class="material-symbols-outlined text-sm">help</span>
-            Forgot password?
-          </button>
-        </div>
-        
-        <!-- Sign In Button -->
-        <button id="signInBtn" class="btn-ripple w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-xl shadow-indigo-500/30 dark:shadow-indigo-800/30 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 text-lg">
-          <span class="material-symbols-outlined">login</span>
-          Sign In
-        </button>
-        
-        <!-- Demo credentials hint -->
-        <div class="bg-slate-100 dark:bg-slate-700/50 rounded-xl p-3 mt-4">
-          <p class="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-base">info</span>
-            Demo: OAKRIDGE / 2025-001 / password123
-          </p>
-        </div>
-      </div>
-      
-      <!-- Footer links -->
-      <div class="mt-8 text-center space-y-3">
-        <p class="text-xs text-slate-500 dark:text-slate-400">
-          Having trouble? 
-          <button id="helpBtn" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Contact Help Desk</button>
-        </p>
-        <button id="backBtn" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition">
-          <span class="material-symbols-outlined text-base">arrow_back</span>
-          Change role / Back
-        </button>
-      </div>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
     </div>
-    
-    <!-- Version -->
-    <p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-6">School ERP · Production ready · Firestore auth</p>
-  </div>
 
-  <!-- ========== FIREBASE AUTH & FIRESTORE LOGIC - FULL REAL IMPLEMENTATION ========== -->
-  <script type="module">
-    // ----------------------------------------------------------------------
-    //  REAL FIREBASE AUTH USING SCHOOL CODE + ADMISSION NO + PASSWORD
-    //  Direct Firestore validation – NO email/password required
-    //  Session storage, redirect, password reset, error handling – FULL APP
-    // ----------------------------------------------------------------------
-    
-    // Get Firebase instances from global (set in config above)
-    const auth = window.firebaseAuth;
-    const db = window.firebaseDb;
-    
-    if (!db || !auth) {
-      console.error('❌ Firebase not initialized. Did you paste your config?');
-      document.body.innerHTML = `<div class="p-8 text-center"><h1 class="text-red-600">Firebase configuration missing. Please edit the firebaseConfig object at the top of the script.</h1></div>`;
-      throw new Error('Firebase not initialized');
-    }
-    
-    // Import Firebase functions
-    import { 
-      signInWithEmailAndPassword,
-      sendPasswordResetEmail,
-      onAuthStateChanged,
-      signOut
-    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-    import {
-      collection,
-      query,
-      where,
-      getDocs,
-      limit,
-      doc,
-      getDoc,
-      updateDoc
-    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-    
-    // ----- DOM elements -----
-    const schoolCodeInput = document.getElementById('schoolCode');
-    const admissionNoInput = document.getElementById('admissionNo');
-    const passwordInput = document.getElementById('password');
-    const signInBtn = document.getElementById('signInBtn');
-    const toggleBtn = document.getElementById('togglePassword');
-    const toggleIcon = document.getElementById('toggleIcon');
-    const forgotBtn = document.getElementById('forgotBtn');
-    const errorContainer = document.getElementById('errorContainer');
-    const errorText = document.getElementById('errorText').querySelector('span:last-child');
-    const helpBtn = document.getElementById('helpBtn');
-    const backBtn = document.getElementById('backBtn');
-    const darkToggle = document.getElementById('darkToggle');
-    
-    // ----- Dark mode system -----
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    darkToggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-    });
-    
-    // ----- Toggle password visibility -----
-    toggleBtn.addEventListener('click', () => {
-      const type = passwordInput.type === 'password' ? 'text' : 'password';
-      passwordInput.type = type;
-      toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
-    });
-    
-    // ----- Show/hide error -----
-    function showError(msg) {
-      errorText.textContent = msg;
-      errorContainer.classList.remove('hidden');
-      // Auto-hide after 6 seconds
-      setTimeout(() => {
-        if (errorText.textContent === msg) {
-          errorContainer.classList.add('hidden');
-        }
-      }, 6000);
-    }
-    function hideError() {
-      errorContainer.classList.add('hidden');
-    }
-    
-    // ----- Set loading state -----
-    function setLoading(isLoading) {
-      if (isLoading) {
-        signInBtn.disabled = true;
-        signInBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">progress_activity</span> Signing in...`;
-      } else {
-        signInBtn.disabled = false;
-        signInBtn.innerHTML = `<span class="material-symbols-outlined">login</span> Sign In`;
-      }
-    }
-    
-    // ========== 🚀 REAL LOGIN FUNCTION ==========
-    async function login() {
-      const schoolCode = schoolCodeInput.value.trim().toUpperCase();
-      const admissionNo = admissionNoInput.value.trim();
-      const password = passwordInput.value.trim();
-      
-      if (!schoolCode || !admissionNo || !password) {
-        showError('All fields are required');
-        return;
-      }
-      
-      hideError();
-      setLoading(true);
-      
-      try {
-        // ----- STRATEGY 1: Direct document lookup (FAST, NO INDEX NEEDED) -----
-        // Document ID convention: students/{schoolCode}_{admissionNo}
-        const docId = `${schoolCode}_${admissionNo}`;
-        const studentRef = doc(db, 'students', docId);
-        let studentSnap = await getDoc(studentRef);
-        
-        // ----- STRATEGY 2: Fallback to query (if composite ID not used) -----
-        if (!studentSnap.exists()) {
-          console.log('Direct doc not found, trying query...');
-          const q = query(
-            collection(db, 'students'),
-            where('schoolCode', '==', schoolCode),
-            where('admissionNo', '==', admissionNo),
-            limit(1)
-          );
-          const querySnap = await getDocs(q);
-          
-          if (querySnap.empty) {
-            showError('❌ No student found with these credentials');
-            setLoading(false);
-            return;
-          }
-          studentSnap = querySnap.docs[0];
-        }
-        
-        const studentData = studentSnap.data();
-        
-        // ----- SECURE PASSWORD VERIFICATION -----
-        // In production: Use bcrypt compare via Cloud Function
-        // For real app: Store hashed passwords (this is a demo with plain text for clarity)
-        if (!studentData.password || studentData.password !== password) {
-          showError('🔒 Incorrect password');
-          setLoading(false);
-          return;
-        }
-        
-        // ===== LOGIN SUCCESS =====
-        console.log('✅ Login successful:', studentData);
-        
-        // ----- CREATE PERSISTENT SESSION (survives page reload) -----
-        const session = {
-          uid: studentSnap.id,
-          schoolCode: studentData.schoolCode || schoolCode,
-          admissionNo: studentData.admissionNo || admissionNo,
-          name: studentData.name || studentData.fullName || 'Student',
-          email: studentData.email || null,
-          class: studentData.class || studentData.grade || '',
-          section: studentData.section || '',
-          photoURL: studentData.photoURL || null,
-          loggedInAt: new Date().toISOString(),
-          expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p style="color: var(--dark-blue); font-weight: 600;">Authenticating...</p>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Authentication failed</span>
+    </div>
+
+    <!-- Back Button -->
+    <button onclick="window.location.href='index.html'" 
+        style="position: fixed; top: 30px; left: 30px; width: 45px; height: 45px; border-radius: 50%; background: white; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-arrow-left" style="color: var(--dark-blue); font-size: 20px;"></i>
+    </button>
+
+    <!-- Dark Mode Toggle -->
+    <button onclick="document.documentElement.classList.toggle('dark')" 
+        style="position: fixed; top: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: white; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-moon" style="color: var(--dark-blue); font-size: 20px;"></i>
+    </button>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo-wrapper">
+                <div class="logo-circle">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h1>EDUSKY<span style="color: var(--student-blue);">LARK</span></h1>
+                <p><i class="fas fa-graduation-cap"></i> Student Portal</p>
+                <span class="student-badge">
+                    <i class="fas fa-check-circle"></i> Secure Access
+                </span>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="email">
+                        <i class="fas fa-envelope" style="margin-right: 5px; color: var(--student-blue);"></i> Email Address
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="far fa-envelope"></i></span>
+                        <input type="email" id="email" class="form-control" placeholder="student@school.edu" required autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="fas fa-lock" style="margin-right: 5px; color: var(--student-blue);"></i> Password
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="options-row">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe"> Remember me
+                    </label>
+                    <a href="#" class="forgot-link" id="forgotPassword">
+                        <i class="fas fa-question-circle"></i> Forgot Password?
+                    </a>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Access Student Dashboard
+                </button>
+            </form>
+
+            <!-- Demo Credentials -->
+            <div class="demo-card">
+                <div class="demo-title">
+                    <i class="fas fa-flask"></i> Demo Credentials (Testing)
+                </div>
+                <div class="demo-item">
+                    <i class="fas fa-school"></i>
+                    <span><strong>School:</strong> Nairobi Adventist Academy</span>
+                </div>
+                <div class="demo-item">
+                    <i class="fas fa-envelope"></i>
+                    <span><strong>Email:</strong> student@naa.edu</span>
+                </div>
+                <div class="demo-item">
+                    <i class="fas fa-key"></i>
+                    <span><strong>Password:</strong> student123</span>
+                </div>
+                <div style="font-size: 11px; color: #999; margin-top: 10px; text-align: center;">
+                    <i class="fas fa-info-circle"></i> Role must be 'student' and linked to a school
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-text">
+                    <i class="fas fa-shield-alt" style="color: var(--student-blue);"></i> Authorized students only
+                </div>
+                <a href="#" class="contact-support" id="contactSupport">
+                    <i class="fas fa-headset"></i> Contact IT Support
+                </a>
+                <div class="footer-text">
+                    <i class="fas fa-heart" style="color: var(--red);"></i> EDUSKYLARK v2.1 · Student Portal
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
         };
-        
-        localStorage.setItem('erp_student_session', JSON.stringify(session));
-        
-        // ----- OPTIONAL: Sign into Firebase Auth if email exists -----
-        if (studentData.email && studentData.email.includes('@')) {
-          try {
-            // This creates a proper Firebase session for security rules
-            await signInWithEmailAndPassword(auth, studentData.email, password);
-            console.log('✅ Firebase Auth session created');
-          } catch (authErr) {
-            console.warn('Firebase Auth signin failed (non-critical):', authErr.message);
-            // Continue anyway – we have our own session
-          }
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const togglePassword = document.getElementById('togglePassword');
+        const rememberMe = document.getElementById('rememberMe');
+        const forgotPasswordBtn = document.getElementById('forgotPassword');
+
+        // Toggle Password Visibility
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="far fa-eye"></i>' : '<i class="far fa-eye-slash"></i>';
+        });
+
+        // Show Error
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
         }
-        
-        // ----- REDIRECT TO REAL DASHBOARD -----
-        // This is what makes it a REAL app
-        showSuccessAndRedirect(session);
-        
-      } catch (error) {
-        console.error('Login error:', error);
-        showError(`Login failed: ${error.message}`);
-        setLoading(false);
-      }
-    }
-    
-    // ----- Success & redirect with animation -----
-    function showSuccessAndRedirect(session) {
-      // Show success state on button
-      signInBtn.innerHTML = `<span class="material-symbols-outlined">check_circle</span> Welcome, ${session.name.split(' ')[0]}!`;
-      signInBtn.classList.remove('bg-gradient-to-r', 'from-indigo-600', 'to-indigo-700');
-      signInBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-      
-      // Redirect after 1.5 seconds
-      setTimeout(() => {
-        // 🔥 REAL REDIRECT – Replace with your dashboard URL
-        window.location.href = '/student-dashboard.html'; 
-        // If you don't have dashboard yet, use alert + session display
-        // alert(`✅ Logged in as ${session.name}\nRedirecting to dashboard...`);
-      }, 1500);
-    }
-    
-    // ========== FORGOT PASSWORD ==========
-    async function handleForgotPassword() {
-      const schoolCode = schoolCodeInput.value.trim().toUpperCase();
-      const admissionNo = admissionNoInput.value.trim();
-      
-      if (!schoolCode || !admissionNo) {
-        showError('Enter school code and admission number first');
-        return;
-      }
-      
-      setLoading(true);
-      try {
-        const docId = `${schoolCode}_${admissionNo}`;
-        const studentRef = doc(db, 'students', docId);
-        let studentSnap = await getDoc(studentRef);
-        
-        if (!studentSnap.exists()) {
-          const q = query(
-            collection(db, 'students'),
-            where('schoolCode', '==', schoolCode),
-            where('admissionNo', '==', admissionNo),
-            limit(1)
-          );
-          const querySnap = await getDocs(q);
-          if (querySnap.empty) {
-            showError('No account found');
-            setLoading(false);
-            return;
-          }
-          studentSnap = querySnap.docs[0];
+
+        // Show Success
+        function showSuccess(message) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.style.background = 'var(--student-blue)';
+            toast.innerHTML = `<i class="fas fa-check-circle"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         }
-        
-        const email = studentSnap.data().email;
-        
-        if (email && email.includes('@')) {
-          await sendPasswordResetEmail(auth, email);
-          alert(`📧 Password reset email sent to ${email}`);
-          hideError();
-        } else {
-          alert('📧 No email registered. Please contact school admin.');
+
+        // Check if already logged in
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const isStudent = userData.role === 'student' || userData.role === 'learner' || userData.role === 'pupil';
+                    if (isStudent && userData.schoolId) {
+                        window.location.href = 'student-dashboard.html';
+                    } else {
+                        await auth.signOut();
+                    }
+                } else {
+                    await auth.signOut();
+                }
+            }
+        });
+
+        // Login Submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showError('Please enter both email and password.');
+                return;
+            }
+
+            loadingOverlay.style.display = 'flex';
+            loginBtn.disabled = true;
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                const userDoc = await db.collection('users').doc(user.uid).get();
+
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('User profile not found. Contact your school admin.');
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const isStudent = userData.role === 'student' || userData.role === 'learner' || userData.role === 'pupil';
+                const hasSchool = !!userData.schoolId;
+
+                if (!isStudent) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Access denied. This portal is for Students only.');
+                    return;
+                }
+
+                if (!hasSchool) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Your account is not linked to any school. Contact admin.');
+                    return;
+                }
+
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLoginIP: 'web-client',
+                }).catch(err => console.warn('Could not update lastLogin', err));
+
+                window.location.href = 'student-dashboard.html';
+
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                loginBtn.disabled = false;
+
+                let friendlyMessage = 'Authentication failed.';
+                switch (error.code) {
+                    case 'auth/user-not-found': friendlyMessage = 'No account found with this email.'; break;
+                    case 'auth/wrong-password': friendlyMessage = 'Incorrect password.'; break;
+                    case 'auth/invalid-email': friendlyMessage = 'Please enter a valid email address.'; break;
+                    case 'auth/user-disabled': friendlyMessage = 'This account has been disabled.'; break;
+                    case 'auth/too-many-requests': friendlyMessage = 'Too many attempts. Try again later.'; break;
+                    default: friendlyMessage = error.message;
+                }
+                showError(friendlyMessage);
+            }
+        });
+
+        // Forgot Password
+        forgotPasswordBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value.trim();
+            if (!email) {
+                showError('Please enter your email address first.');
+                return;
+            }
+            try {
+                loadingOverlay.style.display = 'flex';
+                await auth.sendPasswordResetEmail(email);
+                loadingOverlay.style.display = 'none';
+                showSuccess('Password reset email sent! Check your inbox.');
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                showError('Could not send reset email.');
+            }
+        });
+
+        // Contact Support
+        document.getElementById('contactSupport').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'mailto:support@eduskyark.com?subject=Student%20Login%20Support';
+        });
+
+        // Remember Me
+        if (localStorage.getItem('studentEmail')) {
+            emailInput.value = localStorage.getItem('studentEmail');
+            rememberMe.checked = true;
         }
-      } catch (error) {
-        console.error('Forgot error:', error);
-        showError('Could not send reset email');
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    // ========== CHECK EXISTING SESSION ==========
-    function checkExistingSession() {
-      const session = localStorage.getItem('erp_student_session');
-      if (session) {
-        try {
-          const data = JSON.parse(session);
-          if (data.expires > Date.now()) {
-            // Session valid – redirect immediately
-            console.log('🔄 Existing session found, redirecting...');
-            window.location.href = '/student-dashboard.html';
-          } else {
-            localStorage.removeItem('erp_student_session');
-          }
-        } catch (e) {
-          localStorage.removeItem('erp_student_session');
-        }
-      }
-    }
-    
-    // ----- Event listeners -----
-    signInBtn.addEventListener('click', login);
-    forgotBtn.addEventListener('click', handleForgotPassword);
-    helpBtn.addEventListener('click', () => {
-      alert('📞 School IT Support\n✉️ support@school.edu\n🕒 Mon-Fri 8am-4pm');
-    });
-    backBtn.addEventListener('click', () => window.history.back());
-    
-    // Enter key support
-    [schoolCodeInput, admissionNoInput, passwordInput].forEach(input => {
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') login();
-      });
-    });
-    
-    // Check if user is already logged in
-    checkExistingSession();
-    
-    // Monitor Firebase auth state
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log('🔥 Firebase Auth:', user.email);
-      }
-    });
-    
-    console.log('🚀 ERP Student Login – READY');
-  </script>
+
+        loginForm.addEventListener('submit', () => {
+            if (rememberMe.checked) {
+                localStorage.setItem('studentEmail', emailInput.value);
+            } else {
+                localStorage.removeItem('studentEmail');
+            }
+        });
+
+        // Dark Mode Toggle
+        document.querySelector('button[onclick*="dark"]').addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+            const icon = this.querySelector('i');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                document.body.style.background = 'linear-gradient(135deg, #1a2530 0%, #2c3e50 100%)';
+                document.querySelector('.login-card').style.background = 'rgba(44, 62, 80, 0.95)';
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                document.body.style.background = 'linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%)';
+                document.querySelector('.login-card').style.background = 'rgba(255, 255, 255, 0.95)';
+            }
+        });
+    </script>
+
+    <!-- Dark Mode CSS -->
+    <style>
+        .dark .login-card { background: rgba(44,62,80,0.95); color: #ecf0f1; }
+        .dark .form-control { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white; }
+        .dark .form-label, .dark .logo-wrapper h1 { color: #ecf0f1; }
+        .dark .demo-card { background: rgba(255,255,255,0.05); border-color: rgba(52,152,219,0.2); }
+    </style>
 </body>
 </html>
