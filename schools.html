@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDUSKYLARK · SCHOOL COMMAND CENTER</title>
-    <!-- Font Awesome 6 (full kit-like CDN) -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK (modular approach for better perf) -->
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Firebase SDK v8 compat -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         /* ------------------------------------------------------------
-           EDUSKYLARK – ENTERPRISE SCHOOL MANAGEMENT (SUPER ADMIN)
-           Fully production design, zero demo, no placeholders.
-           ------------------------------------------------------------ */
+           EDUSKYLARK – SUPER ADMIN DASHBOARD (INTEGRATED WITH AUTH)
+           Fully production, no demo. Real role‑based access.
+        ------------------------------------------------------------ */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         body {
@@ -29,7 +31,7 @@
             position: relative;
         }
 
-        /* sophisticated animated background – subtle, not intrusive */
+        /* refined background orbs */
         .bg-orb {
             position: fixed;
             width: 100%;
@@ -41,7 +43,7 @@
         .orb {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.08), rgba(44,62,80,0.02));
+            background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.06), rgba(44,62,80,0.02));
             animation: orbFloat 24s infinite alternate ease-in-out;
         }
         @keyframes orbFloat {
@@ -49,7 +51,7 @@
             100% { transform: translate(-40px, -30px) scale(1.1); }
         }
 
-        /* ---------- HEADER – executive dark gradient ---------- */
+        /* ---------- HEADER – DEEP SLATE ---------- */
         .header {
             background: linear-gradient(145deg, #0f1a24 0%, #1e2b38 100%);
             color: white;
@@ -141,14 +143,14 @@
             border-color: #e74c3c;
         }
 
-        /* ---------- MAIN LAYOUT ---------- */
+        /* ---------- MAIN CONTAINER ---------- */
         .main-container {
             max-width: 1600px;
             margin: 40px auto;
             padding: 0 32px;
         }
 
-        /* page header with primary CTA */
+        /* page header with CTA */
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -190,7 +192,7 @@
             box-shadow: 0 12px 28px rgba(28,110,164,0.4);
         }
 
-        /* ---------- STATS CARDS – LIVE METRICS ---------- */
+        /* ---------- STATS CARDS ---------- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -234,7 +236,7 @@
             color: #0f1a24;
         }
 
-        /* ---------- FILTER BAR – enterprise grade ---------- */
+        /* ---------- FILTER PANEL ---------- */
         .filter-panel {
             background: white;
             border-radius: 28px;
@@ -319,7 +321,7 @@
             transition: 0.2s;
         }
 
-        /* ---------- SCHOOL TABLE – crystal clear ---------- */
+        /* ---------- TABLE STYLES ---------- */
         .table-enclosure {
             background: white;
             border-radius: 28px;
@@ -443,15 +445,72 @@
             color: #546e7a;
             font-size: 16px;
         }
+
+        /* ---------- LOADING & ERROR TOAST ---------- */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
-    <!-- background orbs (refined) -->
+    <!-- background orbs -->
     <div class="bg-orb">
         <div class="orb" style="width: 600px; height: 600px; top: -200px; left: -200px;"></div>
         <div class="orb" style="width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle at 70% 30%, rgba(230,126,34,0.04), rgba(44,62,80,0.01));"></div>
     </div>
 
+    <!-- Error toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl flex flex-col items-center shadow-2xl">
+            <div class="spinner border-blue-600"></div>
+            <p class="text-slate-700 dark:text-white font-medium mt-4">Authenticating & loading...</p>
+        </div>
+    </div>
+
+    <!-- HEADER: SUPER ADMIN -->
     <header class="header">
         <div class="header-content">
             <div class="logo-area">
@@ -486,7 +545,7 @@
             </button>
         </div>
 
-        <!-- dynamic stats from real firestore -->
+        <!-- dynamic stats from firestore -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-school"></i></div>
@@ -506,7 +565,7 @@
             </div>
         </div>
 
-        <!-- filter & search – fully wired with firestore queries (no demo) -->
+        <!-- filter & search -->
         <div class="filter-panel">
             <div class="filter-group">
                 <label><i class="fas fa-filter"></i> Status</label>
@@ -534,11 +593,11 @@
             </div>
         </div>
 
-        <!-- schools table with live data + pagination -->
+        <!-- schools table -->
         <div class="table-enclosure">
-            <div id="loadingOverlay" style="display: flex; justify-content: center; align-items: center; padding: 60px; flex-direction: column; gap: 16px;">
+            <div id="loadingIndicator" style="display: flex; justify-content: center; align-items: center; padding: 60px; flex-direction: column; gap: 16px;">
                 <i class="fas fa-spinner fa-pulse" style="font-size: 38px; color: #2c7da0;"></i>
-                <p style="color: #2c3e50; font-weight: 500;">Fetching institutional data, please wait...</p>
+                <p style="color: #2c3e50; font-weight: 500;">Loading institutional data...</p>
             </div>
             <div id="tableContent" style="display: none;">
                 <table>
@@ -552,9 +611,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="schoolsTableBody">
-                        <!-- fully dynamic injected from firestore -->
-                    </tbody>
+                    <tbody id="schoolsTableBody"></tbody>
                 </table>
                 <div id="emptyMessage" style="display: none;" class="empty-state">
                     <i class="fas fa-school-circle-exclamation" style="font-size: 48px; margin-bottom: 16px; opacity: 0.6;"></i>
@@ -567,10 +624,9 @@
     </main>
 
     <script>
-        // -----------------------------------------------------------------
-        // FIREBASE – PRODUCTION CONFIG (YOUR KEYS, FULLY OPERATIONAL)
-        // NO MOCK, NO DEMO. REAL AUTH + FIRESTORE.
-        // -----------------------------------------------------------------
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH LOGIN PAGE)
+        // --------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -584,48 +640,65 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ---------- GLOBAL STATE FOR FILTERS / PAGINATION ----------
+        // ---------- GLOBAL STATE ----------
         let currentPage = 1;
         const ITEMS_PER_PAGE = 8;
         let lastVisibleDoc = null;
         let firstVisibleDoc = null;
         let previousPages = [];
-        let currentFilters = {
-            status: 'all',
-            plan: 'all',
-            search: ''
-        };
-        let totalSchoolsCount = 0; // for stats (might be filtered, but we show overall counts from separate aggregation)
-        let activeCount = 0, pendingCount = 0, expiringCount = 0, totalCount = 0;
+        let currentFilters = { status: 'all', plan: 'all', search: '' };
 
-        // ---------- AUTH GUARD + SUPER ADMIN VERIFICATION ----------
+        // ---------- DOM ELEMENTS ----------
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // ---------- HELPER: show error toast ----------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        // ---------- AUTH GUARD – SUPER ADMIN ONLY (INTEGRATED WITH LOGIN) ----------
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.href = 'super-admin-login.html';
                 return;
             }
             try {
+                loadingOverlay.style.display = 'flex';
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 const userData = userDoc.data() || {};
-                // strict super-admin check
-                if (!userDoc.exists || (userData.role !== 'super-admin' && !userData.permissions?.isSuperAdmin)) {
+                
+                // Strict super-admin verification (same as login page)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || role === 'superadmin' || userData.isSuperAdmin === true || userData.permissions?.isSuperAdmin === true;
+
+                if (!userDoc.exists || !isSuperAdmin) {
+                    // Not super admin – sign out and redirect
                     await auth.signOut();
                     window.location.href = 'super-admin-login.html';
                 } else {
-                    // set admin name
-                    document.getElementById('userNameSpan').innerText = userData.fullName || 'Super Admin';
-                    // initial load
-                    loadOverallStats();    // independent aggregation
-                    applyFiltersAndFetch(); // first fetch with filters
+                    // ✅ SUPER ADMIN – set name and load data
+                    document.getElementById('userNameSpan').innerText = userData.fullName || userData.displayName || 'Super Admin';
+                    loadingOverlay.style.display = 'none';
+                    
+                    // Load stats and schools
+                    loadOverallStats();
+                    applyFiltersAndFetch(true);
                 }
             } catch (err) {
                 console.error('Auth verification error', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
                 window.location.href = 'super-admin-login.html';
             }
         });
 
         // ---------- LOGOUT ----------
         document.getElementById('logoutBtn').addEventListener('click', async () => {
+            loadingOverlay.style.display = 'flex';
             await auth.signOut();
             window.location.href = 'super-admin-login.html';
         });
@@ -634,40 +707,38 @@
         document.getElementById('onboardSchoolBtn').addEventListener('click', () => {
             window.location.href = 'onboard-school.html';
         });
-        // onboard from empty state link
-        if (document.getElementById('onboardEmptyLink')) {
-            document.getElementById('onboardEmptyLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = 'onboard-school.html';
-            });
-        }
 
-        // ---------- LOAD OVERALL STATS FROM SCHOOLS (unfiltered) ----------
+        // ---------- LOAD OVERALL STATS (unfiltered) ----------
         async function loadOverallStats() {
             try {
                 const snap = await db.collection('schools').get();
-                totalCount = 0; activeCount = 0; pendingCount = 0; expiringCount = 0;
+                let total = 0, active = 0, pending = 0, expiring = 0;
                 snap.forEach(doc => {
                     const s = doc.data();
-                    totalCount++;
-                    if (s.status === 'active') activeCount++;
-                    else if (s.status === 'pending') pendingCount++;
-                    // you can define expiring logic – e.g., subscription end within 30 days
-                    if (s.subscriptionEndDate) {
-                        const daysLeft = (s.subscriptionEndDate.toDate() - new Date()) / (1000*3600*24);
-                        if (daysLeft > 0 && daysLeft <= 14) expiringCount++;
+                    total++;
+                    if (s.status === 'active') active++;
+                    else if (s.status === 'pending') pending++;
+                    
+                    // Expiring logic – subscription end within 14 days
+                    if (s.subscriptionEndDate?.toDate) {
+                        const daysLeft = (s.subscriptionEndDate.toDate() - new Date()) / (1000 * 3600 * 24);
+                        if (daysLeft > 0 && daysLeft <= 14) expiring++;
+                    } else if (s.subscriptionEndDate) {
+                        // handle if it's timestamp already
+                        const daysLeft = (s.subscriptionEndDate - new Date()) / (1000 * 3600 * 24);
+                        if (daysLeft > 0 && daysLeft <= 14) expiring++;
                     }
                 });
-                document.getElementById('totalStat').innerText = totalCount;
-                document.getElementById('activeStat').innerText = activeCount;
-                document.getElementById('pendingStat').innerText = pendingCount;
-                document.getElementById('expiringStat').innerText = expiringCount;
+                document.getElementById('totalStat').innerText = total;
+                document.getElementById('activeStat').innerText = active;
+                document.getElementById('pendingStat').innerText = pending;
+                document.getElementById('expiringStat').innerText = expiring;
             } catch (e) {
-                console.warn("Stats error", e);
+                console.warn('Stats error', e);
             }
         }
 
-        // ---------- FILTER / SEARCH / PAGINATION with real Firestore queries ----------
+        // ---------- FILTER / SEARCH / PAGINATION ----------
         function applyFiltersAndFetch(resetPage = true) {
             if (resetPage) {
                 currentPage = 1;
@@ -679,7 +750,7 @@
         }
 
         async function fetchSchools(direction = 'next') {
-            const loadingEl = document.getElementById('loadingOverlay');
+            const loadingEl = document.getElementById('loadingIndicator');
             const tableEl = document.getElementById('tableContent');
             loadingEl.style.display = 'flex';
             tableEl.style.display = 'none';
@@ -691,7 +762,6 @@
                 const planVal = document.getElementById('planFilterSelect').value;
                 const searchVal = document.getElementById('searchQueryInput').value.trim().toLowerCase();
 
-                // apply status filter
                 if (statusVal !== 'all') {
                     query = query.where('status', '==', statusVal);
                 }
@@ -699,32 +769,24 @@
                     query = query.where('plan', '==', planVal);
                 }
 
-                // SEARCH: Firestore doesn't support native text search. we combine client + index
-                // For production, we fetch and filter on client (or implement Algolia, but this is robust)
-                // we'll get up to 50 docs, filter for name/email. Properly we also add `orderBy`
                 query = query.orderBy('createdAt', 'desc');
-
-                // pagination: apply cursor
+                
                 if (direction === 'next' && lastVisibleDoc) {
                     query = query.startAfter(lastVisibleDoc);
                 } else if (direction === 'prev' && firstVisibleDoc) {
                     query = query.endBefore(firstVisibleDoc).limitToLast(ITEMS_PER_PAGE);
                 }
 
-                // limit
                 query = query.limit(ITEMS_PER_PAGE);
-
                 const snapshot = await query.get();
                 const docs = snapshot.docs;
 
                 if (docs.length > 0) {
-                    if (direction !== 'prev') {
-                        lastVisibleDoc = docs[docs.length - 1];
-                    }
+                    if (direction !== 'prev') lastVisibleDoc = docs[docs.length - 1];
                     firstVisibleDoc = docs[0];
                 }
 
-                // client side search filtering if searchVal present
+                // client-side search filter
                 let filteredDocs = docs;
                 if (searchVal !== '') {
                     filteredDocs = docs.filter(doc => {
@@ -737,13 +799,13 @@
                 }
 
                 renderSchoolsTable(filteredDocs);
-
-                // pagination buttons update
                 renderPaginationControls(docs.length >= ITEMS_PER_PAGE, direction, filteredDocs.length);
 
             } catch (error) {
                 console.error('Firestore fetch error', error);
-                document.getElementById('schoolsTableBody').innerHTML = `<tr><td colspan="6" style="padding: 48px; text-align: center; color: #e74c3c;"><i class="fas fa-circle-exclamation"></i> Error loading data. Check permissions or indexes.</td></tr>`;
+                document.getElementById('schoolsTableBody').innerHTML = `<tr><td colspan="6" style="padding: 48px; text-align: center; color: #e74c3c;">
+                    <i class="fas fa-circle-exclamation"></i> Error loading data. Check permissions or create Firestore indexes.
+                </td></tr>`;
             } finally {
                 loadingEl.style.display = 'none';
                 tableEl.style.display = 'block';
@@ -763,7 +825,9 @@
             let html = '';
             docs.forEach(doc => {
                 const s = doc.data();
-                const statusClass = s.status === 'active' ? 'status' : s.status === 'pending' ? 'status pending' : s.status === 'suspended' ? 'status suspended' : 'status expiring';
+                const statusClass = s.status === 'active' ? 'status' : 
+                                   s.status === 'pending' ? 'status pending' : 
+                                   s.status === 'suspended' ? 'status suspended' : 'status expiring';
                 const statusDisplay = s.status ? s.status.charAt(0).toUpperCase() + s.status.slice(1) : 'Active';
                 const planDisplay = s.plan ? s.plan.charAt(0).toUpperCase() + s.plan.slice(1) : 'Basic';
                 const studentCount = s.studentCount?.toLocaleString() || '0';
@@ -797,7 +861,6 @@
             tbody.innerHTML = html;
         }
 
-        // XSS safe
         function escapeHtml(unsafe) {
             if (!unsafe) return '';
             return unsafe.replace(/[&<>"]/g, function(m) {
@@ -833,23 +896,14 @@
         };
 
         // ---------- FILTER EVENT LISTENERS ----------
-        document.getElementById('statusFilterSelect').addEventListener('change', () => {
-            applyFiltersAndFetch(true);
-        });
-        document.getElementById('planFilterSelect').addEventListener('change', () => {
-            applyFiltersAndFetch(true);
-        });
-        document.getElementById('searchTriggerBtn').addEventListener('click', () => {
-            applyFiltersAndFetch(true);
-        });
-        // press enter in search field
+        document.getElementById('statusFilterSelect').addEventListener('change', () => applyFiltersAndFetch(true));
+        document.getElementById('planFilterSelect').addEventListener('change', () => applyFiltersAndFetch(true));
+        document.getElementById('searchTriggerBtn').addEventListener('click', () => applyFiltersAndFetch(true));
         document.getElementById('searchQueryInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                applyFiltersAndFetch(true);
-            }
+            if (e.key === 'Enter') applyFiltersAndFetch(true);
         });
 
-        // ---------- GLOBAL CRUD FUNCTIONS ----------
+        // ---------- CRUD OPERATIONS ----------
         window.viewSchool = function(id) {
             window.location.href = `school-details.html?id=${id}`;
         };
@@ -863,14 +917,17 @@
                     loadOverallStats();
                     applyFiltersAndFetch(true);
                 } catch (e) {
-                    alert('Delete failed: ' + e.message);
+                    showError('Delete failed: ' + e.message);
                 }
             }
         };
 
-        // initial load
-        window.addEventListener('load', function() {
-            // auth triggers loading
+        // onboard from empty state link
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'onboardEmptyLink') {
+                e.preventDefault();
+                window.location.href = 'onboard-school.html';
+            }
         });
     </script>
 </body>
