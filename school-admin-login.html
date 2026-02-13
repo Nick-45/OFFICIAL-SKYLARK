@@ -372,7 +372,7 @@
             transform: translateY(-2px);
         }
 
-        /* Demo Credentials Card */
+        /* Demo Credentials Card – Updated to reflect admins collection */
         .demo-card {
             background: rgba(44, 62, 80, 0.03);
             border-radius: 16px;
@@ -616,7 +616,7 @@
                 </button>
             </form>
 
-            <!-- Demo Credentials (for testing) -->
+            <!-- Demo Credentials (reflecting admins collection) -->
             <div class="demo-card">
                 <div class="demo-title">
                     <i class="fas fa-flask"></i> Demo Credentials (Testing Only)
@@ -628,14 +628,14 @@
                 </div>
                 <div class="demo-item">
                     <i class="fas fa-envelope"></i>
-                    <span><strong>Email:</strong> admin@naa.edu</span>
+                    <span><strong>Email:</strong> john@naa.edu</span>
                 </div>
                 <div class="demo-item">
                     <i class="fas fa-key"></i>
-                    <span><strong>Password:</strong> admin123</span>
+                    <span><strong>Password:</strong> EduSkylark123!</span>
                 </div>
                 <div style="font-size: 11px; color: #999; margin-top: 10px; text-align: center;">
-                    <i class="fas fa-info-circle"></i> Your account must have role: 'school_admin' and be linked to a school
+                    <i class="fas fa-info-circle"></i> Must be in <strong>admins collection</strong> with role 'Principal' / 'Academic Admin' etc.
                 </div>
             </div>
 
@@ -701,7 +701,6 @@
 
         // Show Success Toast (for password reset)
         function showSuccess(message) {
-            // Create temporary success toast
             const toast = document.createElement('div');
             toast.className = 'error-toast';
             toast.style.background = 'var(--green)';
@@ -710,29 +709,35 @@
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Check if user is already logged in
+        // Check if user is already logged in - QUERY ADMINS COLLECTION
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // User is signed in, verify school admin role
                 try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    // Query the 'admins' collection (not 'users') using authUid field
+                    const adminsQuery = await db.collection('admins').where('authUid', '==', user.uid).limit(1).get();
                     
-                    if (userDoc.exists) {
-                        const userData = userDoc.data();
-                        const isSchoolAdmin = userData.role === 'school_admin' || 
-                                            userData.role === 'school-admin' || 
-                                            userData.role === 'admin';
+                    if (!adminsQuery.empty) {
+                        const adminDoc = adminsQuery.docs[0];
+                        const adminData = adminDoc.data();
                         
-                        if (isSchoolAdmin && userData.schoolId) {
-                            // Valid school admin - redirect to dashboard
+                        // Check if admin has required fields and is active
+                        const isValidAdmin = adminData && 
+                                           (adminData.role === 'Principal' || 
+                                            adminData.role === 'Academic Admin' || 
+                                            adminData.role === 'Finance Admin' ||
+                                            adminData.role === 'Super Admin') &&
+                                           adminData.school &&
+                                           adminData.status === 'Active';
+                        
+                        if (isValidAdmin) {
+                            // Redirect to school dashboard
                             window.location.href = 'school-dashboard.html';
-                        } else {
-                            // Not a school admin or no school assigned - sign out
-                            await auth.signOut();
+                            return;
                         }
-                    } else {
-                        await auth.signOut();
                     }
+                    
+                    // If we get here, not a valid admin - sign out
+                    await auth.signOut();
                 } catch (error) {
                     console.error('Auth state check error:', error);
                     await auth.signOut();
@@ -740,7 +745,7 @@
             }
         });
 
-        // Login Form Submission
+        // Login Form Submission - VERIFY AGAINST ADMINS COLLECTION
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -761,31 +766,46 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // 2. Fetch user document from Firestore
-                const userDoc = await db.collection('users').doc(user.uid).get();
-
-                if (!userDoc.exists) {
-                    // No user profile – rollback
+                // 2. Check email verification (if required by super admin)
+                if (!user.emailVerified) {
                     await auth.signOut();
                     loadingOverlay.style.display = 'none';
                     loginBtn.disabled = false;
-                    showError('User profile not found. Please contact your school admin.');
+                    showError('Please verify your email address. Check your inbox for the verification link.');
                     return;
                 }
 
-                const userData = userDoc.data();
-                console.log('User data:', userData);
+                // 3. Query the 'admins' collection using authUid
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
 
-                // 3. CHECK FOR SCHOOL ADMIN ROLE
-                const isSchoolAdmin = userData.role === 'school_admin' || 
-                                     userData.role === 'school-admin' || 
-                                     userData.role === 'admin';
+                if (adminsQuery.empty) {
+                    // No matching admin profile
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Admin profile not found. Please contact super admin.');
+                    return;
+                }
+
+                const adminDoc = adminsQuery.docs[0];
+                const adminData = adminDoc.data();
                 
-                // 4. CHECK IF ADMIN HAS ASSIGNED SCHOOL
-                const hasSchool = !!userData.schoolId;
+                console.log('Admin data from admins collection:', adminData);
 
-                if (!isSchoolAdmin) {
-                    // Valid credentials but not school admin
+                // 4. Validate admin role (must be one of the allowed admin roles)
+                const validRoles = ['Principal', 'Academic Admin', 'Finance Admin', 'Super Admin'];
+                const hasValidRole = adminData.role && validRoles.includes(adminData.role);
+                
+                // 5. Check if admin has assigned school
+                const hasSchool = !!adminData.school;
+
+                // 6. Check status (must be Active)
+                const isActive = adminData.status === 'Active';
+
+                if (!hasValidRole) {
                     await auth.signOut();
                     loadingOverlay.style.display = 'none';
                     loginBtn.disabled = false;
@@ -794,7 +814,6 @@
                 }
 
                 if (!hasSchool) {
-                    // School admin but no school assigned
                     await auth.signOut();
                     loadingOverlay.style.display = 'none';
                     loginBtn.disabled = false;
@@ -802,13 +821,26 @@
                     return;
                 }
 
-                // 5. ✅ SCHOOL ADMIN VERIFIED – update last login
-                await db.collection('users').doc(user.uid).update({
+                if (!isActive) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Your account is pending or inactive. Please check your email or contact support.');
+                    return;
+                }
+
+                // 7. ✅ SCHOOL ADMIN VERIFIED – update last login in admins doc
+                await db.collection('admins').doc(adminDoc.id).update({
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                     lastLoginIP: 'web-client',
                 }).catch(err => console.warn('Could not update lastLogin', err));
 
-                // 6. Redirect to school dashboard
+                // 8. Store school context in session for dashboard
+                sessionStorage.setItem('schoolAdminId', adminDoc.id);
+                sessionStorage.setItem('schoolName', adminData.school);
+                sessionStorage.setItem('adminRole', adminData.role);
+
+                // 9. Redirect to school dashboard
                 window.location.href = 'school-dashboard.html';
 
             } catch (error) {
@@ -893,14 +925,13 @@
             }
         });
 
-        // Add dark mode support (simple toggle)
+        // Dark mode support
         document.querySelector('button[onclick*="dark"]').addEventListener('click', function() {
             document.documentElement.classList.toggle('dark');
             const icon = this.querySelector('i');
             if (document.documentElement.classList.contains('dark')) {
                 icon.classList.remove('fa-moon');
                 icon.classList.add('fa-sun');
-                // Add dark mode styles
                 document.body.style.background = 'linear-gradient(135deg, #1a2530 0%, #2c3e50 100%)';
                 document.querySelector('.login-card').style.background = 'rgba(44, 62, 80, 0.95)';
                 document.querySelector('.login-card').style.color = '#ecf0f1';
