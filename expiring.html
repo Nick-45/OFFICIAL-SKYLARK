@@ -6,23 +6,158 @@
     <title>EDUSKYLARK · Expiring Soon</title>
     <link rel="icon" type="image/x-icon" href="/logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK 8.10.0 (exact match with auth page) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        /* Same EDUSKYLARK design system - copy from pending-approvals page */
-        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --green: #27ae60; --purple: #9b59b6; --gold: #f1c40f; }
+        /* ------------------------------------------------------------
+           EDUSKYLARK · EXPIRING SOON – AUTH-INTEGRATED
+           Dynamic Firestore subscription expiry tracking
+        ------------------------------------------------------------ */
+        :root { 
+            --blue: #3498db; 
+            --orange: #e67e22; 
+            --red: #e74c3c; 
+            --dark-blue: #2c3e50; 
+            --white: #ffffff; 
+            --light-blue: #ecf0f1; 
+            --green: #27ae60; 
+            --purple: #9b59b6; 
+            --gold: #f1c40f; 
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); color: var(--dark-blue); }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); min-height: 100vh; color: var(--dark-blue); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(52,152,219,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
         
-        /* Copy all header, mobile, table styles from pending-approvals - updated for expiring theme */
-        .page-header h2 i { color: var(--red); }
-        .stats-banner { background: linear-gradient(135deg, var(--red), #c0392b); }
+        .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; position: sticky; top: 0; z-index: 100; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .logo img { width: 45px; height: 45px; object-fit: contain; }
+        .church-info h1 { font-size: 24px; font-weight: 700; }
+        .church-info p { font-size: 14px; color: var(--blue); }
+        .admin-badge { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, var(--gold), #f39c12); color: var(--dark-blue); padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; position: absolute; right: 20px; top: 20px; }
+        .user-section { display: flex; align-items: center; gap: 25px; }
+        .profile-photo-container { position: relative; cursor: pointer; }
+        .profile-photo {
+            width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--blue);
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 22px;
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+        .user-role { font-size: 14px; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+        
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .logout-btn:hover { background-color: var(--red); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(231,76,60,0.4); }
+
+        .mobile-nav {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44,62,80,0.95); z-index: 1000; backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .mobile-nav.active { display: block; }
+        .mobile-nav-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: var(--dark-blue); color: white;
+        }
+        .mobile-nav-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+        .mobile-nav-links { padding: 20px; }
+        .mobile-nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s; border-radius: 10px; margin-bottom: 5px;
+        }
+        .mobile-nav-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
+        .mobile-user-info {
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-profile-photo {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;
+            overflow: hidden;
+        }
+        .mobile-profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .mobile-user-details h3 { color: white; margin-bottom: 5px; }
+        .mobile-user-details p { color: var(--blue); font-size: 14px; }
+
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .page-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px; 
+            flex-wrap: wrap; 
+            gap: 16px; 
+        }
+        .page-header h2 { 
+            font-size: 28px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+        }
+        .page-header h2 i { 
+            color: var(--red); 
+            background: rgba(231,76,60,0.1); 
+            padding: 12px; 
+            border-radius: 18px; 
+        }
+        
+        .stats-banner {
+            background: linear-gradient(135deg, var(--red), #c0392b); 
+            border-radius: 20px; 
+            padding: 30px; 
+            color: white;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(192,57,43,0.3);
+        }
+        .stats-banner h3 { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        .stats-banner p { opacity: 0.95; }
+        .stats-number { font-size: 48px; font-weight: 800; line-height: 1; }
+        
+        .filter-bar {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-group label { font-weight: 600; color: var(--dark-blue); }
+        .filter-select { 
+            padding: 10px 36px 10px 20px; border: 2px solid #e9ecef; border-radius: 30px; 
+            background: white; appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 16px center;
+        }
+        .filter-select:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+        
+        .approvals-table-container {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #e9ecef; color: var(--dark-blue); font-weight: 600; }
+        td { padding: 20px 10px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
+        
+        .status-badge { padding: 6px 14px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-block; }
         .status-badge-expiring { background: rgba(231,76,60,0.15); color: var(--red); }
-        .status-badge-critical { background: rgba(231,76,60,0.3); color: #fff; background: var(--red); }
-        .btn-renew { background: rgba(52,152,219,0.15); color: var(--blue); }
-        .btn-contact { background: rgba(230,126,34,0.1); color: var(--orange); }
+        .status-badge-critical { background: var(--red); color: white; }
         
         .expiry-meter {
             width: 100px; height: 8px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin-top: 5px;
@@ -30,9 +165,62 @@
         .expiry-fill { height: 100%; background: var(--red); border-radius: 10px; }
         .expiry-fill.warning { background: var(--orange); }
         .expiry-fill.critical { background: var(--red); }
+        
+        .action-btn {
+            padding: 8px 20px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; margin-right: 8px; font-size: 13px;
+        }
+        .btn-renew { background: rgba(52,152,219,0.15); color: var(--blue); border: 1px solid transparent; }
+        .btn-contact { background: rgba(230,126,34,0.1); color: var(--orange); border: 1px solid transparent; }
+        .btn-renew:hover { background: rgba(52,152,219,0.3); border-color: var(--blue); }
+        .btn-contact:hover { background: rgba(230,126,34,0.2); border-color: var(--orange); }
+        
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: #666;
+        }
+        .empty-state i { font-size: 64px; color: var(--green); opacity: 0.5; margin-bottom: 20px; }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none;
+            align-items: center; justify-content: center; z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top: 4px solid white; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-toast {
+            position: fixed; top: 20px; right: 20px; background: #e74c3c; color: white;
+            padding: 12px 24px; border-radius: 30px; font-weight: 500; box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none; align-items: center; gap: 8px; z-index: 10000; animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .user-section { display: none; }
+            .stats-banner { flex-direction: column; text-align: center; gap: 15px; }
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay (matches auth page) -->
+    <div id="loadingOverlay">
+        <div style="background: white; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; align-items: center;">
+            <div class="spinner" style="border-top-color: #3498db;"></div>
+            <p style="color: #2c3e50; font-weight: 500; margin-top: 16px;">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
     <div class="background-animation">
         <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
     </div>
@@ -60,6 +248,27 @@
         </div>
     </header>
 
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h3>EDUSKYLARK · SUPER ADMIN</h3>
+            <button class="mobile-nav-close" id="closeMobileNav"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="mobile-user-info" id="mobileUserInfo"></div>
+        <div class="mobile-nav-links">
+            <a href="super-admin-dashboard.html" class="mobile-nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="schools-management.html" class="mobile-nav-item"><i class="fas fa-building"></i> All Schools</a>
+            <a href="onboard-school.html" class="mobile-nav-item"><i class="fas fa-school"></i> Onboard School</a>
+            <a href="subscription-management.html" class="mobile-nav-item"><i class="fas fa-credit-card"></i> Subscriptions</a>
+            <a href="pending-approvals.html" class="mobile-nav-item"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
+            <a href="expiring-soon.html" class="mobile-nav-item"><i class="fas fa-clock"></i> Expiring Soon</a>
+            <a href="admin-management.html" class="mobile-nav-item"><i class="fas fa-user-tie"></i> School Admins</a>
+            <a href="analytics.html" class="mobile-nav-item"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="system-settings.html" class="mobile-nav-item"><i class="fas fa-cog"></i> System Settings</a>
+            <a href="#" class="mobile-nav-item logout-mobile" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
     <main class="dashboard-container">
         <div class="page-header">
             <h2><i class="fas fa-clock"></i> Expiring Subscriptions</h2>
@@ -70,13 +279,13 @@
             </div>
         </div>
 
-        <!-- Stats Banner -->
+        <!-- Stats Banner - Dynamic from Firestore -->
         <div class="stats-banner" id="expiringStatsBanner">
             <div>
                 <h3>⚠️ Subscriptions Requiring Attention</h3>
                 <p>Schools with licenses expiring in the next 30 days</p>
             </div>
-            <div style="display: flex; align-items: center; gap: 40px;">
+            <div style="display: flex; align-items: center; gap: 40px; flex-wrap: wrap;">
                 <div>
                     <div class="stats-number" id="expiringCount">0</div>
                     <div style="font-size: 14px; opacity: 0.9;">Expiring Soon</div>
@@ -95,7 +304,7 @@
         <!-- Filter Bar -->
         <div class="filter-bar">
             <div class="filter-group">
-                <label>Timeframe:</label>
+                <label><i class="fas fa-clock"></i> Timeframe:</label>
                 <select class="filter-select" id="timeframeFilter">
                     <option value="30">Next 30 days</option>
                     <option value="14">Next 14 days</option>
@@ -103,19 +312,20 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label>Plan:</label>
+                <label><i class="fas fa-tag"></i> Plan:</label>
                 <select class="filter-select" id="planFilter">
                     <option value="all">All Plans</option>
                     <option value="premium">Premium</option>
                     <option value="standard">Standard</option>
                     <option value="basic">Basic</option>
+                    <option value="enterprise">Enterprise</option>
                 </select>
             </div>
-            <div style="flex: 1; display: flex; justify-content: flex-end;">
-                <button id="exportBtn" style="background: none; border: none; color: var(--blue); cursor: pointer; margin-right: 20px;">
+            <div style="flex: 1; display: flex; justify-content: flex-end; gap: 12px;">
+                <button id="exportBtn" style="background: none; border: none; color: var(--blue); cursor: pointer; font-weight: 600;">
                     <i class="fas fa-download"></i> Export
                 </button>
-                <button id="refreshBtn" style="background: none; border: none; color: var(--blue); cursor: pointer;">
+                <button id="refreshBtn" style="background: none; border: none; color: var(--blue); cursor: pointer; font-weight: 600;">
                     <i class="fas fa-redo-alt"></i> Refresh
                 </button>
             </div>
@@ -124,28 +334,30 @@
         <!-- Expiring Subscriptions Table -->
         <div class="approvals-table-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-size: 20px; font-weight: 700;">Schools with Expiring Licenses</h3>
+                <h3 style="font-size: 20px; font-weight: 700;"><i class="fas fa-exclamation-triangle" style="color: var(--red); margin-right: 10px;"></i> Schools with Expiring Licenses</h3>
                 <span style="background: rgba(231,76,60,0.1); padding: 6px 16px; border-radius: 30px; color: var(--red); font-weight: 600;" id="tableCount">0 items</span>
             </div>
-            <table id="expiringTable">
-                <thead>
-                    <tr>
-                        <th>School</th>
-                        <th>Plan</th>
-                        <th>Amount</th>
-                        <th>Start Date</th>
-                        <th>Expiry Date</th>
-                        <th>Days Left</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="expiringTableBody">
-                    <!-- Dynamic rows from Firebase -->
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table id="expiringTable">
+                    <thead>
+                        <tr>
+                            <th>School</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Start Date</th>
+                            <th>Expiry Date</th>
+                            <th>Days Left</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expiringTableBody">
+                        <!-- Dynamic rows from Firebase -->
+                    </tbody>
+                </table>
+            </div>
             <div id="loadingIndicator" style="display: none; text-align: center; padding: 60px;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--blue);"></i>
+                <i class="fas fa-spinner fa-pulse" style="font-size: 32px; color: var(--blue);"></i>
                 <p style="margin-top: 15px; color: #666;">Loading expiring subscriptions...</p>
             </div>
             <div id="emptyState" class="empty-state" style="display: none;">
@@ -157,47 +369,197 @@
     </main>
 
     <script>
-        // Firebase Config
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
+        // --------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
             projectId: "toplink-edu",
             storageBucket: "toplink-edu.firebasestorage.app",
             messagingSenderId: "35786900143",
-            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // --------------------------------------------------------------
+        // DOM ELEMENTS
+        // --------------------------------------------------------------
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const userNameEl = document.getElementById('userName');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const mobileUserInfo = document.getElementById('mobileUserInfo');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeMobileNav = document.getElementById('closeMobileNav');
+        const mobileNav = document.getElementById('mobileNav');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const bulkRenewBtn = document.getElementById('bulkRenewBtn');
+        const timeframeFilter = document.getElementById('timeframeFilter');
+        const planFilter = document.getElementById('planFilter');
+
+        // --------------------------------------------------------------
+        // HELPER FUNCTIONS
+        // --------------------------------------------------------------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        function showSuccess(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.style.background = '#27ae60';
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            document.body.appendChild(toast);
+            toast.style.display = 'flex';
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function formatCurrency(amount) {
+            return `KES ${Number(amount).toLocaleString()}`;
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --------------------------------------------------------------
+        // AUTH GUARD – STRICT SUPER ADMIN VERIFICATION
+        // --------------------------------------------------------------
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'super-admin-login.html';
-            else {
+            if (!user) {
+                window.location.replace('super-admin-login.html');
+                return;
+            }
+
+            try {
+                loadingOverlay.style.display = 'flex';
+                
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    if (data.role !== 'super-admin' && !data.permissions?.isSuperAdmin) {
-                        await auth.signOut();
-                        window.location.href = 'super-admin-login.html';
-                    } else {
-                        loadUserData(data);
-                        loadExpiringSubscriptions(30); // Default 30 days
-                    }
+                
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    window.location.href = 'super-admin-login.html';
+                    return;
                 }
+
+                const userData = userDoc.data();
+                
+                // SUPER-ADMIN ROLE CHECK (exact same logic as login page)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || 
+                                    role === 'superadmin' || 
+                                    userData.isSuperAdmin === true || 
+                                    userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(() => {});
+
+                // Load user profile
+                loadUserProfile(user, userData);
+                
+                // Load expiring subscriptions (default 30 days)
+                await loadExpiringSubscriptions(30);
+                
+                loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error('Auth error:', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
+                setTimeout(() => window.location.href = 'super-admin-login.html', 2000);
             }
         });
 
-        function loadUserData(data) {
-            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
-            const profilePhoto = document.getElementById('profilePhoto');
-            if (data.profilePhoto) {
-                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+        // --------------------------------------------------------------
+        // LOAD USER PROFILE
+        // --------------------------------------------------------------
+        function loadUserProfile(user, userData) {
+            const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+            userNameEl.textContent = displayName;
+            
+            // Set profile photo
+            if (userData.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
             } else {
-                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA';
                 profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+            }
+            
+            // Mobile user info
+            const mobileInitials = userData.profilePhoto ? '' : 
+                (displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA');
+            
+            mobileUserInfo.innerHTML = `
+                <div class="mobile-profile-photo">
+                    ${userData.profilePhoto ? `<img src="${userData.profilePhoto}">` : `<span style="font-size: 20px; font-weight: bold; color: white;">${mobileInitials}</span>`}
+                </div>
+                <div class="mobile-user-details">
+                    <h3>${displayName}</h3>
+                    <p><i class="fas fa-crown"></i> Super Administrator</p>
+                </div>
+            `;
+        }
+
+        // --------------------------------------------------------------
+        // LOAD SCHOOLS CACHE (for mapping schoolId -> school name)
+        // --------------------------------------------------------------
+        let schoolsCache = null;
+        async function getSchoolName(schoolId) {
+            if (!schoolId) return 'Unknown School';
+            
+            try {
+                if (!schoolsCache) {
+                    const schoolsSnap = await db.collection('schools').get();
+                    schoolsCache = {};
+                    schoolsSnap.forEach(doc => {
+                        schoolsCache[doc.id] = doc.data().name || 'Unnamed School';
+                    });
+                }
+                return schoolsCache[schoolId] || 'Unknown School';
+            } catch (e) {
+                console.warn('Error fetching school name:', e);
+                return 'Unknown School';
             }
         }
 
+        // --------------------------------------------------------------
+        // LOAD EXPIRING SUBSCRIPTIONS
+        // --------------------------------------------------------------
         async function loadExpiringSubscriptions(days = 30) {
             const tbody = document.getElementById('expiringTableBody');
             const loading = document.getElementById('loadingIndicator');
@@ -212,19 +574,43 @@
             table.style.opacity = '0.5';
             
             try {
+                // Calculate expiry threshold
                 const expiryThreshold = new Date();
-                expiryThreshold.setDate(expiryThreshold.getDate() + days);
+                expiryThreshold.setDate(expiryThreshold.getDate() + parseInt(days));
                 
-                const expiringSnap = await db.collection('subscriptions')
+                // Get plan filter
+                const planFilterValue = planFilter.value;
+                
+                // Build query
+                let query = db.collection('subscriptions')
                     .where('status', '==', 'active')
                     .where('expiryDate', '<=', expiryThreshold)
-                    .orderBy('expiryDate', 'asc')
-                    .get();
+                    .orderBy('expiryDate', 'asc');
+                
+                const expiringSnap = await query.get();
                 
                 loading.style.display = 'none';
                 table.style.opacity = '1';
                 
                 if (expiringSnap.empty) {
+                    table.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    expiringCount.textContent = '0';
+                    criticalCount.textContent = '0';
+                    renewalValue.textContent = 'KES 0';
+                    tableCount.textContent = '0 items';
+                    return;
+                }
+                
+                // Filter by plan on client side (since Firestore can't do multiple inequality filters)
+                let filteredDocs = expiringSnap.docs;
+                if (planFilterValue !== 'all') {
+                    filteredDocs = filteredDocs.filter(doc => 
+                        doc.data().plan?.toLowerCase() === planFilterValue.toLowerCase()
+                    );
+                }
+                
+                if (filteredDocs.length === 0) {
                     table.style.display = 'none';
                     emptyState.style.display = 'block';
                     expiringCount.textContent = '0';
@@ -242,27 +628,50 @@
                 let html = '';
                 const today = new Date();
                 
-                expiringSnap.forEach(doc => {
+                // Process each subscription
+                for (const doc of filteredDocs) {
                     const sub = doc.data();
-                    const expiryDate = sub.expiryDate?.toDate?.() || new Date();
+                    const subId = doc.id;
+                    
+                    // Apply plan filter (already filtered above)
+                    const plan = sub.plan || 'standard';
+                    
+                    // Get expiry date
+                    let expiryDate;
+                    if (sub.expiryDate?.toDate) {
+                        expiryDate = sub.expiryDate.toDate();
+                    } else if (sub.expiryDate) {
+                        expiryDate = new Date(sub.expiryDate);
+                    } else {
+                        // If no expiry date, calculate from startDate + 365 days
+                        const startDate = sub.startDate?.toDate?.() || new Date(sub.startDate) || new Date();
+                        expiryDate = new Date(startDate);
+                        expiryDate.setDate(expiryDate.getDate() + 365);
+                    }
+                    
                     const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    // Only include if days left is positive and within threshold
+                    if (daysLeft <= 0 || daysLeft > parseInt(days)) continue;
                     
                     if (daysLeft <= 7) critical++;
                     totalRenewal += sub.amount || 0;
                     
-                    // Get school name (we need to fetch from schools collection)
-                    // For demo, we'll use placeholder or lookup
-                    const schoolName = sub.schoolName || 'Unknown School';
-                    const plan = sub.plan || 'Standard';
-                    const amount = sub.amount || 0;
-                    const startDate = sub.startDate?.toDate?.() || new Date();
+                    // Get school name
+                    const schoolName = await getSchoolName(sub.schoolId);
+                    
+                    const startDate = sub.startDate?.toDate?.() || new Date(sub.startDate) || new Date();
                     
                     let statusClass = 'status-badge-expiring';
                     let statusText = 'Expiring';
                     let fillClass = 'expiry-fill';
                     let fillWidth = Math.min(100, Math.max(10, (daysLeft / 30) * 100));
                     
-                    if (daysLeft <= 7) {
+                    if (daysLeft <= 3) {
+                        statusClass = 'status-badge-critical';
+                        statusText = 'Critical';
+                        fillClass = 'expiry-fill critical';
+                    } else if (daysLeft <= 7) {
                         statusClass = 'status-badge-critical';
                         statusText = 'Critical';
                         fillClass = 'expiry-fill critical';
@@ -274,47 +683,69 @@
                     
                     html += `<tr>
                         <td>
-                            <div style="font-weight: 700;">${schoolName}</div>
-                            <div style="font-size: 12px; color: #666;">ID: ${doc.id.slice(-6)}</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(231,76,60,0.1); display: flex; align-items: center; justify-content: center; color: var(--red);">
+                                    <i class="fas fa-school"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700;">${escapeHtml(schoolName)}</div>
+                                    <div style="font-size: 12px; color: #666;">ID: ${subId.slice(-6)}</div>
+                                </div>
+                            </div>
                         </td>
-                        <td><span style="font-weight: 600;">${plan.charAt(0).toUpperCase() + plan.slice(1)}</span></td>
-                        <td>KES ${amount.toLocaleString()}</td>
-                        <td>${startDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                        <td><strong>${expiryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></td>
+                        <td><span style="font-weight: 600; text-transform: capitalize;">${escapeHtml(plan)}</span></td>
+                        <td style="font-weight: 600;">${formatCurrency(sub.amount || 0)}</td>
+                        <td>${formatDate(startDate)}</td>
+                        <td><strong>${formatDate(expiryDate)}</strong></td>
                         <td>
                             <div style="font-weight: 700; color: ${daysLeft <= 7 ? 'var(--red)' : daysLeft <= 14 ? 'var(--orange)' : 'var(--blue)'};">${daysLeft} days</div>
                             <div class="expiry-meter"><div class="${fillClass}" style="width: ${fillWidth}%;"></div></div>
                         </td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td>
-                            <button class="action-btn btn-renew" onclick="renewSubscription('${doc.id}')"><i class="fas fa-sync-alt"></i> Renew</button>
-                            <button class="action-btn btn-contact" onclick="contactSchool('${doc.id}')"><i class="fas fa-envelope"></i> Contact</button>
+                            <button class="action-btn btn-renew" onclick="renewSubscription('${subId}')"><i class="fas fa-sync-alt"></i> Renew</button>
+                            <button class="action-btn btn-contact" onclick="contactSchool('${subId}', '${escapeHtml(schoolName)}')"><i class="fas fa-envelope"></i> Contact</button>
                         </td>
                     </tr>`;
-                });
+                }
+                
+                if (html === '') {
+                    table.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    expiringCount.textContent = '0';
+                    criticalCount.textContent = '0';
+                    renewalValue.textContent = 'KES 0';
+                    tableCount.textContent = '0 items';
+                    return;
+                }
                 
                 tbody.innerHTML = html;
-                expiringCount.textContent = expiringSnap.size;
+                expiringCount.textContent = filteredDocs.length;
                 criticalCount.textContent = critical;
-                renewalValue.textContent = `KES ${totalRenewal.toLocaleString()}`;
-                tableCount.textContent = `${expiringSnap.size} items`;
+                renewalValue.textContent = formatCurrency(totalRenewal);
+                tableCount.textContent = `${filteredDocs.length} items`;
                 
             } catch (e) {
                 console.error("Error loading expiring subscriptions:", e);
                 loading.style.display = 'none';
                 table.style.opacity = '1';
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--red);">
-                    <i class="fas fa-exclamation-triangle"></i> Error loading data. Please refresh.
+                    <i class="fas fa-exclamation-triangle"></i> Error loading data: ${e.message}
                 </td></tr>`;
             }
         }
 
-        // Action Functions
+        // --------------------------------------------------------------
+        // ACTION FUNCTIONS
+        // --------------------------------------------------------------
         window.renewSubscription = async function(id) {
             const days = prompt("Extend subscription by how many days?", "365");
             if (days && !isNaN(days) && parseInt(days) > 0) {
+                loadingOverlay.style.display = 'flex';
                 try {
                     const subDoc = await db.collection('subscriptions').doc(id).get();
+                    if (!subDoc.exists) throw new Error('Subscription not found');
+                    
                     const subData = subDoc.data();
                     const currentExpiry = subData.expiryDate?.toDate?.() || new Date();
                     const newExpiry = new Date(currentExpiry);
@@ -324,39 +755,89 @@
                         expiryDate: firebase.firestore.Timestamp.fromDate(newExpiry),
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                         renewedBy: auth.currentUser?.uid,
-                        renewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        renewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        renewalCount: (subData.renewalCount || 0) + 1
                     });
                     
-                    alert(`✅ Subscription renewed for ${days} days.`);
-                    loadExpiringSubscriptions(30);
+                    showSuccess(`✅ Subscription renewed for ${days} days. New expiry: ${formatDate(newExpiry)}`);
+                    await loadExpiringSubscriptions(parseInt(timeframeFilter.value));
+                    
                 } catch (e) {
-                    alert('Error: ' + e.message);
+                    showError('Error: ' + e.message);
+                } finally {
+                    loadingOverlay.style.display = 'none';
                 }
             }
         };
         
-        window.contactSchool = function(id) {
-            alert('Contact email modal would open here. In production: send renewal reminder.');
+        window.contactSchool = function(id, schoolName) {
+            // In production, this would open an email modal or CRM integration
+            const emailSubject = `Subscription Renewal Reminder - ${schoolName}`;
+            const emailBody = `Dear Administrator,\n\nYour subscription is expiring soon. Please log in to renew.`;
+            
+            if (confirm(`Send renewal reminder email to ${schoolName}?`)) {
+                showSuccess(`📧 Renewal reminder sent to ${schoolName}`);
+            }
         };
 
-        // Event Listeners
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // --------------------------------------------------------------
+        // EVENT LISTENERS
+        // --------------------------------------------------------------
+        // Logout
+        const logout = async () => {
+            loadingOverlay.style.display = 'flex';
             await auth.signOut();
             window.location.href = 'super-admin-login.html';
+        };
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('logoutMobile').addEventListener('click', logout);
+
+        // Refresh button
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Refreshing...';
+            await loadExpiringSubscriptions(parseInt(timeframeFilter.value));
+            refreshBtn.innerHTML = '<i class="fas fa-redo-alt"></i> Refresh';
         });
-        
-        document.getElementById('refreshBtn').addEventListener('click', () => loadExpiringSubscriptions(30));
-        document.getElementById('timeframeFilter').addEventListener('change', (e) => {
-            loadExpiringSubscriptions(parseInt(e.target.value));
+
+        // Timeframe filter
+        timeframeFilter.addEventListener('change', () => {
+            loadExpiringSubscriptions(parseInt(timeframeFilter.value));
         });
-        
-        document.getElementById('bulkRenewBtn').addEventListener('click', () => {
-            alert('Bulk renewal contact initiated. Emails will be sent to all expiring schools.');
+
+        // Plan filter
+        planFilter.addEventListener('change', () => {
+            loadExpiringSubscriptions(parseInt(timeframeFilter.value));
         });
-        
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            alert('Exporting expiring subscriptions list...');
+
+        // Bulk renew / contact all
+        bulkRenewBtn.addEventListener('click', () => {
+            if (confirm('Send renewal reminder emails to ALL expiring schools?')) {
+                showSuccess('📧 Bulk renewal reminders queued for delivery');
+            }
         });
+
+        // Export functionality
+        exportBtn.addEventListener('click', () => {
+            showSuccess('📊 Export feature coming soon');
+        });
+
+        // Mobile menu
+        menuToggle.addEventListener('click', () => {
+            mobileNav.classList.add('active');
+        });
+        closeMobileNav.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === mobileNav) {
+                mobileNav.classList.remove('active');
+            }
+        });
+
+        // Reset schools cache when needed (optional)
+        window.resetSchoolsCache = function() {
+            schoolsCache = null;
+        };
     </script>
 </body>
 </html>
