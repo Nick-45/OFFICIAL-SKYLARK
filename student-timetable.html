@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Timetable</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --student-blue: #3498db;
+            --student-blue-dark: #2980b9;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --green: #27ae60;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .timetable-container {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        
+        .week-nav {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .nav-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: 1px solid #e9ecef; background: white; cursor: pointer;
+        }
+        
+        .timetable-grid {
+            display: grid; grid-template-columns: 100px repeat(5, 1fr); gap: 15px;
+        }
+        .time-slot {
+            padding: 15px; background: #f9f9f9; border-radius: 12px; font-weight: 600; color: var(--dark-blue);
+        }
+        .day-header {
+            padding: 15px; background: linear-gradient(135deg, var(--student-blue), var(--student-blue-dark)); color: white;
+            border-radius: 12px; text-align: center; font-weight: 700;
+        }
+        .class-cell {
+            padding: 15px; background: rgba(52,152,219,0.05); border-radius: 12px; border-left: 4px solid var(--student-blue);
+            cursor: pointer; transition: all 0.3s;
+        }
+        .class-cell:hover { background: rgba(52,152,219,0.1); transform: translateY(-2px); }
+        .class-subject { font-weight: 700; color: var(--dark-blue); }
+        .class-room { font-size: 12px; color: #666; margin-top: 5px; }
+        .break-cell {
+            padding: 15px; background: #f9f9f9; border-radius: 12px; color: #666; text-align: center; font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>EDUSKYLARK · TIMETABLE <span style="background:linear-gradient(135deg,#3498db,#2980b9); padding:3px 10px; border-radius:15px;">STUDENT</span></h1>
+            <button id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="timetable-container">
+            <div class="week-nav">
+                <h2 style="font-size:24px;"><i class="fas fa-calendar-alt" style="color: var(--student-blue);"></i> Weekly Timetable</h2>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                    <span style="font-weight:600;">13 - 19 Apr 2025</span>
+                    <button class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="timetable-grid">
+                <div></div>
+                <div class="day-header">MONDAY</div>
+                <div class="day-header">TUESDAY</div>
+                <div class="day-header">WEDNESDAY</div>
+                <div class="day-header">THURSDAY</div>
+                <div class="day-header">FRIDAY</div>
+
+                <!-- 08:00 - 09:30 -->
+                <div class="time-slot">08:00 - 09:30</div>
+                <div class="class-cell">
+                    <div class="class-subject">Mathematics</div>
+                    <div>Mr. Mwangi</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 101</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Physics</div>
+                    <div>Ms. Odhiambo</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 203</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Mathematics</div>
+                    <div>Mr. Mwangi</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 101</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Chemistry</div>
+                    <div>Dr. Kimani</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 101</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Geography</div>
+                    <div>Mrs. Wambui</div>
+                    <div class="class-room"><i class="fas fa-globe"></i> Room 106</div>
+                </div>
+
+                <!-- 09:30 - 10:00 -->
+                <div class="time-slot">09:30 - 10:00</div>
+                <div class="break-cell" colspan="5">BREAK</div>
+                <div class="break-cell">BREAK</div>
+                <div class="break-cell">BREAK</div>
+                <div class="break-cell">BREAK</div>
+                <div class="break-cell">BREAK</div>
+                <div class="break-cell">BREAK</div>
+
+                <!-- 10:00 - 11:30 -->
+                <div class="time-slot">10:00 - 11:30</div>
+                <div class="class-cell">
+                    <div class="class-subject">Biology</div>
+                    <div>Dr. Muthoni</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 105</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">History</div>
+                    <div>Mr. Kiprop</div>
+                    <div class="class-room"><i class="fas fa-landmark"></i> Room 204</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Physics</div>
+                    <div>Ms. Odhiambo</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 203</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Mathematics</div>
+                    <div>Mr. Mwangi</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 101</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">English</div>
+                    <div>Mrs. Wanjiku</div>
+                    <div class="class-room"><i class="fas fa-book"></i> Room 305</div>
+                </div>
+
+                <!-- 11:30 - 13:00 -->
+                <div class="time-slot">11:30 - 13:00</div>
+                <div class="class-cell">
+                    <div class="class-subject">English</div>
+                    <div>Mrs. Wanjiku</div>
+                    <div class="class-room"><i class="fas fa-book"></i> Room 305</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Geography</div>
+                    <div>Mrs. Wambui</div>
+                    <div class="class-room"><i class="fas fa-globe"></i> Room 106</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Kiswahili</div>
+                    <div>Mr. Hassan</div>
+                    <div class="class-room"><i class="fas fa-language"></i> Room 108</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Biology</div>
+                    <div>Dr. Muthoni</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 105</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">History</div>
+                    <div>Mr. Kiprop</div>
+                    <div class="class-room"><i class="fas fa-landmark"></i> Room 204</div>
+                </div>
+
+                <!-- 13:00 - 14:00 -->
+                <div class="time-slot">13:00 - 14:00</div>
+                <div class="break-cell" colspan="5">LUNCH</div>
+                <div class="break-cell">LUNCH</div>
+                <div class="break-cell">LUNCH</div>
+                <div class="break-cell">LUNCH</div>
+                <div class="break-cell">LUNCH</div>
+                <div class="break-cell">LUNCH</div>
+
+                <!-- 14:00 - 15:30 -->
+                <div class="time-slot">14:00 - 15:30</div>
+                <div class="class-cell">
+                    <div class="class-subject">Chemistry</div>
+                    <div>Dr. Kimani</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 101</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Kiswahili</div>
+                    <div>Mr. Hassan</div>
+                    <div class="class-room"><i class="fas fa-language"></i> Room 108</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">History</div>
+                    <div>Mr. Kiprop</div>
+                    <div class="class-room"><i class="fas fa-landmark"></i> Room 204</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Geography</div>
+                    <div>Mrs. Wambui</div>
+                    <div class="class-room"><i class="fas fa-globe"></i> Room 106</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Chemistry</div>
+                    <div>Dr. Kimani</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 101</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = 'student-login.html';
+        });
+    </script>
+</body>
+</html>
