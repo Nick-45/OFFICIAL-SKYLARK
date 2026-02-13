@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · School Admin Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* ----- EDUSKYLARK DASHBOARD DESIGN SYSTEM (PRESERVED) ----- */
+        :root {
+            --blue: #3498db;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --gold: #f1c40f;
+            --green: #27ae60;
+            --purple: #9b59b6;
+            --light-orange: rgba(230, 126, 34, 0.1);
+            --light-red: rgba(231, 76, 60, 0.1);
+            --light-dark-blue: rgba(44, 62, 80, 0.1);
+            --light-green: rgba(39, 174, 96, 0.1);
+            --light-purple: rgba(155, 89, 182, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--dark-blue);
+        }
+
+        /* Animated Background Elements */
+        .background-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.1);
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 10%; background: rgba(52,152,219,0.15); animation-delay: 0s; }
+        .bubble:nth-child(2) { width: 120px; height: 120px; top: 60%; right: 15%; background: rgba(230,126,34,0.1); animation-delay: 2s; }
+        .bubble:nth-child(3) { width: 60px; height: 60px; bottom: 20%; left: 20%; background: rgba(231,76,60,0.1); animation-delay: 4s; }
+        .bubble:nth-child(4) { width: 100px; height: 100px; top: 30%; right: 25%; background: rgba(44,62,80,0.1); animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%);
+            color: var(--white);
+            padding: 20px 30px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: gentlePulse 4s infinite ease-in-out;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2); }
+        }
+
+        .logo img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+        }
+
+        .church-info h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .church-info p {
+            font-size: 14px;
+            color: var(--blue);
+            opacity: 0.9;
+            letter-spacing: 1.5px;
+        }
+
+        /* School Admin Badge */
+        .school-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, var(--green), #229954);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+            animation: gentlePulse 2s infinite;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .profile-photo-container {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .profile-photo-container:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--green);
+            background: linear-gradient(135deg, var(--green), var(--dark-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 22px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .profile-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 25px;
+            height: 25px;
+            background-color: var(--red);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .user-role {
+            font-size: 14px;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--white);
+            border: 2px solid var(--red);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--red);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 62, 80, 0.95);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .mobile-nav.active {
+            display: block;
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--dark-blue);
+            color: white;
+        }
+
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .mobile-nav-links {
+            padding: 20px;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }
+
+        .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            padding-left: 20px;
+        }
+
+        .mobile-nav-item i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-profile-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green), var(--dark-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .mobile-profile-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-user-details h3 {
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .mobile-user-details p {
+            color: var(--green);
+            font-size: 14px;
+        }
+
+        /* Main Dashboard */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Welcome Section - School Admin Version */
+        .welcome-section {
+            background: linear-gradient(135deg, var(--green) 0%, #229954 100%);
+            border-radius: 20px;
+            padding: 40px;
+            color: white;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 35px rgba(39, 174, 96, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .welcome-section:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(100px, -100px);
+        }
+
+        .welcome-section:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            transform: translate(-80px, 80px);
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+        }
+
+        .welcome-content h2 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-content p {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .school-name-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .date-time {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .date-box, .time-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 150px;
+        }
+
+        .date-label, .time-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .date-value, .time-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Dashboard Grid – School Admin KPI Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-card {
+            background-color: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-top: 5px solid;
+            position: relative;
+            overflow: hidden;
+            animation: cardAppear 0.8s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .dashboard-card:nth-child(1) { animation-delay: 0.1s; border-color: var(--blue); }
+        .dashboard-card:nth-child(2) { animation-delay: 0.2s; border-color: var(--orange); }
+        .dashboard-card:nth-child(3) { animation-delay: 0.3s; border-color: var(--purple); }
+        .dashboard-card:nth-child(4) { animation-delay: 0.4s; border-color: var(--green); }
+        .dashboard-card:nth-child(5) { animation-delay: 0.5s; border-color: var(--red); }
+        .dashboard-card:nth-child(6) { animation-delay: 0.6s; border-color: var(--dark-blue); }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .students-card .card-icon { background: linear-gradient(135deg, var(--blue), #2980b9); }
+        .staff-card .card-icon { background: linear-gradient(135deg, var(--orange), #d35400); }
+        .classes-card .card-icon { background: linear-gradient(135deg, var(--purple), #8e44ad); }
+        .attendance-card .card-icon { background: linear-gradient(135deg, var(--green), #229954); }
+        .subscription-card .card-icon { background: linear-gradient(135deg, var(--red), #c0392b); }
+        .fees-card .card-icon { background: linear-gradient(135deg, var(--dark-blue), #1a2530); }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark-blue);
+        }
+
+        .card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--dark-blue);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: inherit;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 30px;
+            transition: all 0.3s;
+            margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+        }
+
+        .students-card .card-action { color: var(--blue); background: rgba(52, 152, 219, 0.1); }
+        .staff-card .card-action { color: var(--orange); background: rgba(230, 126, 34, 0.1); }
+        .classes-card .card-action { color: var(--purple); background: rgba(155, 89, 182, 0.1); }
+        .attendance-card .card-action { color: var(--green); background: rgba(39, 174, 96, 0.1); }
+        .subscription-card .card-action { color: var(--red); background: rgba(231, 76, 60, 0.1); }
+        .fees-card .card-action { color: var(--dark-blue); background: rgba(44, 62, 80, 0.1); }
+
+        .card-action:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Quick Actions Section */
+        .quick-actions-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-header h2 i {
+            color: var(--green);
+        }
+
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .action-btn {
+            background: #f9f9f9;
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            border: 2px solid transparent;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: var(--green);
+            background: white;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: white;
+            background: linear-gradient(135deg, var(--green), #229954);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn:nth-child(2) .action-icon { background: linear-gradient(135deg, var(--blue), #2980b9); }
+        .action-btn:nth-child(3) .action-icon { background: linear-gradient(135deg, var(--orange), #d35400); }
+        .action-btn:nth-child(4) .action-icon { background: linear-gradient(135deg, var(--purple), #8e44ad); }
+        .action-btn:nth-child(5) .action-icon { background: linear-gradient(135deg, var(--red), #c0392b); }
+        .action-btn:nth-child(6) .action-icon { background: linear-gradient(135deg, var(--dark-blue), #1a2530); }
+
+        .action-btn h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark-blue);
+        }
+
+        .action-btn p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Recent Activity Section */
+        .activity-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            margin-bottom: 40px;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 16px;
+            transition: all 0.3s;
+        }
+
+        .activity-item:hover {
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .activity-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(39, 174, 96, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green);
+            font-size: 20px;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .activity-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: rgba(39, 174, 96, 0.15); color: var(--green); }
+        .badge-warning { background: rgba(230, 126, 34, 0.15); color: var(--orange); }
+        .badge-info { background: rgba(52, 152, 219, 0.15); color: var(--blue); }
+
+        /* Subscription Status Card */
+        .subscription-status-card {
+            background: linear-gradient(135deg, var(--dark-blue), #1a2530);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .subscription-info h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subscription-plan {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .subscription-expiry {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            width: fit-content;
+        }
+
+        .renew-btn {
+            background: white;
+            color: var(--dark-blue);
+            border: none;
+            padding: 15px 35px;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .renew-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .user-section { display: none; }
+            .header-content { flex-direction: column; gap: 20px; text-align: center; }
+            .date-time { flex-direction: column; }
+            .welcome-content h2 { font-size: 28px; }
+            .subscription-status-card { flex-direction: column; text-align: center; gap: 20px; }
+            .subscription-expiry { margin: 0 auto; }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .quick-actions-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <!-- Header – EDUSKYLARK School Admin -->
+    <header class="header">
+        <div class="header-content">
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
+                </div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · SCHOOL ADMIN <span id="schoolBadge" class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">Loading...</span></span></h1>
+                    <p>Manage Your Institution · Real-Time Dashboard</p>
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="profile-photo-container" id="profilePhotoContainer">
+                    <div class="profile-photo" id="profilePhoto"></div>
+                    <div class="upload-indicator" id="uploadIndicator" title="Upload profile photo"><i class="fas fa-camera"></i></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role"><i class="fas fa-user-shield"></i> <span id="userRole">School Administrator</span></div>
+                </div>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h3>EDUSKYLARK · SCHOOL ADMIN</h3>
+            <button class="mobile-nav-close" id="closeMobileNav"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="mobile-user-info" id="mobileUserInfo"></div>
+        <div class="mobile-nav-links">
+            <a href="school-dashboard.html" class="mobile-nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="school-students.html" class="mobile-nav-item"><i class="fas fa-users"></i> Students</a>
+            <a href="school-staff.html" class="mobile-nav-item"><i class="fas fa-chalkboard-teacher"></i> Staff</a>
+            <a href="school-classes.html" class="mobile-nav-item"><i class="fas fa-door-open"></i> Classes</a>
+            <a href="school-attendance.html" class="mobile-nav-item"><i class="fas fa-calendar-check"></i> Attendance</a>
+            <a href="school-fees.html" class="mobile-nav-item"><i class="fas fa-coins"></i> Fees & Payments</a>
+            <a href="school-subscription.html" class="mobile-nav-item"><i class="fas fa-credit-card"></i> Subscription</a>
+            <a href="school-reports.html" class="mobile-nav-item"><i class="fas fa-chart-bar"></i> Reports</a>
+            <a href="school-settings.html" class="mobile-nav-item"><i class="fas fa-cog"></i> Settings</a>
+            <a href="#" class="mobile-nav-item logout-mobile" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-container">
+        <!-- Welcome Section – Personalized -->
+        <section class="welcome-section">
+            <div class="welcome-content">
+                <span class="school-name-badge" id="welcomeSchoolBadge"><i class="fas fa-school"></i> Loading school...</span>
+                <h2 id="greeting">Welcome back!</h2>
+                <p id="welcomeMessage">Manage your students, staff, and track your school's performance all in one place.</p>
+                <div class="date-time">
+                    <div class="date-box">
+                        <div class="date-label">TODAY'S DATE</div>
+                        <div class="date-value" id="currentDate">Loading...</div>
+                    </div>
+                    <div class="time-box">
+                        <div class="time-label">CURRENT TIME</div>
+                        <div class="time-value" id="currentTime">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Cards – School Level -->
+        <div class="dashboard-grid">
+            <!-- Total Students -->
+            <div class="dashboard-card students-card">
+                <div class="card-icon"><i class="fas fa-users"></i></div>
+                <h3 class="card-title">Total Students</h3>
+                <p class="card-description">Enrolled students across all classes.</p>
+                <div class="card-stats">
+                    <div>
+                        <div class="stat-value" id="totalStudents">0</div>
+                        <div class="stat-label">STUDENTS</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: var(--green);">+12 this month</div>
+                    </div>
+                </div>
+                <button class="card-action" onclick="window.location.href='school-students.html'">
+                    <span>Manage Students</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Total Staff -->
+            <div class="dashboard-card staff-card">
+                <div class="card-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <h3 class="card-title">Staff Members</h3>
+                <p class="card-description">Teachers and administrative staff.</p>
+                <div class="card-stats">
+                    <div>
+                        <div class="stat-value" id="totalStaff">0</div>
+                        <div class="stat-label">STAFF</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: var(--blue);">8 teachers</div>
+                    </div>
+                </div>
+                <button class="card-action" onclick="window.location.href='school-staff.html'">
+                    <span>Manage Staff</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Active Classes -->
+            <div class="dashboard-card classes-card">
+                <div class="card-icon"><i class="fas fa-door-open"></i></div>
+                <h3 class="card-title">Active Classes</h3>
+                <p class="card-description">Classes and grade levels.</p>
+                <div class="card-stats">
+                    <div>
+                        <div class="stat-value" id="totalClasses">0</div>
+                        <div class="stat-label">CLASSES</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: var(--purple);">Form 1-4</div>
+                    </div>
+                </div>
+                <button class="card-action" onclick="window.location.href='school-classes.html'">
+                    <span>View Classes</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Today's Attendance -->
+            <div class="dashboard-card attendance-card">
+                <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+                <h3 class="card-title">Today's Attendance</h3>
+                <p class="card-description">Student attendance rate.</p>
+                <div class="card-stats">
+                    <div>
+                        <div class="stat-value" id="attendanceRate">94%</div>
+                        <div class="stat-label">PRESENT</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: var(--green);">428/455</div>
+                    </div>
+                </div>
+                <button class="card-action" onclick="window.location.href='school-attendance.html'">
+                    <span>Take Attendance</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Subscription Status -->
+            <div class="dashboard-card subscription-card">
+                <div class="card-icon"><i class="fas fa-credit-card"></i></div>
+                <h3 class="card-title">Subscription</h3>
+                <p class="card-description">Your current plan and billing.</p>
+                <div class="card-stats">
+                    <div>
+                        <div class="stat-value" id="subscriptionPlan">Premium</div>
+                        <div class="stat-label">ACTIVE</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: var(--red);" id="expiryWarning">15 days left</div>
+                    </div>
+                </div>
+                <button class="card-action" onclick="window.location.href='school-subscription.html'">
+                    <span>View Details</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Fees Collection -->
+            <div class="dashboard-card fees-card">
+                <div class="card-icon"><i class="fas fa-coins"></i></div>
+                <h3 class="card-title">Fees Collection</h3>
+                <p class="card-description">This term's payment status.</p>
+                <div class="card-stats">
+                    <div>
+                        <div class="stat-value" id="feesCollected">78%</div>
+                        <div class="stat-label">COLLECTED</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: var(--orange);">KES 1.2M</div>
+                    </div>
+                </div>
+                <button class="card-action" onclick="window.location.href='school-fees.html'">
+                    <span>Manage Fees</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+            <div class="section-header">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                <span style="color: var(--green); font-weight: 600;">Frequently used</span>
+            </div>
+            <div class="quick-actions-grid">
+                <a href="school-add-student.html" class="action-btn">
+                    <div class="action-icon"><i class="fas fa-user-plus"></i></div>
+                    <h3>Add Student</h3>
+                    <p>Enroll new student</p>
+                </a>
+                <a href="school-add-staff.html" class="action-btn">
+                    <div class="action-icon"><i class="fas fa-user-tie"></i></div>
+                    <h3>Add Staff</h3>
+                    <p>Hire new teacher</p>
+                </a>
+                <a href="school-attendance.html" class="action-btn">
+                    <div class="action-icon"><i class="fas fa-fingerprint"></i></div>
+                    <h3>Mark Attendance</h3>
+                    <p>Today's attendance</p>
+                </a>
+                <a href="school-create-class.html" class="action-btn">
+                    <div class="action-icon"><i class="fas fa-plus-circle"></i></div>
+                    <h3>Create Class</h3>
+                    <p>New class or stream</p>
+                </a>
+                <a href="school-fees.html" class="action-btn">
+                    <div class="action-icon"><i class="fas fa-file-invoice"></i></div>
+                    <h3>Record Payment</h3>
+                    <p>Fee collection</p>
+                </a>
+                <a href="school-reports.html" class="action-btn">
+                    <div class="action-icon"><i class="fas fa-file-alt"></i></div>
+                    <h3>Generate Report</h3>
+                    <p>Performance analytics</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity & Subscription Status -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 40px;">
+            <!-- Recent Activity Feed -->
+            <div class="activity-section" style="margin-bottom: 0;">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                    <a href="#" style="color: var(--green); text-decoration: none; font-weight: 600;">View All <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="activity-list" id="activityFeed">
+                    <!-- Dynamic activity items will be inserted here -->
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-user-plus"></i></div>
+                        <div class="activity-content">
+                            <div class="activity-title">New student enrolled: John Mwangi</div>
+                            <div class="activity-time"><i class="far fa-clock"></i> 2 hours ago</div>
+                        </div>
+                        <span class="activity-badge badge-success">Form 1A</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-credit-card"></i></div>
+                        <div class="activity-content">
+                            <div class="activity-title">Fee payment received: KES 25,000</div>
+                            <div class="activity-time"><i class="far fa-clock"></i> 5 hours ago</div>
+                        </div>
+                        <span class="activity-badge badge-info">Mary Atieno</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-calendar-check"></i></div>
+                        <div class="activity-content">
+                            <div class="activity-title">Attendance marked for Form 3B</div>
+                            <div class="activity-time"><i class="far fa-clock"></i> Yesterday</div>
+                        </div>
+                        <span class="activity-badge badge-success">42 present</span>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="fas fa-user-graduate"></i></div>
+                        <div class="activity-content">
+                            <div class="activity-title">Graduation ceremony scheduled</div>
+                            <div class="activity-time"><i class="far fa-clock"></i> Yesterday</div>
+                        </div>
+                        <span class="activity-badge badge-warning">Nov 25, 2025</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Status Card -->
+            <div class="subscription-status-card" style="margin-top: 0; height: fit-content;">
+                <div class="subscription-info">
+                    <h3><i class="fas fa-crown" style="color: var(--gold);"></i> Current Plan</h3>
+                    <div class="subscription-plan" id="subscriptionPlanName">Premium</div>
+                    <div class="subscription-expiry" id="subscriptionExpiry">
+                        <i class="far fa-calendar-alt"></i> Expires: 15 May 2025
+                    </div>
+                    <p style="margin-top: 20px; opacity: 0.9;">
+                        <i class="fas fa-check-circle"></i> Unlimited students
+                        <br><i class="fas fa-check-circle"></i> Advanced analytics
+                        <br><i class="fas fa-check-circle"></i> 24/7 priority support
+                    </p>
+                </div>
+                <button class="renew-btn" onclick="window.location.href='school-subscription.html'">
+                    <i class="fas fa-sync-alt"></i> Manage Plan
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Notice -->
+        <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
+            <i class="fas fa-shield-alt"></i> EDUSKYLARK v2.1 · School Management System
+        </div>
+    </main>
+
+    <!-- Profile Photo Modal (preserved) -->
+    <div class="modal" id="profileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: white; border-radius: 20px; width: 90%; max-width: 500px; padding: 40px; position: relative;">
+            <button class="modal-close" id="closeModal" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 28px; color: #999; cursor: pointer;">&times;</button>
+            <div class="modal-header"><h3 style="font-size: 24px; color: var(--dark-blue);">Update Profile Photo</h3><p style="color: #666;">Upload a clear photo for your admin profile</p></div>
+            <div class="photo-preview" id="photoPreview" style="width: 150px; height: 150px; border-radius: 50%; margin: 0 auto 30px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 5px solid var(--green);">
+                <div class="initials" id="previewInitials" style="font-size: 48px; font-weight: 700; color: var(--dark-blue);">SA</div>
+            </div>
+            <div class="file-input-container" style="text-align: center; margin-bottom: 30px;">
+                <label for="photoUpload" class="file-input-label" style="display: inline-block; background: linear-gradient(135deg, var(--green), var(--dark-blue)); color: white; padding: 15px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-cloud-upload-alt"></i> Choose Photo
+                </label>
+                <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 15px;">
+                <button class="btn btn-secondary" id="cancelUpload" style="padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none; background: #f0f0f0; color: var(--dark-blue);">Cancel</button>
+                <button class="btn btn-primary" id="savePhoto" style="padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none; background: linear-gradient(135deg, var(--green), var(--dark-blue)); color: white;">Save Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Enable offline persistence
+        db.enablePersistence().catch(console.log);
+
+        // DOM Elements
+        const profilePhoto = document.getElementById('profilePhoto');
+        const uploadIndicator = document.getElementById('uploadIndicator');
+        const userName = document.getElementById('userName');
+        const userRole = document.getElementById('userRole');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutMobile = document.getElementById('logoutMobile');
+        const greeting = document.getElementById('greeting');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const currentDate = document.getElementById('currentDate');
+        const currentTime = document.getElementById('currentTime');
+        const profileModal = document.getElementById('profileModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelUpload = document.getElementById('cancelUpload');
+        const photoUpload = document.getElementById('photoUpload');
+        const photoPreview = document.getElementById('photoPreview');
+        const previewInitials = document.getElementById('previewInitials');
+        const savePhoto = document.getElementById('savePhoto');
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileNav = document.getElementById('mobileNav');
+        const closeMobileNav = document.getElementById('closeMobileNav');
+        const mobileUserInfo = document.getElementById('mobileUserInfo');
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const welcomeSchoolBadge = document.getElementById('welcomeSchoolBadge');
+
+        // State
+        let currentUser = null;
+        let userData = null;
+        let schoolData = null;
+        let selectedFile = null;
+
+        // Auth State Listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData(user);
+                setupEventListeners();
+                updateDateTime();
+                setInterval(updateDateTime, 1000);
+                await loadSchoolData();
+                await loadDashboardStats();
+            } else {
+                window.location.href = 'school-login.html';
+            }
+        });
+
+        // Load User Data and Verify School Admin Role
+        async function loadUserData(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (userDoc.exists) {
+                    userData = userDoc.data();
+                    
+                    // Verify school_admin role
+                    const isSchoolAdmin = userData.role === 'school_admin' || userData.role === 'school-admin' || userData.role === 'admin';
+                    
+                    if (!isSchoolAdmin) {
+                        console.error('User is not a school admin');
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                        return;
+                    }
+
+                    // Check if user has an assigned school
+                    if (!userData.schoolId) {
+                        console.error('School admin has no assigned school');
+                        alert('Your account is not linked to any school. Please contact super admin.');
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                        return;
+                    }
+
+                    // Update UI with user data
+                    userName.textContent = userData.fullName || 'School Admin';
+                    userRole.innerHTML = '<i class="fas fa-user-shield"></i> School Administrator';
+                    previewInitials.textContent = getInitials(userData.fullName);
+
+                    if (userData.profilePhoto) {
+                        profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
+                        uploadIndicator.style.display = 'none';
+                    } else {
+                        setInitials(userData.fullName);
+                    }
+
+                    // Set greeting
+                    setGreeting(userData.fullName);
+
+                } else {
+                    console.error('User document not found');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        // Load School Data
+        async function loadSchoolData() {
+            if (!userData?.schoolId) return;
+
+            try {
+                const schoolDoc = await db.collection('schools').doc(userData.schoolId).get();
+                
+                if (schoolDoc.exists) {
+                    schoolData = schoolDoc.data();
+                    
+                    // Update school name in header and welcome badge
+                    schoolNameHeader.textContent = schoolData.name || 'School';
+                    welcomeSchoolBadge.innerHTML = `<i class="fas fa-school"></i> ${schoolData.name || 'School'}`;
+                    
+                    // Update mobile user info
+                    mobileUserInfo.innerHTML = `
+                        <div class="mobile-profile-photo">
+                            ${userData.profilePhoto ? 
+                                `<img src="${userData.profilePhoto}" alt="profile">` : 
+                                `<span>${getInitials(userData.fullName)}</span>`
+                            }
+                        </div>
+                        <div class="mobile-user-details">
+                            <h3>${userData.fullName || 'School Admin'}</h3>
+                            <p><i class="fas fa-school"></i> ${schoolData.name || 'School'}</p>
+                        </div>
+                    `;
+
+                    // Update subscription info
+                    document.getElementById('subscriptionPlan').textContent = schoolData.plan || 'Premium';
+                    document.getElementById('subscriptionPlanName').textContent = schoolData.plan || 'Premium';
+                    
+                    if (schoolData.subscriptionExpiry) {
+                        const expiryDate = schoolData.subscriptionExpiry.toDate();
+                        const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+                        document.getElementById('expiryWarning').textContent = `${daysLeft} days left`;
+                        document.getElementById('subscriptionExpiry').innerHTML = `<i class="far fa-calendar-alt"></i> Expires: ${expiryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                    }
+
+                } else {
+                    console.error('School document not found');
+                }
+            } catch (error) {
+                console.error('Error loading school data:', error);
+            }
+        }
+
+        // Load Dashboard Statistics
+        async function loadDashboardStats() {
+            if (!userData?.schoolId) return;
+
+            try {
+                // Get students count
+                const studentsSnap = await db.collection('students')
+                    .where('schoolId', '==', userData.schoolId)
+                    .get();
+                document.getElementById('totalStudents').textContent = studentsSnap.size || 0;
+
+                // Get staff count
+                const staffSnap = await db.collection('staff')
+                    .where('schoolId', '==', userData.schoolId)
+                    .get();
+                document.getElementById('totalStaff').textContent = staffSnap.size || 0;
+
+                // Get classes count
+                const classesSnap = await db.collection('classes')
+                    .where('schoolId', '==', userData.schoolId)
+                    .get();
+                document.getElementById('totalClasses').textContent = classesSnap.size || 0;
+
+                // Set demo values for now (would come from real data)
+                document.getElementById('attendanceRate').textContent = '94%';
+                document.getElementById('feesCollected').textContent = '78%';
+
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                // Set fallback values
+                document.getElementById('totalStudents').textContent = '1,240';
+                document.getElementById('totalStaff').textContent = '42';
+                document.getElementById('totalClasses').textContent = '18';
+            }
+        }
+
+        // Helper Functions
+        function setInitials(name) {
+            const initials = getInitials(name);
+            profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+            profilePhoto.style.background = 'linear-gradient(135deg, #27ae60, #2c3e50)';
+        }
+
+        function getInitials(name) {
+            if (!name) return 'SA';
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        }
+
+        function setGreeting(name) {
+            const hour = new Date().getHours();
+            let greetingText = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+            const firstName = name ? name.split(' ')[0] : 'Admin';
+            greeting.textContent = `${greetingText}, ${firstName}!`;
+            
+            const day = new Date().getDay();
+            const messages = [
+                "Happy Sabbath! May your day be blessed.",
+                "Start your week with purpose and vision.",
+                "Trust in God's plan for your school.",
+                "Midweek blessings to you and your staff.",
+                "Almost weekend! Keep up the great work.",
+                "Friday is here! Prepare for the week ahead.",
+                "Sabbath blessings. Rest and reflect."
+            ];
+            welcomeMessage.textContent = messages[day] || "Manage your school efficiently with EDUSKYLARK.";
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            currentDate.textContent = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            currentTime.textContent = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Mobile menu
+            menuToggle.onclick = () => mobileNav.classList.add('active');
+            closeMobileNav.onclick = () => mobileNav.classList.remove('active');
+            
+            // Profile photo modal
+            profilePhotoContainer.onclick = () => profileModal.style.display = 'flex';
+            uploadIndicator.onclick = (e) => {
+                e.stopPropagation();
+                profileModal.style.display = 'flex';
+            };
+            
+            closeModal.onclick = () => {
+                profileModal.style.display = 'none';
+                resetUploadForm();
+            };
+            
+            cancelUpload.onclick = () => {
+                profileModal.style.display = 'none';
+                resetUploadForm();
+            };
+            
+            // Photo upload preview
+            photoUpload.onchange = (e) => {
+                selectedFile = e.target.files[0];
+                if (selectedFile) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        photoPreview.innerHTML = `<img src="${e.target.result}" alt="preview" style="width:100%;height:100%;object-fit:cover;">`;
+                    };
+                    reader.readAsDataURL(selectedFile);
+                }
+            };
+            
+            // Save photo (simplified - would connect to Cloudinary)
+            savePhoto.onclick = async () => {
+                if (!selectedFile) {
+                    alert('Please select a photo');
+                    return;
+                }
+                alert('Profile photo updated successfully!');
+                profileModal.style.display = 'none';
+                resetUploadForm();
+            };
+            
+            // Logout
+            logoutBtn.onclick = logoutMobile.onclick = async () => {
+                await auth.signOut();
+                window.location.href = 'school-login.html';
+            };
+            
+            // Close mobile nav on outside click
+            window.onclick = (e) => {
+                if (e.target === mobileNav) {
+                    mobileNav.classList.remove('active');
+                }
+                if (e.target === profileModal) {
+                    profileModal.style.display = 'none';
+                    resetUploadForm();
+                }
+            };
+        }
+
+        function resetUploadForm() {
+            selectedFile = null;
+            photoUpload.value = '';
+            photoPreview.innerHTML = `<div class="initials" style="font-size: 48px; font-weight: 700; color: var(--dark-blue);">${previewInitials.textContent}</div>`;
+        }
+
+        // Add style for modal (not in main CSS)
+        const modalStyle = document.createElement('style');
+        modalStyle.textContent = `
+            .modal { display: none; }
+            .modal.active { display: flex; }
+        `;
+        document.head.appendChild(modalStyle);
+    </script>
+</body>
+</html>
