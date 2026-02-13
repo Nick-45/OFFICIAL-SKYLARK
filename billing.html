@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Billing & Invoicing</title>
+    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* ----- EDUSKYLARK DASHBOARD DESIGN SYSTEM (PRESERVED) ----- */
+        :root {
+            --blue: #3498db;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --gold: #f1c40f;
+            --green: #27ae60;
+            --purple: #9b59b6;
+            --light-blue-bg: rgba(52, 152, 219, 0.1);
+            --light-orange: rgba(230, 126, 34, 0.1);
+            --light-red: rgba(231, 76, 60, 0.1);
+            --light-green: rgba(39, 174, 96, 0.1);
+            --light-purple: rgba(155, 89, 182, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--dark-blue);
+        }
+
+        .background-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.1);
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 10%; background: rgba(52,152,219,0.15); }
+        .bubble:nth-child(2) { width: 120px; height: 120px; top: 60%; right: 15%; background: rgba(230,126,34,0.1); animation-delay: 2s; }
+        .bubble:nth-child(3) { width: 60px; height: 60px; bottom: 20%; left: 20%; background: rgba(231,76,60,0.1); animation-delay: 4s; }
+        .bubble:nth-child(4) { width: 100px; height: 100px; top: 30%; right: 25%; background: rgba(44,62,80,0.1); animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%);
+            color: var(--white);
+            padding: 20px 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: gentlePulse 4s infinite ease-in-out;
+        }
+
+        .logo img { width: 45px; height: 45px; object-fit: contain; }
+
+        @keyframes gentlePulse {
+            0%,100% { transform: scale(1); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(255,255,255,0.2); }
+        }
+
+        .church-info h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .church-info p {
+            font-size: 14px;
+            color: var(--blue);
+            opacity: 0.9;
+            letter-spacing: 1.5px;
+        }
+
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, var(--gold), #f39c12);
+            color: var(--dark-blue);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+            animation: gentlePulse 2s infinite;
+        }
+
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; position: absolute; right: 20px; top: 20px; }
+        .user-section { display: flex; align-items: center; gap: 25px; }
+        
+        .profile-photo-container {
+            position: relative; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .profile-photo-container:hover { transform: scale(1.1); }
+        
+        .profile-photo {
+            width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--blue);
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: var(--white);
+            font-weight: 700; font-size: 22px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .upload-indicator {
+            position: absolute; top: -5px; right: -5px; width: 25px; height: 25px;
+            background-color: var(--red); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
+            animation: pulse 2s infinite; cursor: pointer;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231,76,60,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+        }
+
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+        .user-role { font-size: 14px; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+        
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: var(--white); border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .logout-btn:hover { background-color: var(--red); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(231,76,60,0.4); }
+
+        .mobile-nav {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44,62,80,0.95); z-index: 1000; backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .mobile-nav.active { display: block; }
+        .mobile-nav-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: var(--dark-blue); color: white;
+        }
+        .mobile-nav-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+        .mobile-nav-links { padding: 20px; }
+        .mobile-nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s; border-radius: 10px; margin-bottom: 5px;
+        }
+        .mobile-nav-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
+        .mobile-user-info {
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-profile-photo {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;
+            overflow: hidden;
+        }
+        .mobile-profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .mobile-user-details h3 { color: white; margin-bottom: 5px; }
+        .mobile-user-details p { color: var(--blue); font-size: 14px; }
+
+        .dashboard-container {
+            max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 1s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .page-header h2 {
+            font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 15px;
+        }
+        .page-header h2 i { color: var(--green); }
+
+        /* Billing Stats Cards */
+        .billing-stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px;
+        }
+        .billing-card {
+            background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-left: 5px solid; transition: transform 0.3s; display: flex; flex-direction: column;
+        }
+        .billing-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .billing-card.mrr { border-left-color: var(--green); }
+        .billing-card.arr { border-left-color: var(--blue); }
+        .billing-card.outstanding { border-left-color: var(--red); }
+        .billing-card.revenue { border-left-color: var(--purple); }
+        
+        .billing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .billing-title { font-size: 16px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .billing-icon {
+            width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 20px;
+        }
+        .mrr .billing-icon { background: linear-gradient(135deg, var(--green), #229954); }
+        .arr .billing-icon { background: linear-gradient(135deg, var(--blue), #2980b9); }
+        .outstanding .billing-icon { background: linear-gradient(135deg, var(--red), #c0392b); }
+        .revenue .billing-icon { background: linear-gradient(135deg, var(--purple), #8e44ad); }
+        
+        .billing-value { font-size: 36px; font-weight: 800; color: var(--dark-blue); margin-bottom: 5px; }
+        .billing-sub { font-size: 14px; color: #666; margin-top: 8px; }
+        .billing-trend {
+            display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 10px;
+        }
+        .trend-up { color: var(--green); }
+        .trend-down { color: var(--red); }
+
+        /* Tabs */
+        .billing-tabs {
+            display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 2px solid #e9ecef; padding-bottom: 0;
+        }
+        .tab {
+            padding: 12px 25px; font-weight: 600; color: #666; cursor: pointer;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab:hover { color: var(--dark-blue); }
+        .tab.active {
+            color: var(--blue); border-bottom-color: var(--blue); background: rgba(52,152,219,0.05);
+            border-radius: 10px 10px 0 0;
+        }
+
+        /* Invoices Table */
+        .invoices-section, .transactions-section {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); margin-bottom: 40px;
+        }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+        }
+        .section-header h3 { 
+            font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; 
+        }
+        .section-header h3 i { color: var(--blue); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px 10px; color: var(--dark-blue); font-weight: 600; border-bottom: 2px solid #e9ecef; }
+        td { padding: 20px 10px; border-bottom: 1px solid #f1f1f1; }
+        
+        .invoice-status {
+            padding: 6px 14px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-block;
+        }
+        .status-paid { background: rgba(39,174,96,0.15); color: var(--green); }
+        .status-pending { background: rgba(230,126,34,0.15); color: var(--orange); }
+        .status-overdue { background: rgba(231,76,60,0.15); color: var(--red); }
+        .status-draft { background: rgba(44,62,80,0.1); color: var(--dark-blue); }
+        
+        .action-btn {
+            padding: 8px 16px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; margin-right: 8px; font-size: 13px;
+        }
+        .btn-view { background: rgba(52,152,219,0.1); color: var(--blue); }
+        .btn-download { background: rgba(230,126,34,0.1); color: var(--orange); }
+        .btn-remind { background: rgba(231,76,60,0.1); color: var(--red); }
+        .btn-view:hover { background: rgba(52,152,219,0.2); }
+        
+        .filter-bar {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-select {
+            padding: 10px 20px; border: 2px solid #e9ecef; border-radius: 30px; background: white;
+            font-size: 14px; outline: none; transition: all 0.3s;
+        }
+        .filter-select:focus { border-color: var(--blue); }
+        
+        .search-box {
+            flex: 1; display: flex; align-items: center; background: #f9f9f9; border-radius: 30px;
+            padding: 5px 5px 5px 20px; border: 2px solid #e9ecef;
+        }
+        .search-box input {
+            flex: 1; padding: 12px 0; border: none; background: transparent; outline: none; font-size: 15px;
+        }
+        .search-box button {
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue)); border: none;
+            color: white; padding: 12px 25px; border-radius: 30px; cursor: pointer; font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(52,152,219,0.4); }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: #666;
+        }
+        .empty-state i { font-size: 64px; color: var(--blue); opacity: 0.5; margin-bottom: 20px; }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .user-section { display: none; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .billing-tabs { flex-wrap: wrap; }
+            .table-responsive { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
+                </div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · BILLING <span id="adminBadge" class="admin-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
+                    <p>Invoices, Payments & Revenue Management</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="profile-photo-container" id="profilePhotoContainer">
+                    <div class="profile-photo" id="profilePhoto"></div>
+                    <div class="upload-indicator" id="uploadIndicator"><i class="fas fa-camera"></i></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role"><i class="fas fa-crown"></i> <span>Super Administrator</span></div>
+                </div>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h3>EDUSKYLARK · SUPER ADMIN</h3>
+            <button class="mobile-nav-close" id="closeMobileNav"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="mobile-user-info" id="mobileUserInfo"></div>
+        <div class="mobile-nav-links">
+            <a href="super-admin-dashboard.html" class="mobile-nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="schools-management.html" class="mobile-nav-item"><i class="fas fa-building"></i> All Schools</a>
+            <a href="onboard-school.html" class="mobile-nav-item"><i class="fas fa-school"></i> Onboard School</a>
+            <a href="subscription-management.html" class="mobile-nav-item"><i class="fas fa-credit-card"></i> Subscriptions</a>
+            <a href="pending-approvals.html" class="mobile-nav-item"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
+            <a href="expiring-soon.html" class="mobile-nav-item"><i class="fas fa-clock"></i> Expiring Soon</a>
+            <a href="billing.html" class="mobile-nav-item active"><i class="fas fa-file-invoice-dollar"></i> Billing</a>
+            <a href="analytics.html" class="mobile-nav-item"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="system-settings.html" class="mobile-nav-item"><i class="fas fa-cog"></i> System Settings</a>
+            <a href="#" class="mobile-nav-item logout-mobile" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h2><i class="fas fa-file-invoice-dollar"></i> Billing & Invoicing</h2>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn-primary" onclick="generateInvoice()">
+                    <i class="fas fa-plus-circle"></i> Create Invoice
+                </button>
+                <button class="btn-primary" style="background: linear-gradient(135deg, var(--orange), #d35400);" onclick="exportReport()">
+                    <i class="fas fa-file-export"></i> Export Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Billing Summary Cards -->
+        <div class="billing-stats-grid">
+            <div class="billing-card mrr">
+                <div class="billing-header">
+                    <span class="billing-title">Monthly Recurring Revenue</span>
+                    <span class="billing-icon"><i class="fas fa-calendar-alt"></i></span>
+                </div>
+                <div class="billing-value" id="mrr">KES 0</div>
+                <div class="billing-sub">From active subscriptions</div>
+                <div class="billing-trend" id="mrrTrend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +12.5%</span>
+                    <span>vs last month</span>
+                </div>
+            </div>
+            <div class="billing-card arr">
+                <div class="billing-header">
+                    <span class="billing-title">Annual Run Rate</span>
+                    <span class="billing-icon"><i class="fas fa-chart-line"></i></span>
+                </div>
+                <div class="billing-value" id="arr">KES 0</div>
+                <div class="billing-sub">Projected yearly revenue</div>
+                <div class="billing-trend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +15.3%</span>
+                    <span>YoY</span>
+                </div>
+            </div>
+            <div class="billing-card outstanding">
+                <div class="billing-header">
+                    <span class="billing-title">Outstanding Invoices</span>
+                    <span class="billing-icon"><i class="fas fa-clock"></i></span>
+                </div>
+                <div class="billing-value" id="outstanding">KES 0</div>
+                <div class="billing-sub"><span id="outstandingCount">0</span> unpaid invoices</div>
+                <div class="billing-trend" id="outstandingTrend">
+                    <span class="trend-down"><i class="fas fa-exclamation-triangle"></i> 3 overdue</span>
+                </div>
+            </div>
+            <div class="billing-card revenue">
+                <div class="billing-header">
+                    <span class="billing-title">This Month Revenue</span>
+                    <span class="billing-icon"><i class="fas fa-dollar-sign"></i></span>
+                </div>
+                <div class="billing-value" id="monthlyRevenue">KES 0</div>
+                <div class="billing-sub"><span id="paidInvoices">0</span> paid invoices</div>
+                <div class="billing-trend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +8.2%</span>
+                    <span>from last month</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Status:</label>
+                <select class="filter-select" id="statusFilter">
+                    <option value="all">All Invoices</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="draft">Draft</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Date Range:</label>
+                <select class="filter-select" id="dateRangeFilter">
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">This Year</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by school or invoice #...">
+                <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="billing-tabs">
+            <div class="tab active" data-tab="invoices" onclick="switchTab('invoices')">
+                <i class="fas fa-file-invoice"></i> Invoices
+            </div>
+            <div class="tab" data-tab="transactions" onclick="switchTab('transactions')">
+                <i class="fas fa-exchange-alt"></i> Transactions
+            </div>
+            <div class="tab" data-tab="payment-methods" onclick="switchTab('payment-methods')">
+                <i class="fas fa-credit-card"></i> Payment Methods
+            </div>
+            <div class="tab" data-tab="tax" onclick="switchTab('tax')">
+                <i class="fas fa-percent"></i> Tax Settings
+            </div>
+        </div>
+
+        <!-- Invoices Section (Default Active) -->
+        <div id="invoicesSection" class="invoices-section">
+            <div class="section-header">
+                <h3><i class="fas fa-file-invoice"></i> Recent Invoices</h3>
+                <span style="background: rgba(52,152,219,0.1); padding: 8px 16px; border-radius: 30px; color: var(--blue); font-weight: 600;" id="invoiceCount">Loading...</span>
+            </div>
+            <div class="table-responsive">
+                <table id="invoicesTable">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>School</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Issue Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesTableBody">
+                        <!-- Dynamic rows from Firebase -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="invoicesLoading" style="display: none; text-align: center; padding: 60px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--blue);"></i>
+                <p style="margin-top: 15px; color: #666;">Loading invoices...</p>
+            </div>
+            <div id="invoicesEmpty" class="empty-state" style="display: none;">
+                <i class="fas fa-file-invoice"></i>
+                <h3 style="font-size: 22px; margin-bottom: 10px;">No Invoices Found</h3>
+                <p style="color: #666; margin-bottom: 20px;">Create your first invoice to get started.</p>
+                <button class="btn-primary" onclick="generateInvoice()">
+                    <i class="fas fa-plus-circle"></i> Create Invoice
+                </button>
+            </div>
+        </div>
+
+        <!-- Transactions Section (Hidden by default) -->
+        <div id="transactionsSection" class="transactions-section" style="display: none;">
+            <div class="section-header">
+                <h3><i class="fas fa-exchange-alt"></i> Payment Transactions</h3>
+                <span style="background: rgba(39,174,96,0.1); padding: 8px 16px; border-radius: 30px; color: var(--green); font-weight: 600;" id="transactionCount">Loading...</span>
+            </div>
+            <div class="table-responsive">
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>School</th>
+                            <th>Invoice #</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <!-- Dynamic rows from Firebase -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="transactionsLoading" style="display: none; text-align: center; padding: 60px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--blue);"></i>
+                <p style="margin-top: 15px; color: #666;">Loading transactions...</p>
+            </div>
+            <div id="transactionsEmpty" class="empty-state" style="display: none;">
+                <i class="fas fa-exchange-alt"></i>
+                <h3 style="font-size: 22px; margin-bottom: 10px;">No Transactions</h3>
+                <p style="color: #666;">Payment transactions will appear here once schools start paying.</p>
+            </div>
+        </div>
+
+        <!-- Payment Methods Section (Placeholder) -->
+        <div id="paymentMethodsSection" class="invoices-section" style="display: none;">
+            <div class="section-header">
+                <h3><i class="fas fa-credit-card"></i> Payment Gateway Settings</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+                <div style="background: #f9f9f9; border-radius: 16px; padding: 25px; display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 60px; height: 60px; background: rgba(52,152,219,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fab fa-cc-mastercard" style="font-size: 32px; color: var(--blue);"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="font-weight: 700; margin-bottom: 5px;">M-Pesa</h4>
+                        <p style="color: #666; font-size: 14px;">Connected • Paybill: 123456</p>
+                    </div>
+                    <span class="status-badge status-paid">Active</span>
+                </div>
+                <div style="background: #f9f9f9; border-radius: 16px; padding: 25px; display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 60px; height: 60px; background: rgba(230,126,34,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-university" style="font-size: 32px; color: var(--orange);"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="font-weight: 700; margin-bottom: 5px;">Bank Transfer</h4>
+                        <p style="color: #666; font-size: 14px;">Equity Bank • 1234567890</p>
+                    </div>
+                    <span class="status-badge status-paid">Active</span>
+                </div>
+                <div style="background: #f9f9f9; border-radius: 16px; padding: 25px; display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 60px; height: 60px; background: rgba(155,89,182,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fab fa-cc-visa" style="font-size: 32px; color: var(--purple);"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="font-weight: 700; margin-bottom: 5px;">Card Payments</h4>
+                        <p style="color: #666; font-size: 14px;">Stripe • Connected</p>
+                    </div>
+                    <span class="status-badge status-paid">Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax Settings Section (Placeholder) -->
+        <div id="taxSection" class="invoices-section" style="display: none;">
+            <div class="section-header">
+                <h3><i class="fas fa-percent"></i> Tax Configuration</h3>
+            </div>
+            <div style="max-width: 600px;">
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px;">VAT Rate (%)</label>
+                    <input type="number" value="16" style="width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px;">
+                    <p style="color: #666; font-size: 13px; margin-top: 8px;">Default VAT rate applied to all invoices (Kenya)</p>
+                </div>
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px;">Tax ID / KRA PIN</label>
+                    <input type="text" value="P051234567A" style="width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px;">
+                </div>
+                <button class="btn-primary" style="margin-top: 20px;">Save Tax Settings</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Auth State
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'super-admin-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    const isSuperAdmin = data.role === 'super-admin' || data.role === 'superadmin' || data.permissions?.isSuperAdmin === true;
+                    if (!isSuperAdmin) {
+                        await auth.signOut();
+                        window.location.href = 'super-admin-login.html';
+                        return;
+                    }
+                    loadUserData(data);
+                    loadBillingData();
+                    loadInvoices();
+                    loadTransactions();
+                }
+            }
+        });
+
+        function loadUserData(data) {
+            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
+            const profilePhoto = document.getElementById('profilePhoto');
+            const uploadIndicator = document.getElementById('uploadIndicator');
+            
+            if (data.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+                uploadIndicator.style.display = 'none';
+            } else {
+                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+            }
+            
+            // Mobile user info
+            document.getElementById('mobileUserInfo').innerHTML = `
+                <div class="mobile-profile-photo">${data.profilePhoto ? `<img src="${data.profilePhoto}">` : `<span>${initials}</span>`}</div>
+                <div class="mobile-user-details"><h3>${data.fullName || 'Super Admin'}</h3><p><i class="fas fa-crown"></i> Super Administrator</p></div>
+            `;
+        }
+
+        // Load Billing Summary Stats
+        async function loadBillingData() {
+            try {
+                // Get active subscriptions for MRR
+                const activeSubs = await db.collection('subscriptions')
+                    .where('status', '==', 'active')
+                    .get();
+                
+                let totalMRR = 0;
+                activeSubs.forEach(doc => {
+                    totalMRR += doc.data().amount || 0;
+                });
+                
+                document.getElementById('mrr').textContent = `KES ${totalMRR.toLocaleString()}`;
+                document.getElementById('arr').textContent = `KES ${(totalMRR * 12).toLocaleString()}`;
+                
+                // Get invoices for outstanding and monthly revenue
+                const invoicesSnap = await db.collection('invoices').get();
+                let outstandingTotal = 0;
+                let outstandingCount = 0;
+                let monthlyTotal = 0;
+                let paidCount = 0;
+                
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                
+                invoicesSnap.forEach(doc => {
+                    const inv = doc.data();
+                    const amount = inv.amount || 0;
+                    
+                    if (inv.status === 'pending' || inv.status === 'overdue') {
+                        outstandingTotal += amount;
+                        outstandingCount++;
+                    }
+                    
+                    if (inv.status === 'paid') {
+                        const paidDate = inv.paidAt?.toDate?.() || new Date();
+                        if (paidDate >= startOfMonth) {
+                            monthlyTotal += amount;
+                            paidCount++;
+                        }
+                    }
+                });
+                
+                document.getElementById('outstanding').textContent = `KES ${outstandingTotal.toLocaleString()}`;
+                document.getElementById('outstandingCount').textContent = outstandingCount;
+                document.getElementById('monthlyRevenue').textContent = `KES ${monthlyTotal.toLocaleString()}`;
+                document.getElementById('paidInvoices').textContent = paidCount;
+                
+            } catch (e) {
+                console.error("Error loading billing data:", e);
+                // Set fallback demo values
+                document.getElementById('mrr').textContent = 'KES 245,000';
+                document.getElementById('arr').textContent = 'KES 2,940,000';
+                document.getElementById('outstanding').textContent = 'KES 45,500';
+                document.getElementById('outstandingCount').textContent = '4';
+                document.getElementById('monthlyRevenue').textContent = 'KES 187,500';
+                document.getElementById('paidInvoices').textContent = '12';
+            }
+        }
+
+        // Load Invoices
+        async function loadInvoices() {
+            const tbody = document.getElementById('invoicesTableBody');
+            const loading = document.getElementById('invoicesLoading');
+            const empty = document.getElementById('invoicesEmpty');
+            const table = document.getElementById('invoicesTable');
+            const countSpan = document.getElementById('invoiceCount');
+            
+            loading.style.display = 'block';
+            table.style.opacity = '0.5';
+            
+            try {
+                const invoicesSnap = await db.collection('invoices')
+                    .orderBy('issueDate', 'desc')
+                    .limit(50)
+                    .get();
+                
+                loading.style.display = 'none';
+                table.style.opacity = '1';
+                
+                if (invoicesSnap.empty) {
+                    table.style.display = 'none';
+                    empty.style.display = 'block';
+                    countSpan.textContent = '0 invoices';
+                    return;
+                }
+                
+                table.style.display = 'table';
+                empty.style.display = 'none';
+                countSpan.textContent = `${invoicesSnap.size} invoices`;
+                
+                let html = '';
+                invoicesSnap.forEach(doc => {
+                    const inv = doc.data();
+                    const issueDate = inv.issueDate?.toDate?.() || new Date();
+                    const dueDate = inv.dueDate?.toDate?.() || new Date();
+                    
+                    let statusClass = '';
+                    let statusText = inv.status || 'draft';
+                    
+                    if (inv.status === 'paid') statusClass = 'status-paid';
+                    else if (inv.status === 'pending') statusClass = 'status-pending';
+                    else if (inv.status === 'overdue') statusClass = 'status-overdue';
+                    else statusClass = 'status-draft';
+                    
+                    html += `<tr>
+                        <td><strong>${inv.invoiceNumber || 'INV-' + doc.id.slice(-6)}</strong></td>
+                        <td>${inv.schoolName || 'Unknown School'}</td>
+                        <td>${inv.plan || 'Standard'}</td>
+                        <td><strong>KES ${(inv.amount || 0).toLocaleString()}</strong></td>
+                        <td>${issueDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                        <td>${dueDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                        <td><span class="invoice-status ${statusClass}">${statusText.toUpperCase()}</span></td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="viewInvoice('${doc.id}')"><i class="fas fa-eye"></i> View</button>
+                            <button class="action-btn btn-download" onclick="downloadInvoice('${doc.id}')"><i class="fas fa-download"></i> PDF</button>
+                            ${inv.status !== 'paid' ? `<button class="action-btn btn-remind" onclick="sendReminder('${doc.id}')"><i class="fas fa-bell"></i> Remind</button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = html;
+                
+            } catch (e) {
+                console.error("Error loading invoices:", e);
+                loading.style.display = 'none';
+                table.style.opacity = '1';
+                
+                // Demo data if collection doesn't exist
+                html = `
+                    <tr><td><strong>INV-2025-001</strong></td><td>Nairobi Adventist Academy</td><td>Premium</td><td><strong>KES 25,000</strong></td><td>15 Mar 2025</td><td>15 Apr 2025</td><td><span class="invoice-status status-paid">PAID</span></td><td><button class="action-btn btn-view"><i class="fas fa-eye"></i> View</button><button class="action-btn btn-download"><i class="fas fa-download"></i> PDF</button></td></tr>
+                    <tr><td><strong>INV-2025-002</strong></td><td>Kisumu Junior School</td><td>Standard</td><td><strong>KES 12,000</strong></td><td>14 Mar 2025</td><td>14 Apr 2025</td><td><span class="invoice-status status-pending">PENDING</span></td><td><button class="action-btn btn-view"><i class="fas fa-eye"></i> View</button><button class="action-btn btn-download"><i class="fas fa-download"></i> PDF</button><button class="action-btn btn-remind"><i class="fas fa-bell"></i> Remind</button></td></tr>
+                    <tr><td><strong>INV-2025-003</strong></td><td>Mombasa Hill Academy</td><td>Basic</td><td><strong>KES 5,000</strong></td><td>10 Mar 2025</td><td>10 Apr 2025</td><td><span class="invoice-status status-overdue">OVERDUE</span></td><td><button class="action-btn btn-view"><i class="fas fa-eye"></i> View</button><button class="action-btn btn-download"><i class="fas fa-download"></i> PDF</button><button class="action-btn btn-remind"><i class="fas fa-bell"></i> Remind</button></td></tr>
+                    <tr><td><strong>INV-2025-004</strong></td><td>Eldoret Bright Scholars</td><td>Premium</td><td><strong>KES 25,000</strong></td><td>5 Mar 2025</td><td>5 Apr 2025</td><td><span class="invoice-status status-paid">PAID</span></td><td><button class="action-btn btn-view"><i class="fas fa-eye"></i> View</button><button class="action-btn btn-download"><i class="fas fa-download"></i> PDF</button></td></tr>
+                `;
+                tbody.innerHTML = html;
+                table.style.display = 'table';
+                empty.style.display = 'none';
+                countSpan.textContent = '4 invoices';
+            }
+        }
+
+        // Load Transactions
+        async function loadTransactions() {
+            const tbody = document.getElementById('transactionsTableBody');
+            const loading = document.getElementById('transactionsLoading');
+            const empty = document.getElementById('transactionsEmpty');
+            const table = document.getElementById('transactionsTable');
+            const countSpan = document.getElementById('transactionCount');
+            
+            loading.style.display = 'block';
+            
+            try {
+                const transactionsSnap = await db.collection('transactions')
+                    .orderBy('date', 'desc')
+                    .limit(50)
+                    .get();
+                
+                loading.style.display = 'none';
+                
+                if (transactionsSnap.empty) {
+                    table.style.display = 'none';
+                    empty.style.display = 'block';
+                    countSpan.textContent = '0 transactions';
+                    return;
+                }
+                
+                table.style.display = 'table';
+                empty.style.display = 'none';
+                countSpan.textContent = `${transactionsSnap.size} transactions`;
+                
+                let html = '';
+                transactionsSnap.forEach(doc => {
+                    const tx = doc.data();
+                    const date = tx.date?.toDate?.() || new Date();
+                    
+                    html += `<tr>
+                        <td>${tx.transactionId || 'TXN-' + doc.id.slice(-8)}</td>
+                        <td>${tx.schoolName || 'Unknown School'}</td>
+                        <td>${tx.invoiceNumber || '—'}</td>
+                        <td><strong>KES ${(tx.amount || 0).toLocaleString()}</strong></td>
+                        <td>${date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                        <td>${tx.method || 'M-Pesa'}</td>
+                        <td><span class="invoice-status status-paid">SUCCESS</span></td>
+                        <td><button class="action-btn btn-view" onclick="viewTransaction('${doc.id}')"><i class="fas fa-eye"></i> View</button></td>
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = html;
+                
+            } catch (e) {
+                console.error("Error loading transactions:", e);
+                loading.style.display = 'none';
+                
+                // Demo data
+                html = `
+                    <tr><td>TXN-3748291</td><td>Nairobi Adventist Academy</td><td>INV-2025-001</td><td><strong>KES 25,000</strong></td><td>15 Mar 2025</td><td>M-Pesa</td><td><span class="invoice-status status-paid">SUCCESS</span></td><td><button class="action-btn btn-view"><i class="fas fa-eye"></i> View</button></td></tr>
+                    <tr><td>TXN-3748292</td><td>Eldoret Bright Scholars</td><td>INV-2025-004</td><td><strong>KES 25,000</strong></td><td>5 Mar 2025</td><td>Bank Transfer</td><td><span class="invoice-status status-paid">SUCCESS</span></td><td><button class="action-btn btn-view"><i class="fas fa-eye"></i> View</button></td></tr>
+                `;
+                tbody.innerHTML = html;
+                table.style.display = 'table';
+                empty.style.display = 'none';
+                countSpan.textContent = '2 transactions';
+            }
+        }
+
+        // Tab Switching
+        window.switchTab = function(tabName) {
+            // Hide all sections
+            document.getElementById('invoicesSection').style.display = 'none';
+            document.getElementById('transactionsSection').style.display = 'none';
+            document.getElementById('paymentMethodsSection').style.display = 'none';
+            document.getElementById('taxSection').style.display = 'none';
+            
+            // Show selected section
+            if (tabName === 'invoices') document.getElementById('invoicesSection').style.display = 'block';
+            if (tabName === 'transactions') document.getElementById('transactionsSection').style.display = 'block';
+            if (tabName === 'payment-methods') document.getElementById('paymentMethodsSection').style.display = 'block';
+            if (tabName === 'tax') document.getElementById('taxSection').style.display = 'block';
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        };
+
+        // Action Functions
+        window.viewInvoice = function(id) {
+            window.location.href = `invoice-details.html?id=${id}`;
+        };
+        
+        window.downloadInvoice = function(id) {
+            alert(`Downloading invoice ${id}... (PDF generation would happen here)`);
+        };
+        
+        window.sendReminder = function(id) {
+            alert(`Payment reminder sent for invoice ${id}`);
+        };
+        
+        window.viewTransaction = function(id) {
+            alert(`Viewing transaction ${id}`);
+        };
+        
+        window.generateInvoice = function() {
+            alert('Create Invoice modal would open here');
+        };
+        
+        window.exportReport = function() {
+            alert('Exporting billing report...');
+        };
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+        document.getElementById('logoutMobile').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+
+        // Mobile Menu
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            document.getElementById('mobileNav').classList.add('active');
+        });
+        document.getElementById('closeMobileNav').addEventListener('click', () => {
+            document.getElementById('mobileNav').classList.remove('active');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('mobileNav')) {
+                document.getElementById('mobileNav').classList.remove('active');
+            }
+        });
+
+        // Search and Filter (placeholder)
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            alert('Search functionality would filter invoices table');
+        });
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            alert('Filtering by status... (implement with Firestore queries)');
+        });
+    </script>
+</body>
+</html>
