@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Students</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --blue: #3498db;
+            --red: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
+        .page-header h2 i { color: var(--school-green); }
+        
+        .stats-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white; border-radius: 16px; padding: 25px; border-left: 5px solid var(--school-green);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .stat-value { font-size: 36px; font-weight: 800; color: var(--dark-blue); }
+        
+        .filter-bar {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-select { padding: 12px 25px; border: 2px solid #e9ecef; border-radius: 30px; background: white; }
+        .search-box {
+            flex: 1; display: flex; align-items: center; background: #f9f9f9; border-radius: 30px;
+            padding: 5px 5px 5px 20px; border: 2px solid #e9ecef;
+        }
+        .search-box input {
+            flex: 1; padding: 12px 0; border: none; background: transparent; outline: none;
+        }
+        .search-box button {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer; font-weight: 600;
+        }
+        
+        .students-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;
+        }
+        .student-card {
+            background: white; border-radius: 20px; padding: 25px; display: flex; align-items: center; gap: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s; border-left: 5px solid var(--school-green);
+        }
+        .student-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        
+        .student-avatar {
+            width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700;
+        }
+        .student-info { flex: 1; }
+        .student-name { font-size: 20px; font-weight: 700; color: var(--dark-blue); margin-bottom: 5px; }
+        .student-meta { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; font-size: 13px; color: #666; }
+        .badge { padding: 4px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; }
+        .badge-class { background: rgba(39,174,96,0.1); color: var(--school-green); }
+        .badge-attendance { background: rgba(52,152,219,0.1); color: var(--blue); }
+        
+        .btn-view {
+            background: rgba(39,174,96,0.1); color: var(--school-green); border: none;
+            padding: 8px 20px; border-radius: 30px; font-weight: 600; cursor: pointer;
+        }
+        
+        .add-btn {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · STUDENTS <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
+                    <p>Manage Student Records</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white;" id="schoolName">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h2><i class="fas fa-users"></i> Student Management</h2>
+            <button class="add-btn" onclick="window.location.href='school-add-student.html'">
+                <i class="fas fa-user-plus"></i> Add New Student
+            </button>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Total Students</div>
+                <div class="stat-value" id="totalStudents">1,248</div>
+                <div style="margin-top: 5px; color: var(--school-green);">+24 this term</div>
+            </div>
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Male</div>
+                <div class="stat-value" style="color: var(--blue);" id="maleStudents">648</div>
+            </div>
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Female</div>
+                <div class="stat-value" style="color: #e84393;" id="femaleStudents">600</div>
+            </div>
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Avg. Attendance</div>
+                <div class="stat-value" style="color: var(--school-green);" id="avgAttendance">94%</div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Class:</label>
+                <select class="filter-select" id="classFilter">
+                    <option>All Classes</option>
+                    <option>Form 1A</option>
+                    <option>Form 1B</option>
+                    <option>Form 2A</option>
+                    <option>Form 2B</option>
+                    <option>Form 3A</option>
+                    <option>Form 3B</option>
+                    <option>Form 3C</option>
+                    <option>Form 4A</option>
+                    <option>Form 4B</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status:</label>
+                <select class="filter-select" id="statusFilter">
+                    <option>All</option>
+                    <option>Active</option>
+                    <option>Graduated</option>
+                    <option>Transferred</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name or admission number...">
+                <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
+            </div>
+        </div>
+
+        <div class="students-grid" id="studentsGrid">
+            <!-- Dynamic student cards will be loaded here -->
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'school-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'school_admin' && data.role !== 'admin') {
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                    } else {
+                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
+                        loadStudents(data.schoolId);
+                    }
+                }
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
+        });
+
+        async function loadStudents(schoolId) {
+            const grid = document.getElementById('studentsGrid');
+            
+            try {
+                const studentsSnap = await db.collection('students')
+                    .where('schoolId', '==', schoolId)
+                    .orderBy('fullName')
+                    .get();
+
+                if (!studentsSnap.empty) {
+                    let html = '';
+                    studentsSnap.forEach(doc => {
+                        const s = doc.data();
+                        const initials = s.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                        html += `
+                            <div class="student-card">
+                                <div class="student-avatar">${initials}</div>
+                                <div class="student-info">
+                                    <div class="student-name">${s.fullName}</div>
+                                    <div style="color: #666; font-size: 13px;">Adm: ${s.admissionNo || 'N/A'}</div>
+                                    <div class="student-meta">
+                                        <span class="badge badge-class"><i class="fas fa-door-open"></i> ${s.class || 'Form 3C'}</span>
+                                        <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> ${s.attendanceRate || '94%'}</span>
+                                    </div>
+                                </div>
+                                <button class="btn-view" onclick="viewStudent('${doc.id}')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </div>
+                        `;
+                    });
+                    grid.innerHTML = html;
+                    document.getElementById('totalStudents').textContent = studentsSnap.size;
+                } else {
+                    // Demo data
+                    grid.innerHTML = getDemoStudents();
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+                grid.innerHTML = getDemoStudents();
+            }
+        }
+
+        function getDemoStudents() {
+            return `
+                <div class="student-card">
+                    <div class="student-avatar">JM</div>
+                    <div class="student-info">
+                        <div class="student-name">John Mwangi</div>
+                        <div style="color: #666; font-size: 13px;">Adm: 2025-001</div>
+                        <div class="student-meta">
+                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
+                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 94%</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="viewStudent('1')"><i class="fas fa-eye"></i> View</button>
+                </div>
+                <div class="student-card">
+                    <div class="student-avatar">MA</div>
+                    <div class="student-info">
+                        <div class="student-name">Mary Atieno</div>
+                        <div style="color: #666; font-size: 13px;">Adm: 2025-042</div>
+                        <div class="student-meta">
+                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
+                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 98%</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="viewStudent('2')"><i class="fas fa-eye"></i> View</button>
+                </div>
+                <div class="student-card">
+                    <div class="student-avatar">PK</div>
+                    <div class="student-info">
+                        <div class="student-name">Peter Kamau</div>
+                        <div style="color: #666; font-size: 13px;">Adm: 2024-128</div>
+                        <div class="student-meta">
+                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 4A</span>
+                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 88%</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="viewStudent('3')"><i class="fas fa-eye"></i> View</button>
+                </div>
+                <div class="student-card">
+                    <div class="student-avatar">AO</div>
+                    <div class="student-info">
+                        <div class="student-name">Alice Odhiambo</div>
+                        <div style="color: #666; font-size: 13px;">Adm: 2023-215</div>
+                        <div class="student-meta">
+                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
+                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 95%</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="viewStudent('4')"><i class="fas fa-eye"></i> View</button>
+                </div>
+                <div class="student-card">
+                    <div class="student-avatar">BM</div>
+                    <div class="student-info">
+                        <div class="student-name">Brian Muthama</div>
+                        <div style="color: #666; font-size: 13px;">Adm: 2023-218</div>
+                        <div class="student-meta">
+                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
+                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 91%</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="viewStudent('5')"><i class="fas fa-eye"></i> View</button>
+                </div>
+                <div class="student-card">
+                    <div class="student-avatar">SN</div>
+                    <div class="student-info">
+                        <div class="student-name">Sarah Njeri</div>
+                        <div style="color: #666; font-size: 13px;">Adm: 2022-089</div>
+                        <div class="student-meta">
+                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 4A</span>
+                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 96%</span>
+                        </div>
+                    </div>
+                    <button class="btn-view" onclick="viewStudent('6')"><i class="fas fa-eye"></i> View</button>
+                </div>
+            `;
+        }
+
+        window.viewStudent = function(id) {
+            window.location.href = `school-student-details.html?id=${id}`;
+        };
+    </script>
+</body>
+</html>
