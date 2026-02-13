@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Timetable</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --teal: #1abc9c; --teal-dark: #16a085; --dark-blue: #2c3e50; --blue: #3498db; --orange: #e67e22; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .timetable-container {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        
+        .week-nav {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .week-display {
+            display: flex; align-items: center; gap: 20px;
+        }
+        .nav-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: 1px solid #e9ecef; background: white; cursor: pointer;
+        }
+        
+        .timetable-grid {
+            display: grid; grid-template-columns: 100px repeat(5, 1fr); gap: 15px;
+        }
+        .time-slot {
+            padding: 15px; background: #f9f9f9; border-radius: 12px; font-weight: 600; color: var(--dark-blue);
+        }
+        .day-header {
+            padding: 15px; background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: white;
+            border-radius: 12px; text-align: center; font-weight: 700;
+        }
+        .class-cell {
+            padding: 15px; background: rgba(26,188,156,0.05); border-radius: 12px; border-left: 4px solid var(--teal);
+            cursor: pointer; transition: all 0.3s;
+        }
+        .class-cell:hover { background: rgba(26,188,156,0.1); transform: translateY(-2px); }
+        .class-subject { font-weight: 700; color: var(--dark-blue); }
+        .class-room { font-size: 12px; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>EDUSKYLARK · TIMETABLE <span style="background:linear-gradient(135deg,var(--teal),var(--teal-dark)); padding:3px 10px; border-radius:15px;">TEACHER</span></h1>
+            <button id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="timetable-container">
+            <div class="week-nav">
+                <h2 style="font-size:24px;"><i class="fas fa-calendar-alt" style="color:var(--teal);"></i> My Weekly Timetable</h2>
+                <div class="week-display">
+                    <button class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                    <span style="font-weight:600;">13 - 19 Apr 2025</span>
+                    <button class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="timetable-grid">
+                <div></div>
+                <div class="day-header">MONDAY</div>
+                <div class="day-header">TUESDAY</div>
+                <div class="day-header">WEDNESDAY</div>
+                <div class="day-header">THURSDAY</div>
+                <div class="day-header">FRIDAY</div>
+
+                <!-- 08:00 - 09:30 -->
+                <div class="time-slot">08:00 - 09:30</div>
+                <div class="class-cell">
+                    <div class="class-subject">Mathematics</div>
+                    <div>Form 1A</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 101</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Physics</div>
+                    <div>Form 2B</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 203</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Mathematics</div>
+                    <div>Form 1A</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 101</div>
+                </div>
+                <div></div>
+                <div></div>
+
+                <!-- 10:00 - 11:30 -->
+                <div class="time-slot">10:00 - 11:30</div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div class="class-cell">
+                    <div class="class-subject">Physics</div>
+                    <div>Form 2B</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 203</div>
+                </div>
+                <div class="class-cell">
+                    <div class="class-subject">Chemistry</div>
+                    <div>Form 4A</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 101</div>
+                </div>
+
+                <!-- 11:30 - 13:00 -->
+                <div class="time-slot">11:30 - 13:00</div>
+                <div class="class-cell">
+                    <div class="class-subject">Add Maths</div>
+                    <div>Form 3C</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 305</div>
+                </div>
+                <div></div>
+                <div class="class-cell">
+                    <div class="class-subject">Add Maths</div>
+                    <div>Form 3C</div>
+                    <div class="class-room"><i class="fas fa-map-marker-alt"></i> Room 305</div>
+                </div>
+                <div></div>
+                <div></div>
+
+                <!-- 14:00 - 15:30 -->
+                <div class="time-slot">14:00 - 15:30</div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div class="class-cell">
+                    <div class="class-subject">Chemistry</div>
+                    <div>Form 4A</div>
+                    <div class="class-room"><i class="fas fa-flask"></i> Lab 101</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = 'teacher-login.html';
+        });
+    </script>
+</body>
+</html>
