@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Platform Analytics</title>
+    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* ----- EDUSKYLARK DASHBOARD DESIGN SYSTEM (PRESERVED) ----- */
+        :root {
+            --blue: #3498db;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --gold: #f1c40f;
+            --green: #27ae60;
+            --purple: #9b59b6;
+            --light-orange: rgba(230, 126, 34, 0.1);
+            --light-red: rgba(231, 76, 60, 0.1);
+            --light-dark-blue: rgba(44, 62, 80, 0.1);
+            --light-green: rgba(39, 174, 96, 0.1);
+            --light-purple: rgba(155, 89, 182, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--dark-blue);
+        }
+
+        .background-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.1);
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 10%; background: rgba(52,152,219,0.15); }
+        .bubble:nth-child(2) { width: 120px; height: 120px; top: 60%; right: 15%; background: rgba(230,126,34,0.1); animation-delay: 2s; }
+        .bubble:nth-child(3) { width: 60px; height: 60px; bottom: 20%; left: 20%; background: rgba(231,76,60,0.1); animation-delay: 4s; }
+        .bubble:nth-child(4) { width: 100px; height: 100px; top: 30%; right: 25%; background: rgba(44,62,80,0.1); animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%);
+            color: var(--white);
+            padding: 20px 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: gentlePulse 4s infinite ease-in-out;
+        }
+
+        .logo img { width: 45px; height: 45px; object-fit: contain; }
+
+        @keyframes gentlePulse {
+            0%,100% { transform: scale(1); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(255,255,255,0.2); }
+        }
+
+        .church-info h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .church-info p {
+            font-size: 14px;
+            color: var(--blue);
+            opacity: 0.9;
+            letter-spacing: 1.5px;
+        }
+
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, var(--gold), #f39c12);
+            color: var(--dark-blue);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+            animation: gentlePulse 2s infinite;
+        }
+
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; position: absolute; right: 20px; top: 20px; }
+        .user-section { display: flex; align-items: center; gap: 25px; }
+        
+        .profile-photo-container {
+            position: relative; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .profile-photo-container:hover { transform: scale(1.1); }
+        
+        .profile-photo {
+            width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--blue);
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: var(--white);
+            font-weight: 700; font-size: 22px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .upload-indicator {
+            position: absolute; top: -5px; right: -5px; width: 25px; height: 25px;
+            background-color: var(--red); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
+            animation: pulse 2s infinite; cursor: pointer;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231,76,60,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+        }
+
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+        .user-role { font-size: 14px; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+        
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: var(--white); border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .logout-btn:hover { background-color: var(--red); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(231,76,60,0.4); }
+
+        .mobile-nav {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44,62,80,0.95); z-index: 1000; backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .mobile-nav.active { display: block; }
+        .mobile-nav-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: var(--dark-blue); color: white;
+        }
+        .mobile-nav-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+        .mobile-nav-links { padding: 20px; }
+        .mobile-nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s; border-radius: 10px; margin-bottom: 5px;
+        }
+        .mobile-nav-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
+        .mobile-user-info {
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-profile-photo {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;
+            overflow: hidden;
+        }
+        .mobile-profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .mobile-user-details h3 { color: white; margin-bottom: 5px; }
+        .mobile-user-details p { color: var(--blue); font-size: 14px; }
+
+        .dashboard-container {
+            max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 1s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .page-header h2 {
+            font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 15px;
+        }
+        .page-header h2 i { color: var(--blue); }
+        .date-range-picker {
+            background: white; padding: 10px 20px; border-radius: 30px; display: flex; align-items: center;
+            gap: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #e9ecef;
+        }
+        .date-range-picker i { color: var(--blue); }
+
+        /* Analytics Cards */
+        .analytics-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 40px;
+        }
+        .analytics-card {
+            background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-left: 5px solid; transition: transform 0.3s; display: flex; flex-direction: column;
+        }
+        .analytics-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .analytics-card.revenue { border-left-color: var(--green); }
+        .analytics-card.schools { border-left-color: var(--blue); }
+        .analytics-card.users { border-left-color: var(--purple); }
+        .analytics-card.subscriptions { border-left-color: var(--orange); }
+        
+        .analytics-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .analytics-title { font-size: 16px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .analytics-icon {
+            width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 20px;
+        }
+        .revenue .analytics-icon { background: linear-gradient(135deg, var(--green), #229954); }
+        .schools .analytics-icon { background: linear-gradient(135deg, var(--blue), #2980b9); }
+        .users .analytics-icon { background: linear-gradient(135deg, var(--purple), #8e44ad); }
+        .subscriptions .analytics-icon { background: linear-gradient(135deg, var(--orange), #d35400); }
+        
+        .analytics-value { font-size: 36px; font-weight: 800; color: var(--dark-blue); margin-bottom: 5px; }
+        .analytics-trend {
+            display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 10px;
+        }
+        .trend-up { color: var(--green); }
+        .trend-down { color: var(--red); }
+
+        /* Charts Section */
+        .charts-row {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 40px;
+        }
+        .chart-container {
+            background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .chart-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+        .chart-header h3 {
+            font-size: 18px; font-weight: 700; color: var(--dark-blue); display: flex; align-items: center; gap: 10px;
+        }
+        .chart-header h3 i { color: var(--blue); }
+        
+        /* Mock Chart Bars (visual representation) */
+        .bar-chart {
+            display: flex; align-items: flex-end; justify-content: space-between; height: 200px; margin-top: 30px;
+        }
+        .bar-item {
+            display: flex; flex-direction: column; align-items: center; width: 12%;
+        }
+        .bar {
+            width: 100%; background: linear-gradient(to top, var(--blue), #74b9ff); border-radius: 6px 6px 0 0;
+            height: 0; transition: height 0.5s; position: relative;
+        }
+        .bar-label { margin-top: 12px; font-size: 12px; color: #666; }
+        
+        .pie-placeholder {
+            width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--blue) 0% 45%, var(--orange) 45% 70%, var(--green) 70% 90%, var(--purple) 90% 100%);
+            margin: 20px auto;
+        }
+        .pie-legend {
+            display: flex; flex-direction: column; gap: 10px; margin-top: 20px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 4px; }
+
+        /* Top Schools Table */
+        .top-schools-section {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); margin-bottom: 40px;
+        }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+        }
+        .section-header h3 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .section-header h3 i { color: var(--blue); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px 10px; color: var(--dark-blue); font-weight: 600; border-bottom: 2px solid #e9ecef; }
+        td { padding: 15px 10px; border-bottom: 1px solid #f1f1f1; }
+        .school-rank { font-weight: 800; color: var(--blue); }
+        .trend-indicator { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 20px; font-size: 12px; }
+        .trend-up { background: rgba(39,174,96,0.1); color: var(--green); }
+        .trend-down { background: rgba(231,76,60,0.1); color: var(--red); }
+
+        @media (max-width: 1024px) {
+            .charts-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .user-section { display: none; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
+                </div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · ANALYTICS <span id="adminBadge" class="admin-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
+                    <p>Platform Performance & Insights</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="profile-photo-container" id="profilePhotoContainer">
+                    <div class="profile-photo" id="profilePhoto"></div>
+                    <div class="upload-indicator" id="uploadIndicator"><i class="fas fa-camera"></i></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role"><i class="fas fa-crown"></i> <span>Super Administrator</span></div>
+                </div>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h3>EDUSKYLARK · SUPER ADMIN</h3>
+            <button class="mobile-nav-close" id="closeMobileNav"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="mobile-user-info" id="mobileUserInfo"></div>
+        <div class="mobile-nav-links">
+            <a href="super-admin-dashboard.html" class="mobile-nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="schools-management.html" class="mobile-nav-item"><i class="fas fa-building"></i> All Schools</a>
+            <a href="onboard-school.html" class="mobile-nav-item"><i class="fas fa-school"></i> Onboard School</a>
+            <a href="subscription-management.html" class="mobile-nav-item"><i class="fas fa-credit-card"></i> Subscriptions</a>
+            <a href="pending-approvals.html" class="mobile-nav-item"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
+            <a href="expiring-soon.html" class="mobile-nav-item"><i class="fas fa-clock"></i> Expiring Soon</a>
+            <a href="admin-management.html" class="mobile-nav-item"><i class="fas fa-user-tie"></i> School Admins</a>
+            <a href="analytics.html" class="mobile-nav-item"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="system-settings.html" class="mobile-nav-item"><i class="fas fa-cog"></i> System Settings</a>
+            <a href="#" class="mobile-nav-item logout-mobile" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h2><i class="fas fa-chart-line"></i> Platform Analytics</h2>
+            <div class="date-range-picker">
+                <i class="fas fa-calendar-alt"></i>
+                <span id="dateRangeText">Last 30 Days</span>
+                <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="analytics-grid">
+            <div class="analytics-card revenue">
+                <div class="analytics-header">
+                    <span class="analytics-title">Total Revenue (MRR)</span>
+                    <span class="analytics-icon"><i class="fas fa-dollar-sign"></i></span>
+                </div>
+                <div class="analytics-value" id="totalRevenue">KES 0</div>
+                <div class="analytics-trend" id="revenueTrend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +12.5%</span>
+                    <span>vs last month</span>
+                </div>
+            </div>
+            <div class="analytics-card schools">
+                <div class="analytics-header">
+                    <span class="analytics-title">Active Schools</span>
+                    <span class="analytics-icon"><i class="fas fa-school"></i></span>
+                </div>
+                <div class="analytics-value" id="activeSchools">0</div>
+                <div class="analytics-trend" id="schoolsTrend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +4</span>
+                    <span>this month</span>
+                </div>
+            </div>
+            <div class="analytics-card users">
+                <div class="analytics-header">
+                    <span class="analytics-title">Total Students</span>
+                    <span class="analytics-icon"><i class="fas fa-users"></i></span>
+                </div>
+                <div class="analytics-value" id="totalStudents">0</div>
+                <div class="analytics-trend" id="studentsTrend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +842</span>
+                    <span>this month</span>
+                </div>
+            </div>
+            <div class="analytics-card subscriptions">
+                <div class="analytics-header">
+                    <span class="analytics-title">Subscription Growth</span>
+                    <span class="analytics-icon"><i class="fas fa-credit-card"></i></span>
+                </div>
+                <div class="analytics-value" id="subscriptionGrowth">+18%</div>
+                <div class="analytics-trend">
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +5</span>
+                    <span>new subscriptions</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3><i class="fas fa-calendar"></i> Revenue Trend (Last 6 Months)</h3>
+                    <select style="padding: 8px 16px; border-radius: 20px; border: 1px solid #e9ecef; background: white;">
+                        <option>Monthly</option>
+                        <option>Quarterly</option>
+                        <option>Yearly</option>
+                    </select>
+                </div>
+                <div class="bar-chart" id="revenueChart">
+                    <!-- Dynamically populated -->
+                    <div class="bar-item"><div class="bar" style="height: 80px;"></div><div class="bar-label">Oct</div></div>
+                    <div class="bar-item"><div class="bar" style="height: 100px;"></div><div class="bar-label">Nov</div></div>
+                    <div class="bar-item"><div class="bar" style="height: 120px;"></div><div class="bar-label">Dec</div></div>
+                    <div class="bar-item"><div class="bar" style="height: 140px;"></div><div class="bar-label">Jan</div></div>
+                    <div class="bar-item"><div class="bar" style="height: 160px;"></div><div class="bar-label">Feb</div></div>
+                    <div class="bar-item"><div class="bar" style="height: 190px;"></div><div class="bar-label">Mar</div></div>
+                    <div class="bar-item"><div class="bar" style="height: 210px;"></div><div class="bar-label">Apr</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-pie"></i> Plan Distribution</h3>
+                </div>
+                <div class="pie-placeholder"></div>
+                <div class="pie-legend">
+                    <div class="legend-item"><span class="legend-color" style="background: var(--blue);"></span> Premium (45%)</div>
+                    <div class="legend-item"><span class="legend-color" style="background: var(--orange);"></span> Standard (25%)</div>
+                    <div class="legend-item"><span class="legend-color" style="background: var(--green);"></span> Basic (20%)</div>
+                    <div class="legend-item"><span class="legend-color" style="background: var(--purple);"></span> Enterprise (10%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Performing Schools -->
+        <div class="top-schools-section">
+            <div class="section-header">
+                <h3><i class="fas fa-trophy"></i> Top Performing Schools</h3>
+                <a href="schools-management.html" style="color: var(--blue); text-decoration: none; font-weight: 600;">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <table id="topSchoolsTable">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>School Name</th>
+                        <th>Plan</th>
+                        <th>Students</th>
+                        <th>Monthly Revenue</th>
+                        <th>Growth</th>
+                    </tr>
+                </thead>
+                <tbody id="topSchoolsBody">
+                    <tr><td class="school-rank">1</td><td>Nairobi Adventist Academy</td><td>Premium</td><td>1,240</td><td>KES 25,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +12%</span></td></tr>
+                    <tr><td class="school-rank">2</td><td>Eldoret Bright Scholars</td><td>Premium</td><td>2,101</td><td>KES 25,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +8%</span></td></tr>
+                    <tr><td class="school-rank">3</td><td>Kisumu Junior School</td><td>Standard</td><td>845</td><td>KES 12,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +5%</span></td></tr>
+                    <tr><td class="school-rank">4</td><td>Mombasa Hill Academy</td><td>Standard</td><td>512</td><td>KES 12,000</td><td><span class="trend-indicator trend-down"><i class="fas fa-arrow-down"></i> -2%</span></td></tr>
+                    <tr><td class="school-rank">5</td><td>Nakuru Central School</td><td>Basic</td><td>328</td><td>KES 5,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +15%</span></td></tr>
+                </tbody>
+            </table>
+            <div id="loadingIndicator" style="display: none; text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--blue);"></i>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Auth Check
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'super-admin-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    const isSuperAdmin = data.role === 'super-admin' || data.role === 'superadmin' || data.permissions?.isSuperAdmin === true;
+                    if (!isSuperAdmin) {
+                        await auth.signOut();
+                        window.location.href = 'super-admin-login.html';
+                        return;
+                    }
+                    loadUserData(user, data);
+                    loadAnalyticsData();
+                }
+            }
+        });
+
+        async function loadUserData(user, data) {
+            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
+            const profilePhoto = document.getElementById('profilePhoto');
+            const uploadIndicator = document.getElementById('uploadIndicator');
+            
+            if (data.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+                uploadIndicator.style.display = 'none';
+            } else {
+                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+            }
+            
+            // Mobile user info
+            document.getElementById('mobileUserInfo').innerHTML = `
+                <div class="mobile-profile-photo">${data.profilePhoto ? `<img src="${data.profilePhoto}">` : `<span>${initials}</span>`}</div>
+                <div class="mobile-user-details"><h3>${data.fullName || 'Super Admin'}</h3><p><i class="fas fa-crown"></i> Super Administrator</p></div>
+            `;
+        }
+
+        async function loadAnalyticsData() {
+            try {
+                // Get total revenue from active subscriptions
+                const activeSubs = await db.collection('subscriptions').where('status', '==', 'active').get();
+                let totalMRR = 0;
+                activeSubs.forEach(doc => { totalMRR += doc.data().amount || 0; });
+                document.getElementById('totalRevenue').textContent = `KES ${totalMRR.toLocaleString()}`;
+                
+                // Active schools count
+                const schoolsSnap = await db.collection('schools').where('status', '==', 'active').get();
+                document.getElementById('activeSchools').textContent = schoolsSnap.size;
+                
+                // Total students (sum across schools)
+                let studentSum = 0;
+                schoolsSnap.forEach(doc => { studentSum += doc.data().studentCount || 0; });
+                document.getElementById('totalStudents').textContent = studentSum.toLocaleString();
+                
+                // Subscription growth (new subs this month)
+                const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
+                const newSubs = await db.collection('subscriptions').where('createdAt', '>=', start).get();
+                const growthPercent = activeSubs.size > 0 ? Math.round((newSubs.size / activeSubs.size) * 100) : 0;
+                document.getElementById('subscriptionGrowth').textContent = `+${growthPercent}%`;
+                
+            } catch (e) {
+                console.error("Error loading analytics:", e);
+            }
+        }
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+        document.getElementById('logoutMobile').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+
+        // Mobile menu
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            document.getElementById('mobileNav').classList.add('active');
+        });
+        document.getElementById('closeMobileNav').addEventListener('click', () => {
+            document.getElementById('mobileNav').classList.remove('active');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('mobileNav')) {
+                document.getElementById('mobileNav').classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
