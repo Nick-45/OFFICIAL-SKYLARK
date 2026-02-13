@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Pending Approvals</title>
+    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* Same EDUSKYLARK design system - copy all root and global styles from analytics page */
+        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --white: #ffffff; --light-blue: #ecf0f1; --green: #27ae60; --purple: #9b59b6; --gold: #f1c40f; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%); min-height: 100vh; color: var(--dark-blue); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(52,152,219,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        
+        /* Copy all header, mobile, card styles from analytics page - condensed here */
+        .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; position: sticky; top: 0; z-index: 100; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; font-weight: 700; }
+        .church-info p { font-size: 14px; color: var(--blue); }
+        .admin-badge { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, var(--gold), #f39c12); color: var(--dark-blue); padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .user-section { display: flex; align-items: center; gap: 25px; }
+        .profile-photo { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--blue); background: linear-gradient(135deg, var(--blue), var(--dark-blue)); display: flex; align-items: center; justify-content: center; color: white; overflow: hidden; }
+        .logout-btn { background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red); padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+        
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
+        .page-header h2 i { color: var(--orange); }
+        
+        .stats-banner {
+            background: linear-gradient(135deg, var(--orange), #d35400); border-radius: 20px; padding: 30px; color: white;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .stats-banner h3 { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        .stats-banner p { opacity: 0.95; }
+        .stats-number { font-size: 48px; font-weight: 800; }
+        
+        .filter-bar {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-select { padding: 10px 20px; border: 2px solid #e9ecef; border-radius: 30px; background: white; }
+        
+        .approvals-table-container {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #e9ecef; }
+        td { padding: 20px 10px; border-bottom: 1px solid #f1f1f1; }
+        
+        .school-info { display: flex; align-items: center; gap: 12px; }
+        .school-avatar {
+            width: 45px; height: 45px; border-radius: 12px; background: rgba(230,126,34,0.1);
+            display: flex; align-items: center; justify-content: center; color: var(--orange); font-weight: 700;
+        }
+        .status-badge { padding: 6px 14px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-pending { background: rgba(230,126,34,0.15); color: var(--orange); }
+        
+        .action-btn {
+            padding: 8px 20px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; margin-right: 8px; font-size: 13px;
+        }
+        .btn-approve { background: rgba(39,174,96,0.15); color: var(--green); }
+        .btn-reject { background: rgba(231,76,60,0.1); color: var(--red); }
+        .btn-view { background: rgba(52,152,219,0.1); color: var(--blue); }
+        .btn-approve:hover { background: rgba(39,174,96,0.3); }
+        .btn-reject:hover { background: rgba(231,76,60,0.2); }
+        
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: #666;
+        }
+        .empty-state i { font-size: 64px; color: var(--orange); opacity: 0.5; margin-bottom: 20px; }
+        
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .user-section { display: none; }
+            .stats-banner { flex-direction: column; text-align: center; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · PENDING <span class="admin-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
+                    <p>Review & Approve New Schools</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="profile-photo-container">
+                    <div class="profile-photo" id="profilePhoto"></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role"><i class="fas fa-crown"></i> Super Administrator</div>
+                </div>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Nav (simplified) -->
+    <div class="mobile-nav" id="mobileNav"><!-- same as analytics --></div>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h2><i class="fas fa-hourglass-half"></i> Pending Approvals</h2>
+            <div class="date-range-picker" style="background: white; padding: 10px 20px; border-radius: 30px;">
+                <i class="fas fa-sync-alt" style="color: var(--blue);"></i> Last 7 days
+            </div>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="stats-banner" id="pendingStatsBanner">
+            <div>
+                <h3>Awaiting Your Review</h3>
+                <p>Schools waiting for activation and onboarding approval</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 40px;">
+                <div>
+                    <div class="stats-number" id="pendingCount">0</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Pending Schools</div>
+                </div>
+                <div>
+                    <div class="stats-number" id="pendingAdminsCount">0</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Admin Invites</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Filter by:</label>
+                <select class="filter-select" id="filterType">
+                    <option value="all">All Pending</option>
+                    <option value="school">New Schools</option>
+                    <option value="admin">Admin Approvals</option>
+                    <option value="subscription">Subscription Pending</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Plan:</label>
+                <select class="filter-select" id="planFilter">
+                    <option value="all">All Plans</option>
+                    <option value="premium">Premium</option>
+                    <option value="standard">Standard</option>
+                    <option value="basic">Basic</option>
+                </select>
+            </div>
+            <div style="flex: 1; display: flex; justify-content: flex-end;">
+                <button id="refreshBtn" style="background: none; border: none; color: var(--blue); cursor: pointer;">
+                    <i class="fas fa-redo-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Approvals Table -->
+        <div class="approvals-table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 20px; font-weight: 700;">Schools Pending Activation</h3>
+                <span style="background: rgba(230,126,34,0.1); padding: 6px 16px; border-radius: 30px; color: var(--orange); font-weight: 600;" id="tableCount">0 items</span>
+            </div>
+            <table id="pendingTable">
+                <thead>
+                    <tr>
+                        <th>School</th>
+                        <th>Requested By</th>
+                        <th>Plan</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTableBody">
+                    <!-- Dynamic rows from Firebase -->
+                </tbody>
+            </table>
+            <div id="loadingIndicator" style="display: none; text-align: center; padding: 60px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--blue);"></i>
+                <p style="margin-top: 15px; color: #666;">Loading pending approvals...</p>
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-check-circle"></i>
+                <h3 style="font-size: 22px; margin-bottom: 10px;">All Caught Up!</h3>
+                <p style="color: #666; margin-bottom: 20px;">No pending approvals at this time.</p>
+                <button onclick="window.location.href='onboard-school.html'" style="background: linear-gradient(135deg, var(--blue), var(--dark-blue)); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-plus-circle"></i> Onboard New School
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'super-admin-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'super-admin' && !data.permissions?.isSuperAdmin) {
+                        await auth.signOut();
+                        window.location.href = 'super-admin-login.html';
+                    } else {
+                        loadUserData(data);
+                        loadPendingSchools();
+                    }
+                }
+            }
+        });
+
+        function loadUserData(data) {
+            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
+            const profilePhoto = document.getElementById('profilePhoto');
+            if (data.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+            } else {
+                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+            }
+        }
+
+        async function loadPendingSchools() {
+            const tbody = document.getElementById('pendingTableBody');
+            const loading = document.getElementById('loadingIndicator');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('pendingTable');
+            const pendingCount = document.getElementById('pendingCount');
+            const tableCount = document.getElementById('tableCount');
+            
+            loading.style.display = 'block';
+            table.style.opacity = '0.5';
+            
+            try {
+                const pendingSnap = await db.collection('schools')
+                    .where('status', '==', 'pending')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                loading.style.display = 'none';
+                table.style.opacity = '1';
+                
+                if (pendingSnap.empty) {
+                    table.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    pendingCount.textContent = '0';
+                    tableCount.textContent = '0 items';
+                    return;
+                }
+                
+                table.style.display = 'table';
+                emptyState.style.display = 'none';
+                pendingCount.textContent = pendingSnap.size;
+                tableCount.textContent = `${pendingSnap.size} items`;
+                
+                let html = '';
+                pendingSnap.forEach(doc => {
+                    const s = doc.data();
+                    const created = s.createdAt?.toDate?.() || new Date();
+                    const dateStr = created.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                    
+                    html += `<tr>
+                        <td>
+                            <div class="school-info">
+                                <div class="school-avatar"><i class="fas fa-school"></i></div>
+                                <div>
+                                    <div style="font-weight: 700;">${s.name || 'Unnamed School'}</div>
+                                    <div style="font-size: 13px; color: #666;">${s.email || ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${s.adminName || '—'}<br><span style="font-size: 12px; color: #666;">${s.adminEmail || ''}</span></td>
+                        <td><span style="font-weight: 600;">${s.plan ? s.plan.charAt(0).toUpperCase() + s.plan.slice(1) : 'Standard'}</span></td>
+                        <td>${dateStr}</td>
+                        <td><span class="status-badge status-pending">Pending</span></td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="viewSchool('${doc.id}')"><i class="fas fa-eye"></i> View</button>
+                            <button class="action-btn btn-approve" onclick="approveSchool('${doc.id}')"><i class="fas fa-check"></i> Approve</button>
+                            <button class="action-btn btn-reject" onclick="rejectSchool('${doc.id}')"><i class="fas fa-times"></i> Reject</button>
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+                
+            } catch (e) {
+                console.error("Error loading pending schools:", e);
+                loading.style.display = 'none';
+                table.style.opacity = '1';
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--red);">
+                    <i class="fas fa-exclamation-triangle"></i> Error loading data. Please refresh.
+                </td></tr>`;
+            }
+        }
+
+        // Approval Functions
+        window.viewSchool = function(id) {
+            window.location.href = `school-details.html?id=${id}`;
+        };
+        
+        window.approveSchool = async function(id) {
+            if (confirm('Approve this school? They will be able to access the platform.')) {
+                try {
+                    await db.collection('schools').doc(id).update({
+                        status: 'active',
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        approvedBy: auth.currentUser?.uid
+                    });
+                    alert('✅ School approved successfully!');
+                    loadPendingSchools();
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            }
+        };
+        
+        window.rejectSchool = async function(id) {
+            if (confirm('Reject this school application? This action can be undone.')) {
+                try {
+                    await db.collection('schools').doc(id).update({
+                        status: 'rejected',
+                        rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        rejectedBy: auth.currentUser?.uid
+                    });
+                    alert('School application rejected.');
+                    loadPendingSchools();
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            }
+        };
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        });
+
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', loadPendingSchools);
+
+        // Filter change
+        document.getElementById('filterType').addEventListener('change', loadPendingSchools);
+        document.getElementById('planFilter').addEventListener('change', loadPendingSchools);
+    </script>
+</body>
+</html>
