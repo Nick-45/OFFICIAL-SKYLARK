@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Add Staff</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* Same styles as Add Student page - with green theme */
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --red: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .form-card { background: white; border-radius: 30px; padding: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); border-top: 6px solid var(--school-green); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
+        .page-header h2 i { color: var(--school-green); }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark-blue); display: flex; align-items: center; gap: 8px; }
+        .form-label i { color: var(--school-green); width: 20px; }
+        .form-control { width: 100%; padding: 14px 18px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 15px; transition: all 0.3s; background: #f9f9f9; }
+        .form-control:focus { border-color: var(--school-green); background: white; box-shadow: 0 0 0 4px rgba(39,174,96,0.1); outline: none; }
+        select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 16px; }
+        .action-buttons { display: flex; justify-content: flex-end; gap: 20px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; }
+        .btn { padding: 14px 35px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none; font-size: 16px; transition: all 0.3s; display: flex; align-items: center; gap: 10px; }
+        .btn-primary { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(39,174,96,0.4); }
+        .btn-secondary { background: #f0f0f0; color: var(--dark-blue); }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .form-group.full-width { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · ADD STAFF <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
+                    <p>Hire New Staff Member</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white;" id="schoolName">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="form-card">
+            <div class="page-header">
+                <h2><i class="fas fa-user-tie"></i> Add New Staff</h2>
+                <a href="school-staff.html" style="color: var(--school-green); text-decoration: none; font-weight: 600;">
+                    <i class="fas fa-arrow-left"></i> Back to Staff
+                </a>
+            </div>
+
+            <form id="addStaffForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user"></i> Full Name</label>
+                        <input type="text" class="form-control" id="fullName" placeholder="Enter full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-id-card"></i> Employee ID</label>
+                        <input type="text" class="form-control" id="employeeId" placeholder="e.g., TCH-2025-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-briefcase"></i> Role</label>
+                        <select class="form-control" id="role" required>
+                            <option value="">Select Role</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="head-teacher">Head Teacher</option>
+                            <option value="deputy-head">Deputy Head</option>
+                            <option value="administrator">Administrator</option>
+                            <option value="accountant">Accountant</option>
+                            <option value="librarian">Librarian</option>
+                            <option value="nurse">School Nurse</option>
+                            <option value="janitor">Janitor</option>
+                            <option value="security">Security</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-book"></i> Department</label>
+                        <select class="form-control" id="department">
+                            <option value="">Select Department</option>
+                            <option value="mathematics">Mathematics</option>
+                            <option value="sciences">Sciences</option>
+                            <option value="languages">Languages</option>
+                            <option value="humanities">Humanities</option>
+                            <option value="creative">Creative Arts</option>
+                            <option value="technical">Technical</option>
+                            <option value="administration">Administration</option>
+                            <option value="support">Support Staff</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth</label>
+                        <input type="date" class="form-control" id="dob">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-venus-mars"></i> Gender</label>
+                        <select class="form-control" id="gender">
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-phone"></i> Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+254 712 345 678" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-envelope"></i> Email Address</label>
+                        <input type="email" class="form-control" id="email" placeholder="staff@school.edu" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label"><i class="fas fa-map-marker-alt"></i> Address</label>
+                        <input type="text" class="form-control" id="address" placeholder="Enter address">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> Date Hired</label>
+                        <input type="date" class="form-control" id="dateHired" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-graduation-cap"></i> Qualification</label>
+                        <input type="text" class="form-control" id="qualification" placeholder="e.g., Bachelor of Education">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-money-bill"></i> Salary (KES)</label>
+                        <input type="number" class="form-control" id="salary" placeholder="e.g., 45000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-tag"></i> Employment Type</label>
+                        <select class="form-control" id="employmentType">
+                            <option value="permanent">Permanent</option>
+                            <option value="contract">Contract</option>
+                            <option value="intern">Intern</option>
+                            <option value="part-time">Part Time</option>
+                            <option value="temporary">Temporary</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='school-staff.html'">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i> Add Staff
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'school-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'school_admin' && data.role !== 'admin') {
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                    } else {
+                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
+                    }
+                }
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
+        });
+
+        document.getElementById('addStaffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+            try {
+                const user = auth.currentUser;
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const schoolId = userDoc.data().schoolId;
+
+                const staffData = {
+                    fullName: document.getElementById('fullName').value,
+                    employeeId: document.getElementById('employeeId').value,
+                    role: document.getElementById('role').value,
+                    department: document.getElementById('department').value,
+                    dob: document.getElementById('dob').value,
+                    gender: document.getElementById('gender').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value,
+                    address: document.getElementById('address').value,
+                    dateHired: document.getElementById('dateHired').value,
+                    qualification: document.getElementById('qualification').value,
+                    salary: document.getElementById('salary').value,
+                    employmentType: document.getElementById('employmentType').value,
+                    schoolId: schoolId,
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await db.collection('staff').add(staffData);
+                
+                // Also create a user account for the staff member
+                await db.collection('users').add({
+                    email: staffData.email,
+                    fullName: staffData.fullName,
+                    role: staffData.role === 'teacher' ? 'teacher' : 'staff',
+                    schoolId: schoolId,
+                    staffId: staffData.employeeId,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('✅ Staff added successfully!');
+                window.location.href = 'school-staff.html';
+            } catch (error) {
+                console.error('Error adding staff:', error);
+                alert('❌ Error adding staff: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Staff';
+            }
+        });
+    </script>
+</body>
+</html>
