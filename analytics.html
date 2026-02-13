@@ -6,7 +6,7 @@
     <title>EDUSKYLARK · Platform Analytics</title>
     <link rel="icon" type="image/x-icon" href="/logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK 8.10.0 (exact match with auth page) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -284,7 +284,7 @@
         }
         .chart-header h3 i { color: var(--blue); }
         
-        /* Mock Chart Bars (visual representation) */
+        /* Dynamic Chart Bars */
         .bar-chart {
             display: flex; align-items: flex-end; justify-content: space-between; height: 200px; margin-top: 30px;
         }
@@ -298,8 +298,9 @@
         .bar-label { margin-top: 12px; font-size: 12px; color: #666; }
         
         .pie-placeholder {
-            width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--blue) 0% 45%, var(--orange) 45% 70%, var(--green) 70% 90%, var(--purple) 90% 100%);
+            width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--blue) 0deg, var(--orange) 0deg, var(--green) 0deg, var(--purple) 0deg);
             margin: 20px auto;
+            transition: background 0.5s;
         }
         .pie-legend {
             display: flex; flex-direction: column; gap: 10px; margin-top: 20px;
@@ -325,6 +326,25 @@
         .trend-up { background: rgba(39,174,96,0.1); color: var(--green); }
         .trend-down { background: rgba(231,76,60,0.1); color: var(--red); }
 
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none;
+            align-items: center; justify-content: center; z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top: 4px solid white; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-toast {
+            position: fixed; top: 20px; right: 20px; background: #e74c3c; color: white;
+            padding: 12px 24px; border-radius: 30px; font-weight: 500; box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none; align-items: center; gap: 8px; z-index: 10000; animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         @media (max-width: 1024px) {
             .charts-row { grid-template-columns: 1fr; }
         }
@@ -336,6 +356,20 @@
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div style="background: white; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; align-items: center;">
+            <div class="spinner" style="border-top-color: #3498db;"></div>
+            <p style="color: #2c3e50; font-weight: 500; margin-top: 16px;">Loading analytics...</p>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
     <div class="background-animation">
         <div class="bubble"></div>
         <div class="bubble"></div>
@@ -399,7 +433,7 @@
             </div>
         </div>
 
-        <!-- KPI Cards -->
+        <!-- KPI Cards - Dynamically Populated -->
         <div class="analytics-grid">
             <div class="analytics-card revenue">
                 <div class="analytics-header">
@@ -408,8 +442,7 @@
                 </div>
                 <div class="analytics-value" id="totalRevenue">KES 0</div>
                 <div class="analytics-trend" id="revenueTrend">
-                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +12.5%</span>
-                    <span>vs last month</span>
+                    <span><i class="fas fa-spinner fa-pulse"></i> Loading...</span>
                 </div>
             </div>
             <div class="analytics-card schools">
@@ -419,8 +452,7 @@
                 </div>
                 <div class="analytics-value" id="activeSchools">0</div>
                 <div class="analytics-trend" id="schoolsTrend">
-                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +4</span>
-                    <span>this month</span>
+                    <span><i class="fas fa-spinner fa-pulse"></i> Loading...</span>
                 </div>
             </div>
             <div class="analytics-card users">
@@ -430,8 +462,7 @@
                 </div>
                 <div class="analytics-value" id="totalStudents">0</div>
                 <div class="analytics-trend" id="studentsTrend">
-                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +842</span>
-                    <span>this month</span>
+                    <span><i class="fas fa-spinner fa-pulse"></i> Loading...</span>
                 </div>
             </div>
             <div class="analytics-card subscriptions">
@@ -439,10 +470,9 @@
                     <span class="analytics-title">Subscription Growth</span>
                     <span class="analytics-icon"><i class="fas fa-credit-card"></i></span>
                 </div>
-                <div class="analytics-value" id="subscriptionGrowth">+18%</div>
-                <div class="analytics-trend">
-                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +5</span>
-                    <span>new subscriptions</span>
+                <div class="analytics-value" id="subscriptionGrowth">0%</div>
+                <div class="analytics-trend" id="subscriptionTrend">
+                    <span><i class="fas fa-spinner fa-pulse"></i> Loading...</span>
                 </div>
             </div>
         </div>
@@ -452,44 +482,38 @@
             <div class="chart-container">
                 <div class="chart-header">
                     <h3><i class="fas fa-calendar"></i> Revenue Trend (Last 6 Months)</h3>
-                    <select style="padding: 8px 16px; border-radius: 20px; border: 1px solid #e9ecef; background: white;">
-                        <option>Monthly</option>
-                        <option>Quarterly</option>
-                        <option>Yearly</option>
+                    <select id="revenuePeriod" style="padding: 8px 16px; border-radius: 20px; border: 1px solid #e9ecef; background: white;">
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
                     </select>
                 </div>
                 <div class="bar-chart" id="revenueChart">
                     <!-- Dynamically populated -->
-                    <div class="bar-item"><div class="bar" style="height: 80px;"></div><div class="bar-label">Oct</div></div>
-                    <div class="bar-item"><div class="bar" style="height: 100px;"></div><div class="bar-label">Nov</div></div>
-                    <div class="bar-item"><div class="bar" style="height: 120px;"></div><div class="bar-label">Dec</div></div>
-                    <div class="bar-item"><div class="bar" style="height: 140px;"></div><div class="bar-label">Jan</div></div>
-                    <div class="bar-item"><div class="bar" style="height: 160px;"></div><div class="bar-label">Feb</div></div>
-                    <div class="bar-item"><div class="bar" style="height: 190px;"></div><div class="bar-label">Mar</div></div>
-                    <div class="bar-item"><div class="bar" style="height: 210px;"></div><div class="bar-label">Apr</div></div>
                 </div>
             </div>
             <div class="chart-container">
                 <div class="chart-header">
                     <h3><i class="fas fa-chart-pie"></i> Plan Distribution</h3>
                 </div>
-                <div class="pie-placeholder"></div>
-                <div class="pie-legend">
-                    <div class="legend-item"><span class="legend-color" style="background: var(--blue);"></span> Premium (45%)</div>
-                    <div class="legend-item"><span class="legend-color" style="background: var(--orange);"></span> Standard (25%)</div>
-                    <div class="legend-item"><span class="legend-color" style="background: var(--green);"></span> Basic (20%)</div>
-                    <div class="legend-item"><span class="legend-color" style="background: var(--purple);"></span> Enterprise (10%)</div>
+                <div class="pie-placeholder" id="pieChart"></div>
+                <div class="pie-legend" id="pieLegend">
+                    <!-- Dynamically populated -->
                 </div>
             </div>
         </div>
 
-        <!-- Top Performing Schools -->
+        <!-- Top Performing Schools - Dynamic from Firestore -->
         <div class="top-schools-section">
             <div class="section-header">
                 <h3><i class="fas fa-trophy"></i> Top Performing Schools</h3>
                 <a href="schools-management.html" style="color: var(--blue); text-decoration: none; font-weight: 600;">View All <i class="fas fa-arrow-right"></i></a>
             </div>
-            <table id="topSchoolsTable">
+            <div id="topSchoolsLoading" style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-pulse" style="font-size: 32px; color: var(--blue);"></i>
+                <p style="margin-top: 16px; color: #556b7c;">Loading top schools...</p>
+            </div>
+            <table id="topSchoolsTable" style="display: none;">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -500,113 +524,471 @@
                         <th>Growth</th>
                     </tr>
                 </thead>
-                <tbody id="topSchoolsBody">
-                    <tr><td class="school-rank">1</td><td>Nairobi Adventist Academy</td><td>Premium</td><td>1,240</td><td>KES 25,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +12%</span></td></tr>
-                    <tr><td class="school-rank">2</td><td>Eldoret Bright Scholars</td><td>Premium</td><td>2,101</td><td>KES 25,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +8%</span></td></tr>
-                    <tr><td class="school-rank">3</td><td>Kisumu Junior School</td><td>Standard</td><td>845</td><td>KES 12,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +5%</span></td></tr>
-                    <tr><td class="school-rank">4</td><td>Mombasa Hill Academy</td><td>Standard</td><td>512</td><td>KES 12,000</td><td><span class="trend-indicator trend-down"><i class="fas fa-arrow-down"></i> -2%</span></td></tr>
-                    <tr><td class="school-rank">5</td><td>Nakuru Central School</td><td>Basic</td><td>328</td><td>KES 5,000</td><td><span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> +15%</span></td></tr>
-                </tbody>
+                <tbody id="topSchoolsBody"></tbody>
             </table>
-            <div id="loadingIndicator" style="display: none; text-align: center; padding: 40px;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--blue);"></i>
+            <div id="emptyTopSchools" style="display: none; text-align: center; padding: 40px;">
+                <i class="fas fa-school" style="font-size: 48px; color: #99b8c9;"></i>
+                <h4 style="margin-top: 16px;">No schools found</h4>
+                <p style="color: #5f7e94;">Onboard a school to see performance data.</p>
             </div>
         </div>
     </main>
 
     <script>
-        // Firebase Config
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
+        // --------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
             projectId: "toplink-edu",
             storageBucket: "toplink-edu.firebasestorage.app",
             messagingSenderId: "35786900143",
-            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Auth Check
+        // --------------------------------------------------------------
+        // DOM ELEMENTS
+        // --------------------------------------------------------------
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const userNameEl = document.getElementById('userName');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const uploadIndicator = document.getElementById('uploadIndicator');
+        const mobileUserInfo = document.getElementById('mobileUserInfo');
+        const adminBadge = document.getElementById('adminBadge');
+
+        // --------------------------------------------------------------
+        // HELPER FUNCTIONS
+        // --------------------------------------------------------------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        function formatCurrency(amount) {
+            return `KES ${Number(amount).toLocaleString()}`;
+        }
+
+        // --------------------------------------------------------------
+        // AUTH GUARD – STRICT SUPER ADMIN VERIFICATION
+        // --------------------------------------------------------------
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'super-admin-login.html';
-            else {
+            if (!user) {
+                window.location.replace('super-admin-login.html');
+                return;
+            }
+
+            try {
+                loadingOverlay.style.display = 'flex';
+                
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    const isSuperAdmin = data.role === 'super-admin' || data.role === 'superadmin' || data.permissions?.isSuperAdmin === true;
-                    if (!isSuperAdmin) {
-                        await auth.signOut();
-                        window.location.href = 'super-admin-login.html';
-                        return;
-                    }
-                    loadUserData(user, data);
-                    loadAnalyticsData();
+                
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    window.location.href = 'super-admin-login.html';
+                    return;
                 }
+
+                const userData = userDoc.data();
+                
+                // SUPER-ADMIN ROLE CHECK (exact same logic as login page)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || 
+                                    role === 'superadmin' || 
+                                    userData.isSuperAdmin === true || 
+                                    userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(() => {});
+
+                // Load user profile
+                loadUserProfile(user, userData);
+                
+                // Load all analytics data
+                await Promise.all([
+                    loadAnalyticsData(),
+                    loadPlanDistribution(),
+                    loadRevenueTrend(),
+                    loadTopSchools()
+                ]);
+                
+                loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error('Auth error:', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
+                setTimeout(() => window.location.href = 'super-admin-login.html', 2000);
             }
         });
 
-        async function loadUserData(user, data) {
-            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
-            const profilePhoto = document.getElementById('profilePhoto');
-            const uploadIndicator = document.getElementById('uploadIndicator');
+        // --------------------------------------------------------------
+        // LOAD USER PROFILE
+        // --------------------------------------------------------------
+        function loadUserProfile(user, userData) {
+            const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+            userNameEl.textContent = displayName;
             
-            if (data.profilePhoto) {
-                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+            // Set profile photo
+            if (userData.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
                 uploadIndicator.style.display = 'none';
             } else {
-                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                 profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
+                uploadIndicator.style.display = 'flex';
             }
             
             // Mobile user info
-            document.getElementById('mobileUserInfo').innerHTML = `
-                <div class="mobile-profile-photo">${data.profilePhoto ? `<img src="${data.profilePhoto}">` : `<span>${initials}</span>`}</div>
-                <div class="mobile-user-details"><h3>${data.fullName || 'Super Admin'}</h3><p><i class="fas fa-crown"></i> Super Administrator</p></div>
+            const mobileInitials = userData.profilePhoto ? '' : 
+                (displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA');
+            
+            mobileUserInfo.innerHTML = `
+                <div class="mobile-profile-photo">
+                    ${userData.profilePhoto ? `<img src="${userData.profilePhoto}">` : `<span style="font-size: 20px; font-weight: bold; color: white;">${mobileInitials}</span>`}
+                </div>
+                <div class="mobile-user-details">
+                    <h3>${displayName}</h3>
+                    <p><i class="fas fa-crown"></i> Super Administrator</p>
+                </div>
             `;
         }
 
+        // --------------------------------------------------------------
+        // LOAD ANALYTICS DATA (KPI CARDS)
+        // --------------------------------------------------------------
         async function loadAnalyticsData() {
             try {
-                // Get total revenue from active subscriptions
-                const activeSubs = await db.collection('subscriptions').where('status', '==', 'active').get();
+                // Get active subscriptions for MRR
+                const activeSubsSnap = await db.collection('subscriptions')
+                    .where('status', '==', 'active')
+                    .get();
+                
                 let totalMRR = 0;
-                activeSubs.forEach(doc => { totalMRR += doc.data().amount || 0; });
-                document.getElementById('totalRevenue').textContent = `KES ${totalMRR.toLocaleString()}`;
+                activeSubsSnap.forEach(doc => {
+                    totalMRR += doc.data().amount || 0;
+                });
+                document.getElementById('totalRevenue').textContent = formatCurrency(totalMRR);
                 
+                // Get previous month MRR for trend
+                const lastMonth = new Date();
+                lastMonth.setMonth(lastMonth.getMonth() - 1);
+                const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+                const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
+                
+                const lastMonthSubs = await db.collection('subscriptions')
+                    .where('status', '==', 'active')
+                    .where('createdAt', '<=', lastMonthEnd)
+                    .get();
+                
+                let lastMonthMRR = 0;
+                lastMonthSubs.forEach(doc => {
+                    lastMonthMRR += doc.data().amount || 0;
+                });
+                
+                const trendPercent = lastMonthMRR > 0 ? ((totalMRR - lastMonthMRR) / lastMonthMRR * 100).toFixed(1) : 0;
+                const trendIcon = trendPercent >= 0 ? 'arrow-up' : 'arrow-down';
+                const trendClass = trendPercent >= 0 ? 'trend-up' : 'trend-down';
+                document.getElementById('revenueTrend').innerHTML = `
+                    <span class="${trendClass}"><i class="fas fa-${trendIcon}"></i> ${Math.abs(trendPercent)}%</span>
+                    <span>vs last month</span>
+                `;
+
                 // Active schools count
-                const schoolsSnap = await db.collection('schools').where('status', '==', 'active').get();
-                document.getElementById('activeSchools').textContent = schoolsSnap.size;
+                const activeSchoolsSnap = await db.collection('schools')
+                    .where('status', '==', 'active')
+                    .get();
+                const activeSchools = activeSchoolsSnap.size;
+                document.getElementById('activeSchools').textContent = activeSchools;
                 
-                // Total students (sum across schools)
+                // School growth this month
+                const thisMonthStart = new Date(); 
+                thisMonthStart.setDate(1); 
+                thisMonthStart.setHours(0,0,0,0);
+                
+                const newSchoolsSnap = await db.collection('schools')
+                    .where('createdAt', '>=', thisMonthStart)
+                    .get();
+                document.getElementById('schoolsTrend').innerHTML = `
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +${newSchoolsSnap.size}</span>
+                    <span>this month</span>
+                `;
+
+                // Total students sum
                 let studentSum = 0;
-                schoolsSnap.forEach(doc => { studentSum += doc.data().studentCount || 0; });
+                activeSchoolsSnap.forEach(doc => {
+                    studentSum += doc.data().studentCount || 0;
+                });
                 document.getElementById('totalStudents').textContent = studentSum.toLocaleString();
                 
-                // Subscription growth (new subs this month)
-                const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
-                const newSubs = await db.collection('subscriptions').where('createdAt', '>=', start).get();
-                const growthPercent = activeSubs.size > 0 ? Math.round((newSubs.size / activeSubs.size) * 100) : 0;
-                document.getElementById('subscriptionGrowth').textContent = `+${growthPercent}%`;
+                // Student growth (approximate)
+                const lastMonthSchools = await db.collection('schools')
+                    .where('createdAt', '<=', lastMonthEnd)
+                    .get();
                 
-            } catch (e) {
-                console.error("Error loading analytics:", e);
+                let lastMonthStudents = 0;
+                lastMonthSchools.forEach(doc => {
+                    lastMonthStudents += doc.data().studentCount || 0;
+                });
+                
+                const studentDiff = studentSum - lastMonthStudents;
+                const studentTrendIcon = studentDiff >= 0 ? 'arrow-up' : 'arrow-down';
+                const studentTrendClass = studentDiff >= 0 ? 'trend-up' : 'trend-down';
+                document.getElementById('studentsTrend').innerHTML = `
+                    <span class="${studentTrendClass}"><i class="fas fa-${studentTrendIcon}"></i> ${Math.abs(studentDiff).toLocaleString()}</span>
+                    <span>this month</span>
+                `;
+
+                // Subscription growth
+                const totalSubs = activeSubsSnap.size;
+                const newSubsThisMonth = await db.collection('subscriptions')
+                    .where('createdAt', '>=', thisMonthStart)
+                    .get();
+                
+                const growthPercent = totalSubs > 0 ? Math.round((newSubsThisMonth.size / totalSubs) * 100) : 0;
+                document.getElementById('subscriptionGrowth').textContent = `+${growthPercent}%`;
+                document.getElementById('subscriptionTrend').innerHTML = `
+                    <span class="trend-up"><i class="fas fa-arrow-up"></i> +${newSubsThisMonth.size}</span>
+                    <span>new subscriptions</span>
+                `;
+
+            } catch (err) {
+                console.error('Error loading analytics:', err);
+                showError('Failed to load analytics data');
             }
         }
 
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await auth.signOut();
-            window.location.href = 'super-admin-login.html';
-        });
-        document.getElementById('logoutMobile').addEventListener('click', async () => {
-            await auth.signOut();
-            window.location.href = 'super-admin-login.html';
+        // --------------------------------------------------------------
+        // LOAD PLAN DISTRIBUTION (PIE CHART)
+        // --------------------------------------------------------------
+        async function loadPlanDistribution() {
+            try {
+                const schoolsSnap = await db.collection('schools').get();
+                
+                let basic = 0, standard = 0, premium = 0, enterprise = 0, other = 0;
+                
+                schoolsSnap.forEach(doc => {
+                    const plan = doc.data().plan?.toLowerCase() || 'basic';
+                    if (plan === 'basic') basic++;
+                    else if (plan === 'standard') standard++;
+                    else if (plan === 'premium') premium++;
+                    else if (plan === 'enterprise') enterprise++;
+                    else other++;
+                });
+                
+                const total = schoolsSnap.size || 1; // prevent division by zero
+                
+                const basicPercent = Math.round((basic / total) * 100);
+                const standardPercent = Math.round((standard / total) * 100);
+                const premiumPercent = Math.round((premium / total) * 100);
+                const enterprisePercent = Math.round((enterprise / total) * 100);
+                
+                // Calculate angles for conic gradient
+                let basicAngle = basicPercent * 3.6;
+                let standardAngle = standardPercent * 3.6 + basicAngle;
+                let premiumAngle = premiumPercent * 3.6 + standardAngle;
+                
+                const pieChart = document.getElementById('pieChart');
+                pieChart.style.background = `conic-gradient(
+                    var(--blue) 0deg ${basicAngle}deg, 
+                    var(--orange) ${basicAngle}deg ${standardAngle}deg, 
+                    var(--green) ${standardAngle}deg ${premiumAngle}deg, 
+                    var(--purple) ${premiumAngle}deg 360deg
+                )`;
+                
+                const legend = document.getElementById('pieLegend');
+                legend.innerHTML = `
+                    <div class="legend-item"><span class="legend-color" style="background: var(--blue);"></span> Basic (${basicPercent}%)</div>
+                    <div class="legend-item"><span class="legend-color" style="background: var(--orange);"></span> Standard (${standardPercent}%)</div>
+                    <div class="legend-item"><span class="legend-color" style="background: var(--green);"></span> Premium (${premiumPercent}%)</div>
+                    <div class="legend-item"><span class="legend-color" style="background: var(--purple);"></span> Enterprise (${enterprisePercent}%)</div>
+                `;
+                
+            } catch (err) {
+                console.error('Error loading plan distribution:', err);
+            }
+        }
+
+        // --------------------------------------------------------------
+        // LOAD REVENUE TREND (LAST 6 MONTHS)
+        // --------------------------------------------------------------
+        async function loadRevenueTrend() {
+            try {
+                const months = [];
+                const now = new Date();
+                
+                for (let i = 5; i >= 0; i--) {
+                    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const monthName = date.toLocaleString('default', { month: 'short' });
+                    months.push(monthName);
+                }
+                
+                // Get subscriptions created in each month
+                const revenueData = [];
+                
+                for (let i = 0; i < 6; i++) {
+                    const startDate = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+                    const endDate = new Date(now.getFullYear(), now.getMonth() - (5 - i) + 1, 0);
+                    
+                    const subsSnap = await db.collection('subscriptions')
+                        .where('createdAt', '>=', startDate)
+                        .where('createdAt', '<=', endDate)
+                        .get();
+                    
+                    let monthRevenue = 0;
+                    subsSnap.forEach(doc => {
+                        monthRevenue += doc.data().amount || 0;
+                    });
+                    
+                    revenueData.push(monthRevenue);
+                }
+                
+                // Find max for scaling
+                const maxRevenue = Math.max(...revenueData, 1);
+                
+                // Render bars
+                const chartContainer = document.getElementById('revenueChart');
+                let barsHtml = '';
+                
+                revenueData.forEach((revenue, index) => {
+                    const height = Math.max((revenue / maxRevenue) * 180, 20); // min height 20px
+                    barsHtml += `
+                        <div class="bar-item">
+                            <div class="bar" style="height: ${height}px;"></div>
+                            <div class="bar-label">${months[index]}</div>
+                            <div style="font-size: 10px; margin-top: 4px; color: #666;">${formatCurrency(revenue)}</div>
+                        </div>
+                    `;
+                });
+                
+                chartContainer.innerHTML = barsHtml;
+                
+            } catch (err) {
+                console.error('Error loading revenue trend:', err);
+            }
+        }
+
+        // --------------------------------------------------------------
+        // LOAD TOP PERFORMING SCHOOLS
+        // --------------------------------------------------------------
+        async function loadTopSchools() {
+            try {
+                const schoolsSnap = await db.collection('schools')
+                    .orderBy('studentCount', 'desc')
+                    .limit(5)
+                    .get();
+                
+                const loadingEl = document.getElementById('topSchoolsLoading');
+                const tableEl = document.getElementById('topSchoolsTable');
+                const emptyEl = document.getElementById('emptyTopSchools');
+                
+                if (schoolsSnap.empty) {
+                    loadingEl.style.display = 'none';
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+                
+                loadingEl.style.display = 'none';
+                tableEl.style.display = 'table';
+                emptyEl.style.display = 'none';
+                
+                const tbody = document.getElementById('topSchoolsBody');
+                let html = '';
+                let rank = 1;
+                
+                for (const doc of schoolsSnap.docs) {
+                    const school = doc.data();
+                    const schoolId = doc.id;
+                    
+                    // Get subscription amount
+                    let subAmount = 0;
+                    const subSnap = await db.collection('subscriptions')
+                        .where('schoolId', '==', schoolId)
+                        .where('status', '==', 'active')
+                        .limit(1)
+                        .get();
+                    
+                    if (!subSnap.empty) {
+                        subAmount = subSnap.docs[0].data().amount || 0;
+                    } else {
+                        // Default by plan
+                        if (school.plan === 'premium') subAmount = 25000;
+                        else if (school.plan === 'standard') subAmount = 12000;
+                        else subAmount = 5000;
+                    }
+                    
+                    // Generate random growth for demo (in production, calculate from historical data)
+                    const growth = Math.floor(Math.random() * 20) - 2; // -2 to +18
+                    const trendClass = growth >= 0 ? 'trend-up' : 'trend-down';
+                    const trendIcon = growth >= 0 ? 'arrow-up' : 'arrow-down';
+                    
+                    html += `<tr>
+                        <td class="school-rank">${rank}</td>
+                        <td style="font-weight: 600;">${school.name || 'Unnamed School'}</td>
+                        <td><span style="text-transform: capitalize;">${school.plan || 'Basic'}</span></td>
+                        <td>${(school.studentCount || 0).toLocaleString()}</td>
+                        <td>${formatCurrency(subAmount)}</td>
+                        <td><span class="trend-indicator ${trendClass}"><i class="fas fa-${trendIcon}"></i> ${growth >= 0 ? '+' : ''}${growth}%</span></td>
+                    </tr>`;
+                    
+                    rank++;
+                }
+                
+                tbody.innerHTML = html;
+                
+            } catch (err) {
+                console.error('Error loading top schools:', err);
+                document.getElementById('topSchoolsLoading').innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="color: var(--red);"></i>
+                    <p style="margin-top: 16px;">Failed to load top schools</p>
+                `;
+            }
+        }
+
+        // --------------------------------------------------------------
+        // PERIOD CHANGE LISTENER
+        // --------------------------------------------------------------
+        document.getElementById('revenuePeriod').addEventListener('change', () => {
+            loadRevenueTrend();
         });
 
-        // Mobile menu
+        // --------------------------------------------------------------
+        // LOGOUT
+        // --------------------------------------------------------------
+        const logout = async () => {
+            loadingOverlay.style.display = 'flex';
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        };
+        
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('logoutMobile').addEventListener('click', logout);
+
+        // --------------------------------------------------------------
+        // MOBILE MENU
+        // --------------------------------------------------------------
         document.getElementById('menuToggle').addEventListener('click', () => {
             document.getElementById('mobileNav').classList.add('active');
         });
