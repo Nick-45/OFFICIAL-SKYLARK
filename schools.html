@@ -3,36 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDUSKYLARK · SCHOOL COMMAND CENTER</title>
-    <!-- Font Awesome 6 -->
+    <title>EDUSKYLARK · Schools Command</title>
+    <!-- Font Awesome 6 (free) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Firebase SDK v8 compat -->
+    <!-- Firebase SDK 8.10.0 (compat) - EXACT VERSION FROM LOGIN PAGE -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         /* ------------------------------------------------------------
-           EDUSKYLARK – SUPER ADMIN DASHBOARD (INTEGRATED WITH AUTH)
-           Fully production, no demo. Real role‑based access.
+           MODERN ADMIN DASHBOARD – AUTH-INTEGRATED, NO DEMO FALLBACK
         ------------------------------------------------------------ */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
-            background: #f4f7fc;
-            color: #1a2634;
+            background: linear-gradient(145deg, #f4f7fc 0%, #e9eef4 100%);
             min-height: 100vh;
-            position: relative;
+            color: #1a2634;
+            line-height: 1.5;
         }
 
-        /* refined background orbs */
-        .bg-orb {
+        /* background orbs – calm & professional */
+        .bg-ornament {
             position: fixed;
             width: 100%;
             height: 100%;
@@ -43,291 +40,304 @@
         .orb {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.06), rgba(44,62,80,0.02));
-            animation: orbFloat 24s infinite alternate ease-in-out;
+            background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.08), rgba(46,134,171,0.02));
+            animation: levitate 22s infinite alternate ease-in-out;
         }
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(-40px, -30px) scale(1.1); }
+        @keyframes levitate {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-40px) scale(1.02); }
         }
 
-        /* ---------- HEADER – DEEP SLATE ---------- */
-        .header {
-            background: linear-gradient(145deg, #0f1a24 0%, #1e2b38 100%);
-            color: white;
-            padding: 18px 32px;
+        /* header – deep navy with glass touch */
+        .admin-header {
+            background: rgba(26, 37, 48, 0.98);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 16px 32px;
             position: sticky;
             top: 0;
-            z-index: 200;
-            box-shadow: 0 10px 25px -8px rgba(0,0,0,0.2);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
-        .header-content {
-            max-width: 1600px;
+        .header-grid {
+            max-width: 1440px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
-        .logo-area {
+        .brand-block {
             display: flex;
             align-items: center;
             gap: 18px;
         }
-        .logo-icon {
+        .logo-badge {
             width: 52px;
             height: 52px;
-            background: linear-gradient(145deg, #ffffff, #f0f5fa);
-            border-radius: 16px;
+            background: white;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            color: #1e2b38;
-            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.1);
         }
-        .brand-text h1 {
-            font-size: 26px;
+        .logo-badge img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+        .edu-title h1 {
+            font-size: 1.7rem;
             font-weight: 700;
             letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            color: white;
+            line-height: 1.2;
         }
-        .super-badge {
-            background: linear-gradient(145deg, #f1c40f, #e67e22);
-            color: #0f1a24;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 13px;
+        .edu-title span {
+            background: linear-gradient(145deg, #ffe18a, #fbc85a);
+            color: #1e2b38;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
             font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 10px rgba(241,196,15,0.3);
+            text-transform: uppercase;
+            margin-left: 12px;
+            display: inline-block;
+            vertical-align: middle;
             border: 1px solid rgba(255,255,255,0.3);
         }
         .admin-profile {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 24px;
         }
-        .admin-name {
+        .user-greeting {
+            color: #dbeafe;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .logout-btn {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1.5px solid #e74c3c;
+            color: white;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255,255,255,0.07);
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-weight: 500;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .logout-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: white;
-            padding: 10px 22px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
             transition: all 0.2s;
-            backdrop-filter: blur(4px);
+            cursor: pointer;
         }
         .logout-btn:hover {
-            background: rgba(231, 76, 60, 0.8);
+            background: #e74c3c;
             border-color: #e74c3c;
+            transform: scale(0.98);
         }
 
-        /* ---------- MAIN CONTAINER ---------- */
-        .main-container {
-            max-width: 1600px;
+        /* main container */
+        .dashboard-container {
+            max-width: 1440px;
             margin: 40px auto;
             padding: 0 32px;
         }
 
-        /* page header with CTA */
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
         .page-header h2 {
-            font-size: 32px;
+            font-size: 2rem;
             font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: #1a2b3c;
-        }
-        .page-header h2 i {
-            color: #2c7da0;
-            background: rgba(44,125,160,0.12);
-            padding: 12px;
-            border-radius: 18px;
-        }
-        .btn-primary {
-            background: linear-gradient(145deg, #2c7da0, #1e4e6c);
-            border: none;
-            color: white;
-            padding: 14px 32px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 16px;
+            color: #1e2e3f;
             display: flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 8px 22px rgba(28,110,164,0.25);
-            transition: all 0.2s;
-            border: 1px solid rgba(255,255,255,0.25);
-            cursor: pointer;
         }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(28,110,164,0.4);
+        .page-header h2 i {
+            background: #2c3e50;
+            color: white;
+            padding: 12px;
+            border-radius: 20px;
+            font-size: 1.4rem;
+            box-shadow: 0 8px 14px rgba(44,62,80,0.2);
         }
 
-        /* ---------- STATS CARDS ---------- */
-        .stats-grid {
+        .btn-primary {
+            background: linear-gradient(145deg, #2274a5, #1e5f87);
+            border: none;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 100px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1rem;
+            box-shadow: 0 8px 18px rgba(30,95,135,0.3);
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-primary i {
+            font-size: 1.1rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(145deg, #1e6794, #1a4f70);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(30,95,135,0.4);
+        }
+
+        /* stats cards – elegant minimal */
+        .stat-tiles {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 24px;
-            margin-bottom: 36px;
+            margin-bottom: 40px;
         }
-        .stat-card {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
+        .stat-tile {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 28px;
+            padding: 24px 22px;
             display: flex;
             align-items: center;
             gap: 18px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.04);
             transition: 0.2s;
-            backdrop-filter: blur(4px);
-            border-left: 5px solid #2c7da0;
+        }
+        .stat-tile:hover {
+            background: white;
+            border-color: white;
+            box-shadow: 0 20px 30px rgba(52,152,219,0.1);
         }
         .stat-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(44,125,160,0.08);
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(145deg, #ecf9ff, #dfeef8);
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #226688;
             font-size: 26px;
-            color: #1e4e6c;
         }
         .stat-content h4 {
-            font-size: 15px;
-            font-weight: 600;
-            color: #4a5f6e;
+            font-size: 0.85rem;
+            color: #556b7c;
+            letter-spacing: 0.5px;
             margin-bottom: 6px;
-            letter-spacing: 0.3px;
         }
         .stat-content span {
-            font-size: 32px;
-            font-weight: 800;
-            color: #0f1a24;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f1f2f;
         }
 
-        /* ---------- FILTER PANEL ---------- */
-        .filter-panel {
-            background: white;
-            border-radius: 28px;
-            padding: 22px 28px;
-            margin-bottom: 30px;
+        /* filter bar – refined frosted */
+        .filter-bar {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 60px;
+            padding: 12px 24px 12px 28px;
+            margin-bottom: 40px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 20px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.02);
-            border: 1px solid rgba(255,255,255,0.6);
-            backdrop-filter: blur(8px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.02);
         }
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: #f8fafd;
-            padding: 4px 4px 4px 16px;
-            border-radius: 44px;
-            border: 1px solid #e6ecf0;
+            gap: 10px;
         }
         .filter-group label {
-            font-weight: 700;
-            color: #2c3e50;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+            font-weight: 600;
+            color: #1f3a4b;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
         }
         .filter-select {
-            padding: 12px 20px;
-            border: none;
             background: white;
+            border: 1.5px solid #e2ecf5;
             border-radius: 40px;
-            font-size: 14px;
+            padding: 10px 36px 10px 20px;
+            font-size: 0.9rem;
             font-weight: 500;
-            color: #1e2b38;
+            color: #1e2e3f;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
             cursor: pointer;
-            outline: none;
-            border: 1px solid transparent;
-            transition: all 0.1s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: 0.15s;
         }
         .filter-select:focus {
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
         }
-        .search-wrapper {
+        .search-area {
             flex: 1;
+            min-width: 280px;
             display: flex;
-            background: #f8fafd;
-            border-radius: 48px;
-            border: 1px solid #e6ecf0;
-            padding: 2px;
-            transition: 0.2s;
-        }
-        .search-wrapper:focus-within {
-            border-color: #2c7da0;
             background: white;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+            border-radius: 60px;
+            border: 1.5px solid #e2ecf5;
+            transition: 0.15s;
+            padding-left: 20px;
         }
-        .search-wrapper input {
+        .search-area:focus-within {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+        .search-area input {
             flex: 1;
-            padding: 14px 24px;
+            padding: 12px 0;
             border: none;
             background: transparent;
-            font-size: 15px;
+            font-size: 0.95rem;
             outline: none;
         }
-        .search-wrapper button {
-            background: linear-gradient(145deg, #2c7da0, #1e4e6c);
+        .search-area button {
+            background: linear-gradient(145deg, #2e405b, #1f2f40);
             border: none;
             color: white;
             padding: 12px 28px;
-            border-radius: 48px;
-            font-weight: 700;
-            font-size: 14px;
+            border-radius: 60px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.15s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .search-area button:hover {
+            background: #1f3245;
         }
 
-        /* ---------- TABLE STYLES ---------- */
-        .table-enclosure {
-            background: white;
-            border-radius: 28px;
-            padding: 28px;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.04);
-            border: 1px solid rgba(0,0,0,0.02);
+        /* schools table – glass card */
+        .table-panel {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 36px;
+            padding: 28px 28px 36px;
+            box-shadow: 0 25px 40px -12px rgba(0,20,30,0.12);
+            border: 1px solid rgba(255,255,255,0.7);
         }
         table {
             width: 100%;
@@ -335,118 +345,133 @@
         }
         th {
             text-align: left;
-            padding: 16px 12px;
-            font-size: 14px;
-            font-weight: 700;
-            color: #2c3e50;
-            background: #f9fcff;
-            border-bottom: 2px solid #dfe6ed;
-            letter-spacing: 0.5px;
+            padding: 18px 12px;
+            font-weight: 600;
+            color: #284a5c;
+            border-bottom: 2px solid rgba(52,152,219,0.16);
+            font-size: 0.9rem;
         }
         td {
-            padding: 22px 12px;
-            border-bottom: 1px solid #edf2f7;
+            padding: 20px 12px;
+            border-bottom: 1px solid #ecf2f7;
             vertical-align: middle;
         }
-        .school-cell {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .school-badge {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(145deg, #eef6fb, #e3ecf3);
-            border-radius: 16px;
+        .school-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(145deg, #f0f7fd, #e6f0f9);
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1e4e6c;
-            font-size: 22px;
+            color: #1f4e6a;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
-        .school-detail .school-name {
-            font-weight: 800;
-            color: #0f1a24;
-            margin-bottom: 5px;
-            font-size: 16px;
+        .school-detail {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        .school-detail .school-email {
-            font-size: 13px;
-            color: #556b7c;
+        .school-name {
+            font-weight: 700;
+            color: #0d2e40;
+            margin-bottom: 4px;
+        }
+        .school-contact {
+            font-size: 0.75rem;
+            color: #5e7b8c;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .plan-badge {
+            background: #ecf3fa;
+            padding: 7px 18px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1f4e6a;
+            display: inline-block;
         }
         .status {
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-size: 13px;
+            padding: 7px 20px;
+            border-radius: 100px;
+            font-size: 0.75rem;
             font-weight: 700;
-            display: inline-block;
             letter-spacing: 0.3px;
-            background: rgba(39,174,96,0.12);
-            color: #1e6f3c;
+            text-transform: uppercase;
         }
-        .status.pending { background: rgba(230,126,34,0.12); color: #b45f1b; }
-        .status.suspended { background: rgba(44,62,80,0.08); color: #2c3e50; }
-        .status.expiring { background: rgba(231,76,60,0.12); color: #b33c2c; }
-        
+        .status-active { background: #e3f4e7; color: #0f6638; }
+        .status-pending { background: #fff0db; color: #a3511c; }
+        .status-expiring { background: #ffe2de; color: #b3341c; }
+        .status-suspended { background: #e3e9ed; color: #2c404e; }
+
         .action-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
-        .action-btn {
-            padding: 8px 18px;
-            border-radius: 40px;
-            border: none;
+        .btn-action {
+            background: transparent;
+            border: 1px solid #d4e1ec;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.75rem;
             font-weight: 600;
-            font-size: 13px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: 0.15s;
-            background: white;
+            gap: 6px;
+            transition: 0.1s;
             cursor: pointer;
-            border: 1px solid transparent;
+            color: #2e4d66;
         }
-        .action-btn.view { background: rgba(44,125,160,0.08); color: #1e4e6c; }
-        .action-btn.edit { background: rgba(230,126,34,0.08); color: #b45f1b; }
-        .action-btn.delete { background: rgba(231,76,60,0.08); color: #b33c2c; }
-        .action-btn:hover { background: rgba(0,0,0,0.04); border-color: #cbd5e1; }
+        .btn-action i { font-size: 0.8rem; }
+        .btn-view:hover { background: #e7f1fa; border-color: #3498db; color: #1f5b87; }
+        .btn-edit:hover { background: #fef1e6; border-color: #e67e22; color: #a34e16; }
+        .btn-delete:hover { background: #fcebea; border-color: #e74c3c; color: #b33224; }
 
         .pagination {
             display: flex;
             justify-content: center;
-            align-items: center;
             gap: 12px;
-            margin-top: 36px;
+            margin-top: 40px;
         }
         .page-number {
             width: 44px;
             height: 44px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 16px;
             background: white;
-            border: 1px solid #dee6ed;
+            border: 1px solid #d4e1ec;
             font-weight: 600;
-            cursor: pointer;
+            color: #1f3a4b;
             transition: 0.1s;
+            cursor: pointer;
         }
         .page-number.active {
-            background: #1e4e6c;
+            background: #1f4c6b;
             color: white;
-            border-color: #1e4e6c;
+            border-color: #1f4c6b;
         }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: #fafdff;
-            border-radius: 28px;
-            color: #546e7a;
-            font-size: 16px;
+        .page-number:hover:not(.active) {
+            background: #ecf3fa;
         }
 
-        /* ---------- LOADING & ERROR TOAST ---------- */
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #4d6878;
+        }
+        .empty-message i {
+            font-size: 48px;
+            color: #99b8c9;
+            margin-bottom: 16px;
+        }
+
+        /* Loading overlay - matches auth page */
         #loadingOverlay {
             position: fixed;
             top: 0;
@@ -487,13 +512,28 @@
             animation: slideIn 0.3s;
         }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* responsive */
+        @media (max-width: 900px) {
+            .header-grid { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .filter-bar { border-radius: 28px; }
+            .table-panel { padding: 18px; }
+        }
     </style>
 </head>
 <body>
-    <!-- background orbs -->
-    <div class="bg-orb">
-        <div class="orb" style="width: 600px; height: 600px; top: -200px; left: -200px;"></div>
-        <div class="orb" style="width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle at 70% 30%, rgba(230,126,34,0.04), rgba(44,62,80,0.01));"></div>
+    <!-- subtle background ornaments -->
+    <div class="bg-ornament">
+        <div class="orb" style="width:280px; height:280px; top:5%; left:-80px; animation-duration: 26s;"></div>
+        <div class="orb" style="width:360px; height:360px; bottom:-50px; right:5%; animation-duration: 32s; animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Loading overlay (exact match with auth page) -->
+    <div id="loadingOverlay">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl flex flex-col items-center shadow-2xl">
+            <div class="spinner border-blue-600"></div>
+            <p class="text-slate-700 dark:text-white font-medium mt-4">Authenticating & loading...</p>
+        </div>
     </div>
 
     <!-- Error toast -->
@@ -502,75 +542,72 @@
         <span id="errorMessage">Error</span>
     </div>
 
-    <!-- Loading overlay -->
-    <div id="loadingOverlay">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl flex flex-col items-center shadow-2xl">
-            <div class="spinner border-blue-600"></div>
-            <p class="text-slate-700 dark:text-white font-medium mt-4">Authenticating & loading...</p>
-        </div>
-    </div>
-
-    <!-- HEADER: SUPER ADMIN -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo-area">
-                <div class="logo-icon">
-                    <i class="fas fa-graduation-cap"></i>
+    <!-- header -->
+    <header class="admin-header">
+        <div class="header-grid">
+            <div class="brand-block">
+                <div class="logo-badge">
+                    <img src="https://cdn-icons-png.flaticon.com/512/217/217853.png" alt="skylark" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1903/1903716.png'">
                 </div>
-                <div class="brand-text">
-                    <h1>
-                        EDUSKYLARK · INSTITUTION CTL
-                        <span class="super-badge"><i class="fas fa-shield-alt"></i> SUPER ADMIN</span>
-                    </h1>
-                    <p style="font-size: 14px; opacity: 0.8; margin-top: 4px;">Centralized command • real‑time oversight</p>
+                <div class="edu-title">
+                    <h1>EDUSKYLARK <span>SUPER ADMIN</span></h1>
+                    <p style="color:#b0d1e8; font-size:0.8rem;">global oversight · realtime</p>
                 </div>
             </div>
             <div class="admin-profile">
-                <span class="admin-name" id="userDisplay">
-                    <i class="fas fa-user-cog"></i> <span id="userNameSpan">Super Admin</span>
-                </span>
-                <button class="logout-btn" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i> Secure Logout
-                </button>
+                <span class="user-greeting" id="userGreeting"><i class="fas fa-shield"></i> Verifying access...</span>
+                <button class="logout-btn" id="logoutAction"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
     </header>
 
-    <main class="main-container">
-        <!-- page header & onboard action -->
+    <main class="dashboard-container">
+        <!-- page title + CTA -->
         <div class="page-header">
-            <h2><i class="fas fa-building-columns"></i> Schools under management</h2>
-            <button class="btn-primary" id="onboardSchoolBtn">
-                <i class="fas fa-plus-circle"></i> Onboard new institution
+            <h2><i class="fas fa-university"></i> Schools command</h2>
+            <button class="btn-primary" id="onboardNav">
+                <i class="fas fa-plus-circle"></i> Onboard new school
             </button>
         </div>
 
-        <!-- dynamic stats from firestore -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
+        <!-- live stats -->
+        <div class="stat-tiles">
+            <div class="stat-tile">
                 <div class="stat-icon"><i class="fas fa-school"></i></div>
-                <div class="stat-content"><h4>Total schools</h4><span id="totalStat">—</span></div>
+                <div class="stat-content">
+                    <h4>TOTAL SCHOOLS</h4>
+                    <span id="statTotal">0</span>
+                </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-tile">
                 <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                <div class="stat-content"><h4>Active</h4><span id="activeStat">—</span></div>
+                <div class="stat-content">
+                    <h4>ACTIVE</h4>
+                    <span id="statActive">0</span>
+                </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-tile">
                 <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
-                <div class="stat-content"><h4>Pending</h4><span id="pendingStat">—</span></div>
+                <div class="stat-content">
+                    <h4>PENDING</h4>
+                    <span id="statPending">0</span>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
-                <div class="stat-content"><h4>Expiring soon</h4><span id="expiringStat">—</span></div>
+            <div class="stat-tile">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-content">
+                    <h4>EXPIRING</h4>
+                    <span id="statExpiring">0</span>
+                </div>
             </div>
         </div>
 
-        <!-- filter & search -->
-        <div class="filter-panel">
+        <!-- filter bar fully interactive -->
+        <div class="filter-bar">
             <div class="filter-group">
-                <label><i class="fas fa-filter"></i> Status</label>
-                <select class="filter-select" id="statusFilterSelect">
-                    <option value="all">All statuses</option>
+                <label><i class="fas fa-tag"></i> Status</label>
+                <select class="filter-select" id="statusSelect">
+                    <option value="all">All status</option>
                     <option value="active">Active</option>
                     <option value="pending">Pending</option>
                     <option value="expiring">Expiring</option>
@@ -578,8 +615,8 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label><i class="fas fa-tag"></i> Plan</label>
-                <select class="filter-select" id="planFilterSelect">
+                <label><i class="fas fa-layer-group"></i> Plan</label>
+                <select class="filter-select" id="planSelect">
                     <option value="all">All plans</option>
                     <option value="basic">Basic</option>
                     <option value="standard">Standard</option>
@@ -587,19 +624,15 @@
                     <option value="enterprise">Enterprise</option>
                 </select>
             </div>
-            <div class="search-wrapper">
-                <input type="text" id="searchQueryInput" placeholder="Search by school name, email or ID..." value="">
-                <button id="searchTriggerBtn"><i class="fas fa-search"></i> Find</button>
+            <div class="search-area">
+                <input type="text" id="searchField" placeholder="Search by name, email, phone ...">
+                <button id="triggerSearch"><i class="fas fa-magnifying-glass"></i> Find</button>
             </div>
         </div>
 
-        <!-- schools table -->
-        <div class="table-enclosure">
-            <div id="loadingIndicator" style="display: flex; justify-content: center; align-items: center; padding: 60px; flex-direction: column; gap: 16px;">
-                <i class="fas fa-spinner fa-pulse" style="font-size: 38px; color: #2c7da0;"></i>
-                <p style="color: #2c3e50; font-weight: 500;">Loading institutional data...</p>
-            </div>
-            <div id="tableContent" style="display: none;">
+        <!-- schools table card -->
+        <div class="table-panel">
+            <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
@@ -611,21 +644,26 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="schoolsTableBody"></tbody>
+                    <tbody id="schoolTableBody">
+                        <!-- dynamic rows injected -->
+                    </tbody>
                 </table>
-                <div id="emptyMessage" style="display: none;" class="empty-state">
-                    <i class="fas fa-school-circle-exclamation" style="font-size: 48px; margin-bottom: 16px; opacity: 0.6;"></i>
-                    <h3 style="font-weight: 600; margin-bottom: 8px;">No schools match criteria</h3>
-                    <p>Try adjusting filters or <a href="#" id="onboardEmptyLink" style="color: #2c7da0; font-weight: 700; text-decoration: none;">onboard a new school</a></p>
-                </div>
-                <div class="pagination" id="paginationControls"></div>
             </div>
+            <!-- loader inside table panel -->
+            <div id="loaderState" style="display: none; justify-content: center; padding: 40px 0;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <i class="fas fa-spinner fa-pulse" style="font-size: 38px; color: #3498db;"></i>
+                    <span style="color: #3f6275;">Loading schools from Firestore ...</span>
+                </div>
+            </div>
+            <!-- pagination -->
+            <div id="paginationControls" class="pagination"></div>
         </div>
     </main>
 
     <script>
         // --------------------------------------------------------------
-        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH LOGIN PAGE)
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
         // --------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
@@ -636,224 +674,301 @@
             appId: "1:35786900143:web:9e612336393d29324c0a5a",
             measurementId: "G-3VSBS7R11D"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Firebase (only once)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ---------- GLOBAL STATE ----------
+        // --------------------------------------------------------------
+        // GLOBAL STATE & DOM ELEMENTS
+        // --------------------------------------------------------------
+        let allSchools = [];
+        let filteredSchools = [];
         let currentPage = 1;
-        const ITEMS_PER_PAGE = 8;
-        let lastVisibleDoc = null;
-        let firstVisibleDoc = null;
-        let previousPages = [];
-        let currentFilters = { status: 'all', plan: 'all', search: '' };
+        const PAGE_SIZE = 7;
 
-        // ---------- DOM ELEMENTS ----------
+        // DOM elements
+        const tbody = document.getElementById('schoolTableBody');
+        const loader = document.getElementById('loaderState');
+        const statTotal = document.getElementById('statTotal');
+        const statActive = document.getElementById('statActive');
+        const statPending = document.getElementById('statPending');
+        const statExpiring = document.getElementById('statExpiring');
+        const statusSelect = document.getElementById('statusSelect');
+        const planSelect = document.getElementById('planSelect');
+        const searchField = document.getElementById('searchField');
+        const searchBtn = document.getElementById('triggerSearch');
+        const paginationDiv = document.getElementById('paginationControls');
+        const userGreeting = document.getElementById('userGreeting');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const errorToast = document.getElementById('errorToast');
         const errorMessage = document.getElementById('errorMessage');
 
-        // ---------- HELPER: show error toast ----------
+        // --------------------------------------------------------------
+        // HELPER: Show error toast (matches auth page style)
+        // --------------------------------------------------------------
         function showError(msg) {
             errorMessage.textContent = msg;
             errorToast.style.display = 'flex';
             setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
         }
 
-        // ---------- AUTH GUARD – SUPER ADMIN ONLY (INTEGRATED WITH LOGIN) ----------
+        // --------------------------------------------------------------
+        // AUTH GUARD – STRICT SUPER ADMIN VERIFICATION (INTEGRATED WITH LOGIN PAGE)
+        // --------------------------------------------------------------
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                window.location.href = 'super-admin-login.html';
+                // Not logged in - redirect to login page
+                window.location.replace('super-admin-login.html');
                 return;
             }
+
             try {
                 loadingOverlay.style.display = 'flex';
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                const userData = userDoc.data() || {};
                 
-                // Strict super-admin verification (same as login page)
-                const role = userData.role ? userData.role.toLowerCase() : '';
-                const isSuperAdmin = role === 'super-admin' || role === 'superadmin' || userData.isSuperAdmin === true || userData.permissions?.isSuperAdmin === true;
-
-                if (!userDoc.exists || !isSuperAdmin) {
-                    // Not super admin – sign out and redirect
+                // Fetch user document from 'users' collection (same as login page)
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // No user document - sign out and redirect
                     await auth.signOut();
-                    window.location.href = 'super-admin-login.html';
-                } else {
-                    // ✅ SUPER ADMIN – set name and load data
-                    document.getElementById('userNameSpan').innerText = userData.fullName || userData.displayName || 'Super Admin';
                     loadingOverlay.style.display = 'none';
-                    
-                    // Load stats and schools
-                    loadOverallStats();
-                    applyFiltersAndFetch(true);
+                    window.location.href = 'super-admin-login.html';
+                    return;
                 }
+
+                const userData = userDoc.data();
+                
+                // SUPER-ADMIN ROLE CHECK (exact same logic as login page)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || 
+                                    role === 'superadmin' || 
+                                    userData.isSuperAdmin === true || 
+                                    userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    // Valid credentials but not super-admin – sign out and reject
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                // Update last login timestamp (optional, same as login page)
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(err => console.warn('Could not update lastLogin', err));
+
+                // Set user greeting with name from Firestore or auth
+                const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+                userGreeting.innerHTML = `<i class="fas fa-shield-alt"></i> ${displayName}`;
+
+                // Initialize UI and load data
+                bindUI();
+                await loadSchoolsFromFirestore();
+                loadingOverlay.style.display = 'none';
+
             } catch (err) {
-                console.error('Auth verification error', err);
+                console.error('Auth verification error:', err);
                 loadingOverlay.style.display = 'none';
                 showError('Authentication error. Please login again.');
-                window.location.href = 'super-admin-login.html';
-            }
-        });
-
-        // ---------- LOGOUT ----------
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            loadingOverlay.style.display = 'flex';
-            await auth.signOut();
-            window.location.href = 'super-admin-login.html';
-        });
-
-        // onboard button
-        document.getElementById('onboardSchoolBtn').addEventListener('click', () => {
-            window.location.href = 'onboard-school.html';
-        });
-
-        // ---------- LOAD OVERALL STATS (unfiltered) ----------
-        async function loadOverallStats() {
-            try {
-                const snap = await db.collection('schools').get();
-                let total = 0, active = 0, pending = 0, expiring = 0;
-                snap.forEach(doc => {
-                    const s = doc.data();
-                    total++;
-                    if (s.status === 'active') active++;
-                    else if (s.status === 'pending') pending++;
-                    
-                    // Expiring logic – subscription end within 14 days
-                    if (s.subscriptionEndDate?.toDate) {
-                        const daysLeft = (s.subscriptionEndDate.toDate() - new Date()) / (1000 * 3600 * 24);
-                        if (daysLeft > 0 && daysLeft <= 14) expiring++;
-                    } else if (s.subscriptionEndDate) {
-                        // handle if it's timestamp already
-                        const daysLeft = (s.subscriptionEndDate - new Date()) / (1000 * 3600 * 24);
-                        if (daysLeft > 0 && daysLeft <= 14) expiring++;
-                    }
-                });
-                document.getElementById('totalStat').innerText = total;
-                document.getElementById('activeStat').innerText = active;
-                document.getElementById('pendingStat').innerText = pending;
-                document.getElementById('expiringStat').innerText = expiring;
-            } catch (e) {
-                console.warn('Stats error', e);
-            }
-        }
-
-        // ---------- FILTER / SEARCH / PAGINATION ----------
-        function applyFiltersAndFetch(resetPage = true) {
-            if (resetPage) {
-                currentPage = 1;
-                lastVisibleDoc = null;
-                firstVisibleDoc = null;
-                previousPages = [];
-            }
-            fetchSchools();
-        }
-
-        async function fetchSchools(direction = 'next') {
-            const loadingEl = document.getElementById('loadingIndicator');
-            const tableEl = document.getElementById('tableContent');
-            loadingEl.style.display = 'flex';
-            tableEl.style.display = 'none';
-            document.getElementById('emptyMessage').style.display = 'none';
-
-            try {
-                let query = db.collection('schools');
-                const statusVal = document.getElementById('statusFilterSelect').value;
-                const planVal = document.getElementById('planFilterSelect').value;
-                const searchVal = document.getElementById('searchQueryInput').value.trim().toLowerCase();
-
-                if (statusVal !== 'all') {
-                    query = query.where('status', '==', statusVal);
-                }
-                if (planVal !== 'all') {
-                    query = query.where('plan', '==', planVal);
-                }
-
-                query = query.orderBy('createdAt', 'desc');
                 
-                if (direction === 'next' && lastVisibleDoc) {
-                    query = query.startAfter(lastVisibleDoc);
-                } else if (direction === 'prev' && firstVisibleDoc) {
-                    query = query.endBefore(firstVisibleDoc).limitToLast(ITEMS_PER_PAGE);
+                // Still redirect to login on error
+                setTimeout(() => {
+                    window.location.href = 'super-admin-login.html';
+                }, 2000);
+            }
+        });
+
+        // --------------------------------------------------------------
+        // LOAD SCHOOLS – REAL FIRESTORE, NO DEMO FALLBACK
+        // --------------------------------------------------------------
+        async function loadSchoolsFromFirestore() {
+            loader.style.display = 'flex';
+            tbody.innerHTML = '';
+            
+            try {
+                const snapshot = await db.collection('schools')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    allSchools = [];
+                    renderEmpty();
+                } else {
+                    allSchools = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
                 }
-
-                query = query.limit(ITEMS_PER_PAGE);
-                const snapshot = await query.get();
-                const docs = snapshot.docs;
-
-                if (docs.length > 0) {
-                    if (direction !== 'prev') lastVisibleDoc = docs[docs.length - 1];
-                    firstVisibleDoc = docs[0];
-                }
-
-                // client-side search filter
-                let filteredDocs = docs;
-                if (searchVal !== '') {
-                    filteredDocs = docs.filter(doc => {
-                        const d = doc.data();
-                        const name = (d.name || '').toLowerCase();
-                        const email = (d.email || '').toLowerCase();
-                        const id = doc.id.toLowerCase();
-                        return name.includes(searchVal) || email.includes(searchVal) || id.includes(searchVal);
-                    });
-                }
-
-                renderSchoolsTable(filteredDocs);
-                renderPaginationControls(docs.length >= ITEMS_PER_PAGE, direction, filteredDocs.length);
-
-            } catch (error) {
-                console.error('Firestore fetch error', error);
-                document.getElementById('schoolsTableBody').innerHTML = `<tr><td colspan="6" style="padding: 48px; text-align: center; color: #e74c3c;">
-                    <i class="fas fa-circle-exclamation"></i> Error loading data. Check permissions or create Firestore indexes.
+                
+                filterAndRender();
+                
+            } catch (firestoreError) {
+                console.error('Firestore error:', firestoreError);
+                showError('Failed to load schools. Please check your permissions.');
+                
+                // Show error in table
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-message">
+                    <i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>
+                    <h4 style="margin-top:8px;">Failed to load schools</h4>
+                    <p style="color:#5f7e94;">${firestoreError.message}</p>
                 </td></tr>`;
             } finally {
-                loadingEl.style.display = 'none';
-                tableEl.style.display = 'block';
+                loader.style.display = 'none';
             }
         }
 
-        function renderSchoolsTable(docs) {
-            const tbody = document.getElementById('schoolsTableBody');
-            if (!docs || docs.length === 0) {
-                tbody.innerHTML = '';
-                document.getElementById('emptyMessage').style.display = 'block';
-                document.getElementById('paginationControls').innerHTML = '';
+        // --------------------------------------------------------------
+        // UI BINDINGS
+        // --------------------------------------------------------------
+        function bindUI() {
+            // Filter listeners
+            [statusSelect, planSelect].forEach(el => {
+                el.removeEventListener('change', filterHandler);
+                el.addEventListener('change', filterHandler);
+            });
+            
+            searchBtn.removeEventListener('click', filterHandler);
+            searchBtn.addEventListener('click', filterHandler);
+            
+            searchField.removeEventListener('keyup', searchEnterHandler);
+            searchField.addEventListener('keyup', searchEnterHandler);
+            
+            // Onboard button
+            document.getElementById('onboardNav').addEventListener('click', () => {
+                window.location.href = 'onboard-school.html';
+            });
+            
+            // Logout button (exact same as login page)
+            document.getElementById('logoutAction').addEventListener('click', async () => {
+                loadingOverlay.style.display = 'flex';
+                await auth.signOut();
+                window.location.href = 'super-admin-login.html';
+            });
+        }
+
+        function filterHandler() { 
+            currentPage = 1; 
+            filterAndRender(); 
+        }
+        
+        function searchEnterHandler(e) { 
+            if (e.key === 'Enter') { 
+                currentPage = 1; 
+                filterAndRender(); 
+            } 
+        }
+
+        // --------------------------------------------------------------
+        // FILTER + PAGINATION + RENDER
+        // --------------------------------------------------------------
+        function filterAndRender() {
+            if (!allSchools || allSchools.length === 0) {
+                renderEmpty();
+                updateStats([]);
                 return;
             }
-            document.getElementById('emptyMessage').style.display = 'none';
+
+            let filtered = [...allSchools];
+
+            // Status filter
+            const stVal = statusSelect.value;
+            if (stVal !== 'all') {
+                if (stVal === 'expiring') {
+                    filtered = filtered.filter(s => 
+                        s.status === 'expiring' || 
+                        s.subscriptionStatus === 'expiring' || 
+                        s.subscriptionStatus === 'expiring_soon');
+                } else {
+                    filtered = filtered.filter(s => 
+                        s.status === stVal || s.subscriptionStatus === stVal);
+                }
+            }
+
+            // Plan filter
+            const planVal = planSelect.value;
+            if (planVal !== 'all') {
+                filtered = filtered.filter(s => 
+                    (s.plan || 'basic').toLowerCase() === planVal.toLowerCase());
+            }
+
+            // Search filter
+            const query = searchField.value.trim().toLowerCase();
+            if (query) {
+                filtered = filtered.filter(s => 
+                    (s.name?.toLowerCase().includes(query)) ||
+                    (s.email?.toLowerCase().includes(query)) ||
+                    (s.phone?.toLowerCase().includes(query))
+                );
+            }
+
+            filteredSchools = filtered;
+            updateStats(filteredSchools);
+
+            // Pagination
+            const totalPages = Math.ceil(filteredSchools.length / PAGE_SIZE) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const pageItems = filteredSchools.slice(start, start + PAGE_SIZE);
+
+            renderTable(pageItems);
+            renderPagination(totalPages);
+        }
+
+        function renderTable(schools) {
+            if (!schools || schools.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-message">
+                    <i class="fas fa-school-circle-exclamation"></i>
+                    <h4 style="margin-top:8px;">No matching institutions</h4>
+                    <p style="color:#5f7e94;">Try adjusting filters or add a new school.</p>
+                </td></tr>`;
+                return;
+            }
 
             let html = '';
-            docs.forEach(doc => {
-                const s = doc.data();
-                const statusClass = s.status === 'active' ? 'status' : 
-                                   s.status === 'pending' ? 'status pending' : 
-                                   s.status === 'suspended' ? 'status suspended' : 'status expiring';
-                const statusDisplay = s.status ? s.status.charAt(0).toUpperCase() + s.status.slice(1) : 'Active';
-                const planDisplay = s.plan ? s.plan.charAt(0).toUpperCase() + s.plan.slice(1) : 'Basic';
-                const studentCount = s.studentCount?.toLocaleString() || '0';
-                const subStatus = s.subscriptionStatus || 'active';
-                const schoolName = s.name || 'Unnamed Institution';
-                const email = s.email || '—';
+            schools.forEach(sch => {
+                const statusRaw = sch.status || sch.subscriptionStatus || 'active';
+                let statusClass = 'status-active';
+                let statusLabel = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1);
                 
+                if (statusRaw.includes('expiring')) { 
+                    statusClass = 'status-expiring'; 
+                    statusLabel = 'Expiring'; 
+                } else if (statusRaw === 'pending') {
+                    statusClass = 'status-pending';
+                } else if (statusRaw === 'suspended') {
+                    statusClass = 'status-suspended';
+                }
+
+                const planName = sch.plan ? sch.plan.charAt(0).toUpperCase() + sch.plan.slice(1) : 'Basic';
+                const studentCount = sch.studentCount?.toLocaleString() || '0';
+                const schoolInitials = (sch.name || 'SC').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+
                 html += `<tr>
                     <td>
-                        <div class="school-cell">
-                            <div class="school-badge"><i class="fas fa-landmark"></i></div>
-                            <div class="school-detail">
-                                <div class="school-name">${escapeHtml(schoolName)}</div>
-                                <div class="school-email">${escapeHtml(email)}</div>
+                        <div class="school-detail">
+                            <div class="school-avatar">${schoolInitials}</div>
+                            <div>
+                                <div class="school-name">${escapeHtml(sch.name || 'Unnamed')}</div>
+                                <div class="school-contact"><i class="fas fa-envelope"></i> ${escapeHtml(sch.email || '—')}</div>
                             </div>
                         </div>
                     </td>
-                    <td><span style="font-weight: 700; color: #1e4e6c;">${escapeHtml(planDisplay)}</span></td>
-                    <td><strong>${studentCount}</strong></td>
-                    <td><span class="${statusClass}">${escapeHtml(statusDisplay)}</span></td>
-                    <td>${escapeHtml(subStatus)}</td>
+                    <td><span class="plan-badge">${planName}</span></td>
+                    <td style="font-weight: 600;">${studentCount}</td>
+                    <td><span class="status ${statusClass}">${statusLabel}</span></td>
+                    <td>${escapeHtml(sch.subscriptionStatus || 'active')}</td>
                     <td>
                         <div class="action-group">
-                            <button class="action-btn view" onclick="viewSchool('${doc.id}')"><i class="fas fa-eye"></i> View</button>
-                            <button class="action-btn edit" onclick="editSchool('${doc.id}')"><i class="fas fa-pen-to-square"></i> Edit</button>
-                            <button class="action-btn delete" onclick="deleteSchool('${doc.id}')"><i class="fas fa-trash"></i> Del</button>
+                            <button class="btn-action btn-view" onclick="window.viewSchool('${sch.id}')"><i class="fas fa-eye"></i> View</button>
+                            <button class="btn-action btn-edit" onclick="window.editSchool('${sch.id}')"><i class="fas fa-edit"></i> Edit</button>
+                            <button class="btn-action btn-delete" onclick="window.deleteSchool('${sch.id}')"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>`;
@@ -861,6 +976,47 @@
             tbody.innerHTML = html;
         }
 
+        function renderEmpty() {
+            tbody.innerHTML = `<tr><td colspan="6" class="empty-message">
+                <i class="fas fa-school-circle-exclamation"></i>
+                <h4 style="margin-top:8px;">No schools yet</h4>
+                <p style="color:#5f7e94;">Click "Onboard new school" to begin.</p>
+            </td></tr>`;
+        }
+
+        function updateStats(arr) {
+            const total = arr.length;
+            const active = arr.filter(s => s.status === 'active' || s.subscriptionStatus === 'active').length;
+            const pending = arr.filter(s => s.status === 'pending' || s.subscriptionStatus === 'pending').length;
+            const expiring = arr.filter(s => s.status === 'expiring' || s.subscriptionStatus === 'expiring' || s.subscriptionStatus === 'expiring_soon').length;
+            
+            statTotal.textContent = total;
+            statActive.textContent = active;
+            statPending.textContent = pending;
+            statExpiring.textContent = expiring;
+        }
+
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) { 
+                paginationDiv.innerHTML = ''; 
+                return; 
+            }
+            
+            let buttons = '';
+            for (let i = 1; i <= totalPages; i++) {
+                buttons += `<div class="page-number ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</div>`;
+            }
+            paginationDiv.innerHTML = buttons;
+            
+            document.querySelectorAll('.page-number').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    currentPage = parseInt(e.currentTarget.dataset.page);
+                    filterAndRender();
+                });
+            });
+        }
+
+        // XSS prevention
         function escapeHtml(unsafe) {
             if (!unsafe) return '';
             return unsafe.replace(/[&<>"]/g, function(m) {
@@ -872,63 +1028,35 @@
             });
         }
 
-        function renderPaginationControls(hasNext, direction, currentCount) {
-            let pagination = document.getElementById('paginationControls');
-            let btnHtml = '';
-            if (currentPage > 1) {
-                btnHtml += `<div class="page-number" onclick="changePage('prev')"><i class="fas fa-chevron-left"></i></div>`;
-            }
-            btnHtml += `<div class="page-number active">${currentPage}</div>`;
-            if (hasNext && currentCount >= ITEMS_PER_PAGE) {
-                btnHtml += `<div class="page-number" onclick="changePage('next')"><i class="fas fa-chevron-right"></i></div>`;
-            }
-            pagination.innerHTML = btnHtml;
-        }
-
-        window.changePage = function(dir) {
-            if (dir === 'next') {
-                currentPage++;
-                fetchSchools('next');
-            } else if (dir === 'prev' && currentPage > 1) {
-                currentPage--;
-                fetchSchools('prev');
-            }
-        };
-
-        // ---------- FILTER EVENT LISTENERS ----------
-        document.getElementById('statusFilterSelect').addEventListener('change', () => applyFiltersAndFetch(true));
-        document.getElementById('planFilterSelect').addEventListener('change', () => applyFiltersAndFetch(true));
-        document.getElementById('searchTriggerBtn').addEventListener('click', () => applyFiltersAndFetch(true));
-        document.getElementById('searchQueryInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') applyFiltersAndFetch(true);
-        });
-
-        // ---------- CRUD OPERATIONS ----------
+        // --------------------------------------------------------------
+        // CRUD OPERATIONS (REAL FIRESTORE)
+        // --------------------------------------------------------------
         window.viewSchool = function(id) {
             window.location.href = `school-details.html?id=${id}`;
         };
+        
         window.editSchool = function(id) {
             window.location.href = `edit-school.html?id=${id}`;
         };
+        
         window.deleteSchool = async function(id) {
-            if (confirm('⚠️ Permanently delete this school? All associated data will be lost.')) {
-                try {
-                    await db.collection('schools').doc(id).delete();
-                    loadOverallStats();
-                    applyFiltersAndFetch(true);
-                } catch (e) {
-                    showError('Delete failed: ' + e.message);
-                }
+            if (!confirm('⚠️ Permanent deletion. All associated data will be lost. Continue?')) return;
+            
+            try {
+                loadingOverlay.style.display = 'flex';
+                await db.collection('schools').doc(id).delete();
+                
+                // Update local array
+                allSchools = allSchools.filter(s => s.id !== id);
+                filterAndRender();
+                
+                loadingOverlay.style.display = 'none';
+            } catch (e) {
+                loadingOverlay.style.display = 'none';
+                showError('Delete failed: ' + e.message);
+                console.error('Delete error:', e);
             }
         };
-
-        // onboard from empty state link
-        document.addEventListener('click', function(e) {
-            if (e.target.id === 'onboardEmptyLink') {
-                e.preventDefault();
-                window.location.href = 'onboard-school.html';
-            }
-        });
     </script>
 </body>
 </html>
