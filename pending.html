@@ -6,57 +6,131 @@
     <title>EDUSKYLARK · Pending Approvals</title>
     <link rel="icon" type="image/x-icon" href="/logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK 8.10.0 (exact match with auth page) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        /* Same EDUSKYLARK design system - copy all root and global styles from analytics page */
-        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --white: #ffffff; --light-blue: #ecf0f1; --green: #27ae60; --purple: #9b59b6; --gold: #f1c40f; }
+        /* ------------------------------------------------------------
+           EDUSKYLARK · PENDING APPROVALS – AUTH-INTEGRATED
+           Full Firestore dynamic workflow with super-admin verification
+        ------------------------------------------------------------ */
+        :root { 
+            --blue: #3498db; 
+            --orange: #e67e22; 
+            --red: #e74c3c; 
+            --dark-blue: #2c3e50; 
+            --white: #ffffff; 
+            --light-blue: #ecf0f1; 
+            --green: #27ae60; 
+            --purple: #9b59b6; 
+            --gold: #f1c40f; 
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, var(--light-blue) 0%, #d6dbdf 100%); min-height: 100vh; color: var(--dark-blue); }
         .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
         .bubble { position: absolute; border-radius: 50%; background: rgba(52,152,219,0.1); animation: float 15s infinite ease-in-out; }
         @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
         
-        /* Copy all header, mobile, card styles from analytics page - condensed here */
         .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; position: sticky; top: 0; z-index: 100; }
         .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
         .logo-section { display: flex; align-items: center; gap: 20px; }
         .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .logo img { width: 45px; height: 45px; object-fit: contain; }
         .church-info h1 { font-size: 24px; font-weight: 700; }
         .church-info p { font-size: 14px; color: var(--blue); }
         .admin-badge { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, var(--gold), #f39c12); color: var(--dark-blue); padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
-        .user-section { display: flex; align-items: center; gap: 25px; }
-        .profile-photo { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--blue); background: linear-gradient(135deg, var(--blue), var(--dark-blue)); display: flex; align-items: center; justify-content: center; color: white; overflow: hidden; }
-        .logout-btn { background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red); padding: 10px 20px; border-radius: 30px; cursor: pointer; }
         
-        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; position: absolute; right: 20px; top: 20px; }
+        .user-section { display: flex; align-items: center; gap: 25px; }
+        .profile-photo-container { position: relative; cursor: pointer; }
+        .profile-photo {
+            width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--blue);
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 22px;
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+        .user-role { font-size: 14px; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+        
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .logout-btn:hover { background-color: var(--red); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(231,76,60,0.4); }
+
+        .mobile-nav {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44,62,80,0.95); z-index: 1000; backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .mobile-nav.active { display: block; }
+        .mobile-nav-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: var(--dark-blue); color: white;
+        }
+        .mobile-nav-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+        .mobile-nav-links { padding: 20px; }
+        .mobile-nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s; border-radius: 10px; margin-bottom: 5px;
+        }
+        .mobile-nav-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
+        .mobile-user-info {
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-profile-photo {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;
+            overflow: hidden;
+        }
+        .mobile-profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .mobile-user-details h3 { color: white; margin-bottom: 5px; }
+        .mobile-user-details p { color: var(--blue); font-size: 14px; }
+
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 16px; }
         .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
         .page-header h2 i { color: var(--orange); }
         
         .stats-banner {
             background: linear-gradient(135deg, var(--orange), #d35400); border-radius: 20px; padding: 30px; color: white;
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(230,126,34,0.3);
         }
         .stats-banner h3 { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
         .stats-banner p { opacity: 0.95; }
-        .stats-number { font-size: 48px; font-weight: 800; }
+        .stats-number { font-size: 48px; font-weight: 800; line-height: 1; }
         
         .filter-bar {
             background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
             display: flex; flex-wrap: wrap; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
         .filter-group { display: flex; align-items: center; gap: 10px; }
-        .filter-select { padding: 10px 20px; border: 2px solid #e9ecef; border-radius: 30px; background: white; }
+        .filter-group label { font-weight: 600; color: var(--dark-blue); }
+        .filter-select { 
+            padding: 10px 36px 10px 20px; border: 2px solid #e9ecef; border-radius: 30px; 
+            background: white; appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 16px center;
+        }
+        .filter-select:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
         
         .approvals-table-container {
             background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
         }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #e9ecef; }
-        td { padding: 20px 10px; border-bottom: 1px solid #f1f1f1; }
+        th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #e9ecef; color: var(--dark-blue); font-weight: 600; }
+        td { padding: 20px 10px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
         
         .school-info { display: flex; align-items: center; gap: 12px; }
         .school-avatar {
@@ -65,22 +139,44 @@
         }
         .status-badge { padding: 6px 14px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-block; }
         .status-pending { background: rgba(230,126,34,0.15); color: var(--orange); }
+        .status-admin-pending { background: rgba(155,89,182,0.15); color: var(--purple); }
+        .status-subscription-pending { background: rgba(52,152,219,0.15); color: var(--blue); }
         
         .action-btn {
             padding: 8px 20px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer;
             transition: all 0.2s; margin-right: 8px; font-size: 13px;
         }
-        .btn-approve { background: rgba(39,174,96,0.15); color: var(--green); }
-        .btn-reject { background: rgba(231,76,60,0.1); color: var(--red); }
-        .btn-view { background: rgba(52,152,219,0.1); color: var(--blue); }
-        .btn-approve:hover { background: rgba(39,174,96,0.3); }
-        .btn-reject:hover { background: rgba(231,76,60,0.2); }
+        .btn-approve { background: rgba(39,174,96,0.15); color: var(--green); border: 1px solid transparent; }
+        .btn-reject { background: rgba(231,76,60,0.1); color: var(--red); border: 1px solid transparent; }
+        .btn-view { background: rgba(52,152,219,0.1); color: var(--blue); border: 1px solid transparent; }
+        .btn-approve:hover { background: rgba(39,174,96,0.3); border-color: var(--green); }
+        .btn-reject:hover { background: rgba(231,76,60,0.2); border-color: var(--red); }
+        .btn-view:hover { background: rgba(52,152,219,0.2); border-color: var(--blue); }
         
         .empty-state {
             text-align: center; padding: 60px 20px; color: #666;
         }
         .empty-state i { font-size: 64px; color: var(--orange); opacity: 0.5; margin-bottom: 20px; }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: none;
+            align-items: center; justify-content: center; z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top: 4px solid white; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        .error-toast {
+            position: fixed; top: 20px; right: 20px; background: #e74c3c; color: white;
+            padding: 12px 24px; border-radius: 30px; font-weight: 500; box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none; align-items: center; gap: 8px; z-index: 10000; animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         @media (max-width: 768px) {
             .menu-toggle { display: block; }
             .user-section { display: none; }
@@ -89,6 +185,20 @@
     </style>
 </head>
 <body>
+    <!-- Loading Overlay (matches auth page) -->
+    <div id="loadingOverlay">
+        <div style="background: white; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; align-items: center;">
+            <div class="spinner" style="border-top-color: #3498db;"></div>
+            <p style="color: #2c3e50; font-weight: 500; margin-top: 16px;">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
     <div class="background-animation">
         <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
     </div>
@@ -116,18 +226,37 @@
         </div>
     </header>
 
-    <!-- Mobile Nav (simplified) -->
-    <div class="mobile-nav" id="mobileNav"><!-- same as analytics --></div>
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h3>EDUSKYLARK · SUPER ADMIN</h3>
+            <button class="mobile-nav-close" id="closeMobileNav"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="mobile-user-info" id="mobileUserInfo"></div>
+        <div class="mobile-nav-links">
+            <a href="super-admin-dashboard.html" class="mobile-nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="schools-management.html" class="mobile-nav-item"><i class="fas fa-building"></i> All Schools</a>
+            <a href="onboard-school.html" class="mobile-nav-item"><i class="fas fa-school"></i> Onboard School</a>
+            <a href="subscription-management.html" class="mobile-nav-item"><i class="fas fa-credit-card"></i> Subscriptions</a>
+            <a href="pending-approvals.html" class="mobile-nav-item"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
+            <a href="expiring-soon.html" class="mobile-nav-item"><i class="fas fa-clock"></i> Expiring Soon</a>
+            <a href="admin-management.html" class="mobile-nav-item"><i class="fas fa-user-tie"></i> School Admins</a>
+            <a href="analytics.html" class="mobile-nav-item"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="system-settings.html" class="mobile-nav-item"><i class="fas fa-cog"></i> System Settings</a>
+            <a href="#" class="mobile-nav-item logout-mobile" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
 
     <main class="dashboard-container">
         <div class="page-header">
             <h2><i class="fas fa-hourglass-half"></i> Pending Approvals</h2>
-            <div class="date-range-picker" style="background: white; padding: 10px 20px; border-radius: 30px;">
-                <i class="fas fa-sync-alt" style="color: var(--blue);"></i> Last 7 days
+            <div class="date-range-picker" style="background: white; padding: 10px 20px; border-radius: 30px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-sync-alt" style="color: var(--blue);"></i> 
+                <span id="lastUpdatedText">Just now</span>
             </div>
         </div>
 
-        <!-- Stats Banner -->
+        <!-- Stats Banner - Dynamic from Firestore -->
         <div class="stats-banner" id="pendingStatsBanner">
             <div>
                 <h3>Awaiting Your Review</h3>
@@ -148,7 +277,7 @@
         <!-- Filter Bar -->
         <div class="filter-bar">
             <div class="filter-group">
-                <label>Filter by:</label>
+                <label><i class="fas fa-filter"></i> Type:</label>
                 <select class="filter-select" id="filterType">
                     <option value="all">All Pending</option>
                     <option value="school">New Schools</option>
@@ -157,16 +286,17 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label>Plan:</label>
+                <label><i class="fas fa-tag"></i> Plan:</label>
                 <select class="filter-select" id="planFilter">
                     <option value="all">All Plans</option>
                     <option value="premium">Premium</option>
                     <option value="standard">Standard</option>
                     <option value="basic">Basic</option>
+                    <option value="enterprise">Enterprise</option>
                 </select>
             </div>
-            <div style="flex: 1; display: flex; justify-content: flex-end;">
-                <button id="refreshBtn" style="background: none; border: none; color: var(--blue); cursor: pointer;">
+            <div style="flex: 1; display: flex; justify-content: flex-end; gap: 12px;">
+                <button id="refreshBtn" style="background: none; border: none; color: var(--blue); cursor: pointer; font-weight: 600;">
                     <i class="fas fa-redo-alt"></i> Refresh
                 </button>
             </div>
@@ -175,26 +305,28 @@
         <!-- Approvals Table -->
         <div class="approvals-table-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-size: 20px; font-weight: 700;">Schools Pending Activation</h3>
+                <h3 style="font-size: 20px; font-weight: 700;"><i class="fas fa-school" style="color: var(--orange); margin-right: 10px;"></i> Schools Pending Activation</h3>
                 <span style="background: rgba(230,126,34,0.1); padding: 6px 16px; border-radius: 30px; color: var(--orange); font-weight: 600;" id="tableCount">0 items</span>
             </div>
-            <table id="pendingTable">
-                <thead>
-                    <tr>
-                        <th>School</th>
-                        <th>Requested By</th>
-                        <th>Plan</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="pendingTableBody">
-                    <!-- Dynamic rows from Firebase -->
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table id="pendingTable">
+                    <thead>
+                        <tr>
+                            <th>School</th>
+                            <th>Requested By</th>
+                            <th>Plan</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingTableBody">
+                        <!-- Dynamic rows from Firebase -->
+                    </tbody>
+                </table>
+            </div>
             <div id="loadingIndicator" style="display: none; text-align: center; padding: 60px;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--blue);"></i>
+                <i class="fas fa-spinner fa-pulse" style="font-size: 32px; color: var(--blue);"></i>
                 <p style="margin-top: 15px; color: #666;">Loading pending approvals...</p>
             </div>
             <div id="emptyState" class="empty-state" style="display: none;">
@@ -209,111 +341,370 @@
     </main>
 
     <script>
-        // Firebase Config
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
+        // --------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
             projectId: "toplink-edu",
             storageBucket: "toplink-edu.firebasestorage.app",
             messagingSenderId: "35786900143",
-            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // --------------------------------------------------------------
+        // DOM ELEMENTS
+        // --------------------------------------------------------------
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const userNameEl = document.getElementById('userName');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const mobileUserInfo = document.getElementById('mobileUserInfo');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeMobileNav = document.getElementById('closeMobileNav');
+        const mobileNav = document.getElementById('mobileNav');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const filterType = document.getElementById('filterType');
+        const planFilter = document.getElementById('planFilter');
+
+        // --------------------------------------------------------------
+        // HELPER FUNCTIONS
+        // --------------------------------------------------------------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        function showSuccess(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.style.background = '#27ae60';
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            document.body.appendChild(toast);
+            toast.style.display = 'flex';
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdatedText').textContent = `Updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        // --------------------------------------------------------------
+        // AUTH GUARD – STRICT SUPER ADMIN VERIFICATION
+        // --------------------------------------------------------------
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'super-admin-login.html';
-            else {
+            if (!user) {
+                window.location.replace('super-admin-login.html');
+                return;
+            }
+
+            try {
+                loadingOverlay.style.display = 'flex';
+                
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    if (data.role !== 'super-admin' && !data.permissions?.isSuperAdmin) {
-                        await auth.signOut();
-                        window.location.href = 'super-admin-login.html';
-                    } else {
-                        loadUserData(data);
-                        loadPendingSchools();
-                    }
+                
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    window.location.href = 'super-admin-login.html';
+                    return;
                 }
+
+                const userData = userDoc.data();
+                
+                // SUPER-ADMIN ROLE CHECK (exact same logic as login page)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || 
+                                    role === 'superadmin' || 
+                                    userData.isSuperAdmin === true || 
+                                    userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(() => {});
+
+                // Load user profile
+                loadUserProfile(user, userData);
+                
+                // Load pending approvals
+                await loadPendingApprovals();
+                
+                updateLastUpdated();
+                loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error('Auth error:', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
+                setTimeout(() => window.location.href = 'super-admin-login.html', 2000);
             }
         });
 
-        function loadUserData(data) {
-            document.getElementById('userName').textContent = data.fullName || 'Super Admin';
-            const profilePhoto = document.getElementById('profilePhoto');
-            if (data.profilePhoto) {
-                profilePhoto.innerHTML = `<img src="${data.profilePhoto}" alt="profile">`;
+        // --------------------------------------------------------------
+        // LOAD USER PROFILE
+        // --------------------------------------------------------------
+        function loadUserProfile(user, userData) {
+            const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+            userNameEl.textContent = displayName;
+            
+            // Set profile photo
+            if (userData.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
             } else {
-                const initials = data.fullName ? data.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA';
+                const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA';
                 profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
             }
+            
+            // Mobile user info
+            const mobileInitials = userData.profilePhoto ? '' : 
+                (displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA');
+            
+            mobileUserInfo.innerHTML = `
+                <div class="mobile-profile-photo">
+                    ${userData.profilePhoto ? `<img src="${userData.profilePhoto}">` : `<span style="font-size: 20px; font-weight: bold; color: white;">${mobileInitials}</span>`}
+                </div>
+                <div class="mobile-user-details">
+                    <h3>${displayName}</h3>
+                    <p><i class="fas fa-crown"></i> Super Administrator</p>
+                </div>
+            `;
         }
 
-        async function loadPendingSchools() {
+        // --------------------------------------------------------------
+        // LOAD PENDING APPROVALS (SCHOOLS + ADMIN INVITES)
+        // --------------------------------------------------------------
+        async function loadPendingApprovals() {
             const tbody = document.getElementById('pendingTableBody');
             const loading = document.getElementById('loadingIndicator');
             const emptyState = document.getElementById('emptyState');
             const table = document.getElementById('pendingTable');
             const pendingCount = document.getElementById('pendingCount');
+            const pendingAdminsCount = document.getElementById('pendingAdminsCount');
             const tableCount = document.getElementById('tableCount');
             
             loading.style.display = 'block';
             table.style.opacity = '0.5';
             
             try {
-                const pendingSnap = await db.collection('schools')
+                // Get filter values
+                const typeFilter = filterType.value;
+                const planFilterValue = planFilter.value;
+                
+                // Base query for pending schools
+                let schoolsQuery = db.collection('schools')
+                    .where('status', '==', 'pending')
+                    .orderBy('createdAt', 'desc');
+                
+                // Apply plan filter if not 'all'
+                if (planFilterValue !== 'all') {
+                    schoolsQuery = schoolsQuery.where('plan', '==', planFilterValue);
+                }
+                
+                const schoolsSnap = await schoolsQuery.get();
+                
+                // Get admin invites pending
+                const adminInvitesSnap = await db.collection('adminInvites')
                     .where('status', '==', 'pending')
                     .orderBy('createdAt', 'desc')
-                    .get();
+                    .get()
+                    .catch(() => ({ empty: true, size: 0, docs: [] })); // Handle if collection doesn't exist
+                
+                // Get subscription pendings
+                let subscriptionSnap = { empty: true, size: 0, docs: [] };
+                if (typeFilter === 'all' || typeFilter === 'subscription') {
+                    subscriptionSnap = await db.collection('subscriptions')
+                        .where('status', '==', 'pending')
+                        .orderBy('createdAt', 'desc')
+                        .get()
+                        .catch(() => ({ empty: true, size: 0, docs: [] }));
+                }
+                
+                // Update stats counts
+                pendingCount.textContent = schoolsSnap.size;
+                pendingAdminsCount.textContent = adminInvitesSnap.size || 0;
                 
                 loading.style.display = 'none';
                 table.style.opacity = '1';
                 
-                if (pendingSnap.empty) {
+                // Combine and filter based on type
+                let allItems = [];
+                
+                if (typeFilter === 'all' || typeFilter === 'school') {
+                    schoolsSnap.forEach(doc => {
+                        allItems.push({
+                            id: doc.id,
+                            type: 'school',
+                            data: doc.data(),
+                            ref: doc
+                        });
+                    });
+                }
+                
+                if (typeFilter === 'all' || typeFilter === 'admin') {
+                    adminInvitesSnap.forEach(doc => {
+                        allItems.push({
+                            id: doc.id,
+                            type: 'admin',
+                            data: doc.data(),
+                            ref: doc
+                        });
+                    });
+                }
+                
+                if (typeFilter === 'all' || typeFilter === 'subscription') {
+                    subscriptionSnap.forEach(doc => {
+                        allItems.push({
+                            id: doc.id,
+                            type: 'subscription',
+                            data: doc.data(),
+                            ref: doc
+                        });
+                    });
+                }
+                
+                // Sort by date (newest first)
+                allItems.sort((a, b) => {
+                    const dateA = a.data.createdAt?.toDate?.() || new Date(0);
+                    const dateB = b.data.createdAt?.toDate?.() || new Date(0);
+                    return dateB - dateA;
+                });
+                
+                if (allItems.length === 0) {
                     table.style.display = 'none';
                     emptyState.style.display = 'block';
-                    pendingCount.textContent = '0';
                     tableCount.textContent = '0 items';
                     return;
                 }
                 
                 table.style.display = 'table';
                 emptyState.style.display = 'none';
-                pendingCount.textContent = pendingSnap.size;
-                tableCount.textContent = `${pendingSnap.size} items`;
+                tableCount.textContent = `${allItems.length} items`;
                 
                 let html = '';
-                pendingSnap.forEach(doc => {
-                    const s = doc.data();
-                    const created = s.createdAt?.toDate?.() || new Date();
-                    const dateStr = created.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-                    
-                    html += `<tr>
-                        <td>
-                            <div class="school-info">
-                                <div class="school-avatar"><i class="fas fa-school"></i></div>
-                                <div>
-                                    <div style="font-weight: 700;">${s.name || 'Unnamed School'}</div>
-                                    <div style="font-size: 13px; color: #666;">${s.email || ''}</div>
+                
+                for (const item of allItems) {
+                    if (item.type === 'school') {
+                        const s = item.data;
+                        const created = s.createdAt?.toDate?.() || new Date();
+                        const dateStr = formatDate(created);
+                        
+                        html += `<tr>
+                            <td>
+                                <div class="school-info">
+                                    <div class="school-avatar"><i class="fas fa-school"></i></div>
+                                    <div>
+                                        <div style="font-weight: 700;">${escapeHtml(s.name || 'Unnamed School')}</div>
+                                        <div style="font-size: 13px; color: #666;">${escapeHtml(s.email || '')}</div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>${s.adminName || '—'}<br><span style="font-size: 12px; color: #666;">${s.adminEmail || ''}</span></td>
-                        <td><span style="font-weight: 600;">${s.plan ? s.plan.charAt(0).toUpperCase() + s.plan.slice(1) : 'Standard'}</span></td>
-                        <td>${dateStr}</td>
-                        <td><span class="status-badge status-pending">Pending</span></td>
-                        <td>
-                            <button class="action-btn btn-view" onclick="viewSchool('${doc.id}')"><i class="fas fa-eye"></i> View</button>
-                            <button class="action-btn btn-approve" onclick="approveSchool('${doc.id}')"><i class="fas fa-check"></i> Approve</button>
-                            <button class="action-btn btn-reject" onclick="rejectSchool('${doc.id}')"><i class="fas fa-times"></i> Reject</button>
-                        </td>
-                    </tr>`;
-                });
+                            </td>
+                            <td>
+                                ${escapeHtml(s.adminName || '—')}<br>
+                                <span style="font-size: 12px; color: #666;">${escapeHtml(s.adminEmail || '')}</span>
+                            </td>
+                            <td><span style="font-weight: 600; text-transform: capitalize;">${s.plan || 'Standard'}</span></td>
+                            <td>${dateStr}</td>
+                            <td><span class="status-badge status-pending">Pending School</span></td>
+                            <td>
+                                <button class="action-btn btn-view" onclick="viewSchool('${item.id}')"><i class="fas fa-eye"></i> View</button>
+                                <button class="action-btn btn-approve" onclick="approveSchool('${item.id}')"><i class="fas fa-check"></i> Approve</button>
+                                <button class="action-btn btn-reject" onclick="rejectSchool('${item.id}')"><i class="fas fa-times"></i> Reject</button>
+                            </td>
+                        </tr>`;
+                    } else if (item.type === 'admin') {
+                        const invite = item.data;
+                        const created = invite.createdAt?.toDate?.() || new Date();
+                        const dateStr = formatDate(created);
+                        
+                        html += `<tr>
+                            <td>
+                                <div class="school-info">
+                                    <div class="school-avatar" style="background: rgba(155,89,182,0.1); color: var(--purple);"><i class="fas fa-user-tie"></i></div>
+                                    <div>
+                                        <div style="font-weight: 700;">${escapeHtml(invite.schoolName || 'Unknown School')}</div>
+                                        <div style="font-size: 13px; color: #666;">Admin Invite</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                ${escapeHtml(invite.adminName || '—')}<br>
+                                <span style="font-size: 12px; color: #666;">${escapeHtml(invite.adminEmail || '')}</span>
+                            </td>
+                            <td><span style="font-weight: 600;">—</span></td>
+                            <td>${dateStr}</td>
+                            <td><span class="status-badge status-admin-pending">Admin Pending</span></td>
+                            <td>
+                                <button class="action-btn btn-approve" onclick="approveAdminInvite('${item.id}')"><i class="fas fa-check"></i> Approve</button>
+                                <button class="action-btn btn-reject" onclick="rejectAdminInvite('${item.id}')"><i class="fas fa-times"></i> Reject</button>
+                            </td>
+                        </tr>`;
+                    } else if (item.type === 'subscription') {
+                        const sub = item.data;
+                        const created = sub.createdAt?.toDate?.() || new Date();
+                        const dateStr = formatDate(created);
+                        
+                        // Get school name
+                        let schoolName = 'Unknown School';
+                        if (sub.schoolId) {
+                            const schoolDoc = await db.collection('schools').doc(sub.schoolId).get().catch(() => null);
+                            if (schoolDoc?.exists) {
+                                schoolName = schoolDoc.data().name || 'Unknown School';
+                            }
+                        }
+                        
+                        html += `<tr>
+                            <td>
+                                <div class="school-info">
+                                    <div class="school-avatar" style="background: rgba(52,152,219,0.1); color: var(--blue);"><i class="fas fa-credit-card"></i></div>
+                                    <div>
+                                        <div style="font-weight: 700;">${escapeHtml(schoolName)}</div>
+                                        <div style="font-size: 13px; color: #666;">Subscription</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>System</td>
+                            <td><span style="font-weight: 600; text-transform: capitalize;">${sub.plan || 'Standard'}</span></td>
+                            <td>${dateStr}</td>
+                            <td><span class="status-badge status-subscription-pending">Subscription Pending</span></td>
+                            <td>
+                                <button class="action-btn btn-approve" onclick="approveSubscription('${item.id}')"><i class="fas fa-check"></i> Approve</button>
+                                <button class="action-btn btn-reject" onclick="rejectSubscription('${item.id}')"><i class="fas fa-times"></i> Reject</button>
+                            </td>
+                        </tr>`;
+                    }
+                }
+                
                 tbody.innerHTML = html;
                 
             } catch (e) {
-                console.error("Error loading pending schools:", e);
+                console.error("Error loading pending approvals:", e);
                 loading.style.display = 'none';
                 table.style.opacity = '1';
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--red);">
@@ -322,55 +713,209 @@
             }
         }
 
-        // Approval Functions
+        // XSS Prevention
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --------------------------------------------------------------
+        // APPROVAL FUNCTIONS – SCHOOLS
+        // --------------------------------------------------------------
         window.viewSchool = function(id) {
             window.location.href = `school-details.html?id=${id}`;
         };
         
         window.approveSchool = async function(id) {
-            if (confirm('Approve this school? They will be able to access the platform.')) {
-                try {
-                    await db.collection('schools').doc(id).update({
+            if (!confirm('✅ Approve this school? They will gain immediate access to the platform.')) return;
+            
+            loadingOverlay.style.display = 'flex';
+            try {
+                await db.collection('schools').doc(id).update({
+                    status: 'active',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    approvedBy: auth.currentUser?.uid,
+                    approvedByEmail: auth.currentUser?.email,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Also approve associated subscription if exists
+                const subSnap = await db.collection('subscriptions')
+                    .where('schoolId', '==', id)
+                    .where('status', '==', 'pending')
+                    .get();
+                
+                subSnap.forEach(async (doc) => {
+                    await db.collection('subscriptions').doc(doc.id).update({
                         status: 'active',
-                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        approvedBy: auth.currentUser?.uid
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    alert('✅ School approved successfully!');
-                    loadPendingSchools();
-                } catch (e) {
-                    alert('Error: ' + e.message);
-                }
+                });
+                
+                showSuccess('School approved successfully!');
+                await loadPendingApprovals();
+                updateLastUpdated();
+            } catch (e) {
+                showError('Error: ' + e.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
             }
         };
         
         window.rejectSchool = async function(id) {
-            if (confirm('Reject this school application? This action can be undone.')) {
-                try {
-                    await db.collection('schools').doc(id).update({
-                        status: 'rejected',
-                        rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        rejectedBy: auth.currentUser?.uid
-                    });
-                    alert('School application rejected.');
-                    loadPendingSchools();
-                } catch (e) {
-                    alert('Error: ' + e.message);
-                }
+            if (!confirm('❌ Reject this school application? This action can be reversed later.')) return;
+            
+            loadingOverlay.style.display = 'flex';
+            try {
+                await db.collection('schools').doc(id).update({
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    rejectedBy: auth.currentUser?.uid,
+                    rejectedByEmail: auth.currentUser?.email,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showSuccess('School application rejected.');
+                await loadPendingApprovals();
+                updateLastUpdated();
+            } catch (e) {
+                showError('Error: ' + e.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
             }
         };
 
+        // --------------------------------------------------------------
+        // ADMIN INVITE FUNCTIONS
+        // --------------------------------------------------------------
+        window.approveAdminInvite = async function(id) {
+            if (!confirm('Approve this admin invite? The user will receive admin access.')) return;
+            
+            loadingOverlay.style.display = 'flex';
+            try {
+                await db.collection('adminInvites').doc(id).update({
+                    status: 'approved',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    approvedBy: auth.currentUser?.uid
+                });
+                
+                showSuccess('Admin invite approved!');
+                await loadPendingApprovals();
+                updateLastUpdated();
+            } catch (e) {
+                showError('Error: ' + e.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        };
+        
+        window.rejectAdminInvite = async function(id) {
+            if (!confirm('Reject this admin invite?')) return;
+            
+            loadingOverlay.style.display = 'flex';
+            try {
+                await db.collection('adminInvites').doc(id).update({
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    rejectedBy: auth.currentUser?.uid
+                });
+                
+                showSuccess('Admin invite rejected.');
+                await loadPendingApprovals();
+                updateLastUpdated();
+            } catch (e) {
+                showError('Error: ' + e.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        };
+
+        // --------------------------------------------------------------
+        // SUBSCRIPTION FUNCTIONS
+        // --------------------------------------------------------------
+        window.approveSubscription = async function(id) {
+            if (!confirm('Approve this subscription? The school will be billed according to the plan.')) return;
+            
+            loadingOverlay.style.display = 'flex';
+            try {
+                await db.collection('subscriptions').doc(id).update({
+                    status: 'active',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    approvedBy: auth.currentUser?.uid
+                });
+                
+                showSuccess('Subscription approved!');
+                await loadPendingApprovals();
+                updateLastUpdated();
+            } catch (e) {
+                showError('Error: ' + e.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        };
+        
+        window.rejectSubscription = async function(id) {
+            if (!confirm('Reject this subscription? The school will not be billed.')) return;
+            
+            loadingOverlay.style.display = 'flex';
+            try {
+                await db.collection('subscriptions').doc(id).update({
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    rejectedBy: auth.currentUser?.uid
+                });
+                
+                showSuccess('Subscription rejected.');
+                await loadPendingApprovals();
+                updateLastUpdated();
+            } catch (e) {
+                showError('Error: ' + e.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        };
+
+        // --------------------------------------------------------------
+        // EVENT LISTENERS
+        // --------------------------------------------------------------
         // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        const logout = async () => {
+            loadingOverlay.style.display = 'flex';
             await auth.signOut();
             window.location.href = 'super-admin-login.html';
-        });
+        };
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('logoutMobile').addEventListener('click', logout);
 
         // Refresh button
-        document.getElementById('refreshBtn').addEventListener('click', loadPendingSchools);
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Refreshing...';
+            await loadPendingApprovals();
+            updateLastUpdated();
+            refreshBtn.innerHTML = '<i class="fas fa-redo-alt"></i> Refresh';
+        });
 
-        // Filter change
-        document.getElementById('filterType').addEventListener('change', loadPendingSchools);
-        document.getElementById('planFilter').addEventListener('change', loadPendingSchools);
+        // Filter changes
+        filterType.addEventListener('change', loadPendingApprovals);
+        planFilter.addEventListener('change', loadPendingApprovals);
+
+        // Mobile menu
+        menuToggle.addEventListener('click', () => {
+            mobileNav.classList.add('active');
+        });
+        closeMobileNav.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === mobileNav) {
+                mobileNav.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
