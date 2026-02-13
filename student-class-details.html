@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Class Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --student-blue: #3498db;
+            --student-blue-dark: #2980b9;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --green: #27ae60;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --purple: #9b59b6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 10px; color: var(--student-blue);
+            text-decoration: none; font-weight: 600; margin-bottom: 20px;
+        }
+        
+        .class-header-card {
+            background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px;
+            border-left: 5px solid var(--student-blue); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+        }
+        
+        .class-title-large { font-size: 32px; font-weight: 700; color: var(--dark-blue); }
+        .teacher-info { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
+        .teacher-avatar {
+            width: 50px; height: 50px; border-radius: 50%; background: rgba(52,152,219,0.1);
+            display: flex; align-items: center; justify-content: center; color: var(--student-blue); font-size: 20px;
+        }
+        
+        .info-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px;
+        }
+        .info-card {
+            background: white; border-radius: 16px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .info-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .info-title i { color: var(--student-blue); }
+        
+        .progress-circle {
+            width: 120px; height: 120px; margin: 0 auto 20px; position: relative;
+        }
+        .progress-circle-svg { width: 120px; height: 120px; }
+        
+        .assignment-item, .exam-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .assignment-item:last-child { border-bottom: none; }
+        .assignment-title { font-weight: 600; }
+        .due-date { font-size: 13px; color: #666; }
+        .badge { padding: 4px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: rgba(39,174,96,0.1); color: var(--green); }
+        .badge-warning { background: rgba(230,126,34,0.1); color: var(--orange); }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, var(--student-blue), var(--student-blue-dark));
+            color: white; border: none; padding: 10px 25px; border-radius: 30px; font-weight: 600; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>EDUSKYLARK · CLASS DETAILS <span style="background:linear-gradient(135deg,#3498db,#2980b9); padding:3px 10px; border-radius:15px;">STUDENT</span></h1>
+            <button id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <a href="student-classes.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to My Classes</a>
+        
+        <div class="class-header-card">
+            <div>
+                <div class="class-title-large">Mathematics</div>
+                <div style="color: var(--student-blue); font-weight: 600; margin-top: 5px;">Form 3C · Code: MATH-301</div>
+                <div class="teacher-info">
+                    <div class="teacher-avatar"><i class="fas fa-user"></i></div>
+                    <div>
+                        <div style="font-weight: 700;">Mr. John Mwangi</div>
+                        <div style="font-size: 13px; color: #666;">j.mwangi@school.edu · +254 712 345 678</div>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 48px; font-weight: 800; color: var(--student-blue);">78%</div>
+                <div style="color: #666;">Overall Progress</div>
+                <div style="margin-top: 10px; background: rgba(52,152,219,0.1); padding: 8px 20px; border-radius: 30px;">
+                    <i class="fas fa-trophy" style="color: var(--student-blue);"></i> Grade: B+
+                </div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-title"><i class="fas fa-calendar-alt"></i> Schedule</div>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-calendar" style="color: var(--student-blue);"></i> Monday</span>
+                        <span style="font-weight: 600;">08:00 - 09:30</span>
+                        <span style="color: #666;">Room 101</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-calendar" style="color: var(--student-blue);"></i> Wednesday</span>
+                        <span style="font-weight: 600;">08:00 - 09:30</span>
+                        <span style="color: #666;">Room 101</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-calendar" style="color: var(--student-blue);"></i> Friday</span>
+                        <span style="font-weight: 600;">08:00 - 09:30</span>
+                        <span style="color: #666;">Room 101</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title"><i class="fas fa-tasks"></i> Current Assignments</div>
+                <div class="assignment-item">
+                    <div>
+                        <div class="assignment-title">Quadratic Equations</div>
+                        <div class="due-date"><i class="far fa-calendar"></i> Due: 15 Apr 2025</div>
+                    </div>
+                    <span class="badge badge-warning">2 days left</span>
+                    <button class="btn-submit" style="padding: 6px 16px; font-size: 13px;">Submit</button>
+                </div>
+                <div class="assignment-item">
+                    <div>
+                        <div class="assignment-title">Algebra Test Prep</div>
+                        <div class="due-date"><i class="far fa-calendar"></i> Due: 18 Apr 2025</div>
+                    </div>
+                    <span class="badge badge-warning">5 days left</span>
+                    <button class="btn-submit" style="padding: 6px 16px; font-size: 13px;">Submit</button>
+                </div>
+                <div class="assignment-item">
+                    <div>
+                        <div class="assignment-title">Calculus Worksheet</div>
+                        <div class="due-date"><i class="far fa-calendar"></i> Due: 20 Apr 2025</div>
+                    </div>
+                    <span class="badge badge-success">7 days left</span>
+                    <button class="btn-submit" style="padding: 6px 16px; font-size: 13px;">Submit</button>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title"><i class="fas fa-pencil-alt"></i> Upcoming Exams</div>
+                <div class="exam-item">
+                    <div>
+                        <div style="font-weight: 600;">End Term Exam</div>
+                        <div style="font-size: 13px; color: #666;">Weight: 70%</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600;">25 Apr 2025</div>
+                        <div style="font-size: 13px; color: var(--orange);">12 days left</div>
+                    </div>
+                </div>
+                <div class="exam-item">
+                    <div>
+                        <div style="font-weight: 600;">CAT 2</div>
+                        <div style="font-size: 13px; color: #666;">Weight: 20%</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600;">18 Apr 2025</div>
+                        <div style="font-size: 13px; color: var(--red);">5 days left</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 22px;"><i class="fas fa-book-open" style="color: var(--student-blue);"></i> Learning Materials</h3>
+                <a href="#" style="color: var(--student-blue);">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 12px;">
+                    <div style="width: 45px; height: 45px; background: rgba(52,152,219,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--student-blue);">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">Quadratic Equations Notes</div>
+                        <div style="font-size: 12px; color: #666;">2.4 MB · PDF</div>
+                    </div>
+                    <i class="fas fa-download" style="color: var(--student-blue); cursor: pointer;"></i>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 12px;">
+                    <div style="width: 45px; height: 45px; background: rgba(52,152,219,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--student-blue);">
+                        <i class="fas fa-file-video"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">Algebra Tutorial Video</div>
+                        <div style="font-size: 12px; color: #666;">15 mins · MP4</div>
+                    </div>
+                    <i class="fas fa-play" style="color: var(--student-blue); cursor: pointer;"></i>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 12px;">
+                    <div style="width: 45px; height: 45px; background: rgba(52,152,219,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--student-blue);">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">Practice Problems</div>
+                        <div style="font-size: 12px; color: #666;">1.1 MB · DOCX</div>
+                    </div>
+                    <i class="fas fa-download" style="color: var(--student-blue); cursor: pointer;"></i>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = 'student-login.html';
+        });
+    </script>
+</body>
+</html>
