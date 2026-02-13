@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Fees Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --blue: #3498db;
+            --orange: #e67e22;
+            --red: #e74c3c;
+            --purple: #9b59b6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        
+        .fees-summary {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white; border-radius: 20px; padding: 25px; border-left: 5px solid var(--school-green);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; justify-content: space-between;
+        }
+        .summary-value { font-size: 32px; font-weight: 800; color: var(--dark-blue); }
+        .summary-icon { width: 50px; height: 50px; border-radius: 50%; background: rgba(39,174,96,0.1); display: flex; align-items: center; justify-content: center; color: var(--school-green); font-size: 24px; }
+        
+        .filter-bar {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-select { padding: 12px 25px; border: 2px solid #e9ecef; border-radius: 30px; background: white; }
+        
+        .fees-table {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #e9ecef; color: var(--dark-blue); }
+        td { padding: 15px; border-bottom: 1px solid #f1f1f1; }
+        
+        .status-paid { background: rgba(39,174,96,0.15); color: var(--school-green); padding: 5px 15px; border-radius: 30px; font-size: 12px; font-weight: 600; }
+        .status-partial { background: rgba(241,196,15,0.15); color: #f39c12; padding: 5px 15px; border-radius: 30px; }
+        .status-unpaid { background: rgba(231,76,60,0.15); color: var(--red); padding: 5px 15px; border-radius: 30px; }
+        
+        .btn-action { padding: 8px 16px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; margin-right: 8px; }
+        .btn-view { background: rgba(52,152,219,0.1); color: #3498db; }
+        .btn-record { background: rgba(39,174,96,0.1); color: var(--school-green); }
+        
+        .add-fee-btn {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · FEES MANAGEMENT <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
+                    <p>Track Payments & Collections</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white;" id="schoolName">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="font-size: 28px;"><i class="fas fa-coins" style="color: var(--school-green);"></i> Fees & Payments</h2>
+            <button class="add-fee-btn" onclick="window.location.href='school-add-fee.html'">
+                <i class="fas fa-plus-circle"></i> Record Payment
+            </button>
+        </div>
+
+        <div class="fees-summary">
+            <div class="summary-card">
+                <div>
+                    <div style="color: #666; font-size: 14px;">Expected Fees</div>
+                    <div class="summary-value" id="expectedFees">KES 2,450,000</div>
+                    <div style="margin-top: 10px; font-size: 13px;">Term 1, 2025</div>
+                </div>
+                <div class="summary-icon"><i class="fas fa-calculator"></i></div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <div style="color: #666; font-size: 14px;">Collected</div>
+                    <div class="summary-value" style="color: var(--school-green);" id="collectedFees">KES 1,845,000</div>
+                    <div style="margin-top: 10px; font-size: 13px;">75.3% collected</div>
+                </div>
+                <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <div style="color: #666; font-size: 14px;">Outstanding</div>
+                    <div class="summary-value" style="color: var(--red);" id="outstandingFees">KES 605,000</div>
+                    <div style="margin-top: 10px; font-size: 13px;">24.7% pending</div>
+                </div>
+                <div class="summary-icon"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <div style="color: #666; font-size: 14px;">Overdue</div>
+                    <div class="summary-value" style="color: var(--red);" id="overdueFees">KES 125,000</div>
+                    <div style="margin-top: 10px; font-size: 13px;">5 schools</div>
+                </div>
+                <div class="summary-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Class:</label>
+                <select class="filter-select">
+                    <option>All Classes</option>
+                    <option>Form 1A</option>
+                    <option>Form 1B</option>
+                    <option>Form 2A</option>
+                    <option>Form 2B</option>
+                    <option>Form 3A</option>
+                    <option>Form 3B</option>
+                    <option>Form 3C</option>
+                    <option>Form 4A</option>
+                    <option>Form 4B</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status:</label>
+                <select class="filter-select">
+                    <option>All</option>
+                    <option>Paid</option>
+                    <option>Partial</option>
+                    <option>Unpaid</option>
+                    <option>Overdue</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Term:</label>
+                <select class="filter-select">
+                    <option>Term 1, 2025</option>
+                    <option>Term 2, 2025</option>
+                    <option>Term 3, 2025</option>
+                </select>
+            </div>
+            <div style="flex: 1; display: flex; justify-content: flex-end;">
+                <button style="background: none; border: none; color: var(--school-green); font-weight: 600;">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
+            </div>
+        </div>
+
+        <div class="fees-table">
+            <h3 style="margin-bottom: 20px;">Student Fee Balances</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Admission No.</th>
+                        <th>Student Name</th>
+                        <th>Class</th>
+                        <th>Total Fees (KES)</th>
+                        <th>Paid (KES)</th>
+                        <th>Balance (KES)</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-001</td>
+                        <td><span style="font-weight: 600;">John Mwangi</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>45,000</td>
+                        <td>0</td>
+                        <td><span class="status-paid">Paid</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2025-042</td>
+                        <td><span style="font-weight: 600;">Mary Atieno</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>45,000</td>
+                        <td>0</td>
+                        <td><span class="status-paid">Paid</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2025-018</td>
+                        <td><span style="font-weight: 600;">James Otieno</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>25,000</td>
+                        <td>20,000</td>
+                        <td><span class="status-partial">Partial</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                            <button class="btn-action btn-record"><i class="fas fa-plus"></i> Record</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2025-033</td>
+                        <td><span style="font-weight: 600;">Grace Wanjiku</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>0</td>
+                        <td>45,000</td>
+                        <td><span class="status-unpaid">Unpaid</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                            <button class="btn-action btn-record"><i class="fas fa-plus"></i> Record</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2025-056</td>
+                        <td><span style="font-weight: 600;">Peter Kamau</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>30,000</td>
+                        <td>15,000</td>
+                        <td><span class="status-partial">Partial</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                            <button class="btn-action btn-record"><i class="fas fa-plus"></i> Record</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2025-078</td>
+                        <td><span style="font-weight: 600;">Sarah Njeri</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>45,000</td>
+                        <td>0</td>
+                        <td><span class="status-paid">Paid</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2025-091</td>
+                        <td><span style="font-weight: 600;">Brian Muthama</span></td>
+                        <td>Form 3C</td>
+                        <td>45,000</td>
+                        <td>10,000</td>
+                        <td>35,000</td>
+                        <td><span class="status-partial">Partial</span></td>
+                        <td>
+                            <button class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                            <button class="btn-action btn-record"><i class="fas fa-plus"></i> Record</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'school-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'school_admin' && data.role !== 'admin') {
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                    } else {
+                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
+                    }
+                }
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
+        });
+    </script>
+</body>
+</html>
