@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Attendance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --blue: #3498db;
+            --orange: #e67e22;
+            --red: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .attendance-header {
+            background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px;
+            border-left: 6px solid var(--school-green); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .class-selector {
+            display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
+        }
+        .class-btn {
+            padding: 12px 25px; border-radius: 30px; border: 2px solid #e9ecef; background: white;
+            font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .class-btn.active {
+            background: var(--school-green); color: white; border-color: var(--school-green);
+        }
+        .class-btn:hover { background: rgba(39,174,96,0.1); }
+        
+        .date-picker {
+            display: flex; align-items: center; gap: 15px; background: white; padding: 12px 25px;
+            border-radius: 30px; border: 2px solid #e9ecef;
+        }
+        
+        .stats-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white; border-radius: 16px; padding: 25px; border-left: 5px solid var(--school-green);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .stat-value { font-size: 36px; font-weight: 800; color: var(--dark-blue); }
+        
+        .attendance-table {
+            background: white; border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #e9ecef; color: var(--dark-blue); }
+        td { padding: 15px; border-bottom: 1px solid #f1f1f1; }
+        
+        .attendance-toggle {
+            display: flex; gap: 10px;
+        }
+        .toggle-btn {
+            padding: 8px 16px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; background: #f1f1f1; color: #666;
+        }
+        .toggle-btn.present.active, .toggle-btn.present:hover { background: rgba(39,174,96,0.2); color: var(--school-green); }
+        .toggle-btn.absent.active, .toggle-btn.absent:hover { background: rgba(231,76,60,0.2); color: var(--red); }
+        .toggle-btn.late.active, .toggle-btn.late:hover { background: rgba(241,196,15,0.2); color: #f39c12; }
+        
+        .save-btn {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: 700;
+            cursor: pointer; margin-top: 30px; float: right; font-size: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .attendance-header { flex-direction: column; gap: 20px; }
+            .attendance-toggle { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · ATTENDANCE <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
+                    <p>Mark & Track Attendance</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white;" id="schoolName">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="attendance-header">
+            <div>
+                <h2 style="font-size: 28px; margin-bottom: 10px;"><i class="fas fa-calendar-check" style="color: var(--school-green);"></i> Mark Attendance</h2>
+                <p style="color: #666;">Select class and date to take attendance</p>
+            </div>
+            <div class="date-picker">
+                <i class="fas fa-calendar-alt" style="color: var(--school-green);"></i>
+                <input type="date" id="attendanceDate" style="border: none; background: transparent; font-size: 16px; font-weight: 600;" value="2025-04-13">
+            </div>
+        </div>
+
+        <div class="class-selector" style="margin-bottom: 30px; background: white; padding: 20px; border-radius: 20px;">
+            <span style="font-weight: 600; color: var(--dark-blue);">Select Class:</span>
+            <button class="class-btn active" data-class="1A">Form 1A</button>
+            <button class="class-btn" data-class="1B">Form 1B</button>
+            <button class="class-btn" data-class="2A">Form 2A</button>
+            <button class="class-btn" data-class="2B">Form 2B</button>
+            <button class="class-btn" data-class="3A">Form 3A</button>
+            <button class="class-btn" data-class="3B">Form 3B</button>
+            <button class="class-btn" data-class="3C">Form 3C</button>
+            <button class="class-btn" data-class="4A">Form 4A</button>
+            <button class="class-btn" data-class="4B">Form 4B</button>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Total Students</div>
+                <div class="stat-value" id="totalStudents">42</div>
+            </div>
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Present</div>
+                <div class="stat-value" style="color: var(--school-green);" id="presentCount">38</div>
+            </div>
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Absent</div>
+                <div class="stat-value" style="color: var(--red);" id="absentCount">3</div>
+            </div>
+            <div class="stat-card">
+                <div style="color: #666; font-size: 14px;">Late</div>
+                <div class="stat-value" style="color: #f39c12;" id="lateCount">1</div>
+            </div>
+        </div>
+
+        <div class="attendance-table">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 20px;">Form 3C - Mathematics</h3>
+                <span style="background: rgba(39,174,96,0.1); padding: 8px 20px; border-radius: 30px; color: var(--school-green); font-weight: 600;">
+                    <i class="fas fa-check-circle"></i> Attendance: 90.5%
+                </span>
+            </div>
+            <table id="attendanceTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Admission No.</th>
+                        <th>Student Name</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceBody">
+                    <tr>
+                        <td>1</td>
+                        <td>2025-001</td>
+                        <td>John Mwangi</td>
+                        <td><span style="background: rgba(39,174,96,0.15); color: var(--school-green); padding: 5px 15px; border-radius: 30px;">Present</span></td>
+                        <td class="attendance-toggle">
+                            <button class="toggle-btn present active">Present</button>
+                            <button class="toggle-btn absent">Absent</button>
+                            <button class="toggle-btn late">Late</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>2025-042</td>
+                        <td>Mary Atieno</td>
+                        <td><span style="background: rgba(39,174,96,0.15); color: var(--school-green); padding: 5px 15px; border-radius: 30px;">Present</span></td>
+                        <td class="attendance-toggle">
+                            <button class="toggle-btn present active">Present</button>
+                            <button class="toggle-btn absent">Absent</button>
+                            <button class="toggle-btn late">Late</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>2025-018</td>
+                        <td>James Otieno</td>
+                        <td><span style="background: rgba(241,196,15,0.15); color: #f39c12; padding: 5px 15px; border-radius: 30px;">Late</span></td>
+                        <td class="attendance-toggle">
+                            <button class="toggle-btn present">Present</button>
+                            <button class="toggle-btn absent">Absent</button>
+                            <button class="toggle-btn late active">Late</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>2025-033</td>
+                        <td>Grace Wanjiku</td>
+                        <td><span style="background: rgba(231,76,60,0.15); color: var(--red); padding: 5px 15px; border-radius: 30px;">Absent</span></td>
+                        <td class="attendance-toggle">
+                            <button class="toggle-btn present">Present</button>
+                            <button class="toggle-btn absent active">Absent</button>
+                            <button class="toggle-btn late">Late</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>2025-056</td>
+                        <td>Peter Kamau</td>
+                        <td><span style="background: rgba(39,174,96,0.15); color: var(--school-green); padding: 5px 15px; border-radius: 30px;">Present</span></td>
+                        <td class="attendance-toggle">
+                            <button class="toggle-btn present active">Present</button>
+                            <button class="toggle-btn absent">Absent</button>
+                            <button class="toggle-btn late">Late</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="save-btn"><i class="fas fa-save"></i> Save Attendance</button>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) window.location.href = 'school-login.html';
+            else {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.role !== 'school_admin' && data.role !== 'admin') {
+                        await auth.signOut();
+                        window.location.href = 'school-login.html';
+                    } else {
+                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
+                    }
+                }
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
+        });
+
+        // Class selector toggle
+        document.querySelectorAll('.class-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                // Load students for this class
+                document.getElementById('totalStudents').textContent = '42';
+                document.getElementById('presentCount').textContent = '38';
+                document.getElementById('absentCount').textContent = '3';
+                document.getElementById('lateCount').textContent = '1';
+            });
+        });
+
+        // Toggle attendance buttons
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const parent = this.closest('.attendance-toggle');
+                parent.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update status cell
+                const row = this.closest('tr');
+                const statusCell = row.querySelector('td:nth-child(4) span');
+                if (this.classList.contains('present')) {
+                    statusCell.style.background = 'rgba(39,174,96,0.15)';
+                    statusCell.style.color = 'var(--school-green)';
+                    statusCell.textContent = 'Present';
+                } else if (this.classList.contains('absent')) {
+                    statusCell.style.background = 'rgba(231,76,60,0.15)';
+                    statusCell.style.color = 'var(--red)';
+                    statusCell.textContent = 'Absent';
+                } else if (this.classList.contains('late')) {
+                    statusCell.style.background = 'rgba(241,196,15,0.15)';
+                    statusCell.style.color = '#f39c12';
+                    statusCell.textContent = 'Late';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
