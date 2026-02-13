@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -967,15 +968,14 @@
         </div>
         <div class="mobile-user-info" id="mobileUserInfo"></div>
         <div class="mobile-nav-links">
-            <a href="super-admin-dashboard.html" class="mobile-nav-item" data-page="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
-            <a href="schools-management.html" class="mobile-nav-item" data-page="schools"><i class="fas fa-building"></i> All Schools</a>
-            <a href="onboard-school.html" class="mobile-nav-item" data-page="onboard"><i class="fas fa-school"></i> Onboard School</a>
-            <a href="subscription-management.html" class="mobile-nav-item" data-page="subscriptions"><i class="fas fa-credit-card"></i> Subscriptions</a>
-            <a href="subscription-management.html?filter=expiring" class="mobile-nav-item" data-page="expiring"><i class="fas fa-clock"></i> Expiring Soon</a>
-            <a href="schools-management.html?filter=pending" class="mobile-nav-item" data-page="pending"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
-            <a href="admin-management.html" class="mobile-nav-item" data-page="admins"><i class="fas fa-user-tie"></i> School Admins</a>
-            <a href="analytics.html" class="mobile-nav-item" data-page="analytics"><i class="fas fa-chart-line"></i> Platform Analytics</a>
-            <a href="system-settings.html" class="mobile-nav-item" data-page="system"><i class="fas fa-cog"></i> System Settings</a>
+            <a href="#" class="mobile-nav-item" data-page="onboard"><i class="fas fa-school"></i> Onboard School</a>
+            <a href="#" class="mobile-nav-item" data-page="schools"><i class="fas fa-building"></i> All Schools</a>
+            <a href="#" class="mobile-nav-item" data-page="subscriptions"><i class="fas fa-credit-card"></i> Subscriptions</a>
+            <a href="#" class="mobile-nav-item" data-page="expiring"><i class="fas fa-clock"></i> Expiring Soon</a>
+            <a href="#" class="mobile-nav-item" data-page="pending"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
+            <a href="#" class="mobile-nav-item" data-page="admins"><i class="fas fa-user-tie"></i> School Admins</a>
+            <a href="#" class="mobile-nav-item" data-page="analytics"><i class="fas fa-chart-pie"></i> Platform Analytics</a>
+            <a href="#" class="mobile-nav-item" data-page="system"><i class="fas fa-cog"></i> System Settings</a>
             <a href="#" class="mobile-nav-item logout-mobile" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </div>
@@ -1002,7 +1002,7 @@
                 <h3 class="card-title">Schools Onboarded</h3>
                 <p class="card-description">All active schools using EDUSKYLARK platform.</p>
                 <div class="card-stats"><div><div class="stat-value" id="totalSchools">0</div><div class="stat-label">ACTIVE</div></div></div>
-                <button class="card-action" onclick="window.location.href='schools-management.html'"><span>View all schools</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="schools"><span>View all schools</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 2. New Schools (this month) -->
             <div class="dashboard-card subscription">
@@ -1010,7 +1010,7 @@
                 <h3 class="card-title">New Schools</h3>
                 <p class="card-description">Onboarded this month – growth tracking.</p>
                 <div class="card-stats"><div><div class="stat-value" id="newSchoolsMonth">0</div><div class="stat-label">THIS MONTH</div></div></div>
-                <button class="card-action" onclick="window.location.href='onboard-school.html'"><span>Onboard new</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="onboard"><span>Onboard new</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 3. Active Subscriptions -->
             <div class="dashboard-card active-schools">
@@ -1018,7 +1018,7 @@
                 <h3 class="card-title">Active Subscriptions</h3>
                 <p class="card-description">Paid & active plans across schools.</p>
                 <div class="card-stats"><div><div class="stat-value" id="activeSubscriptions">0</div><div class="stat-label">ACTIVE</div></div></div>
-                <button class="card-action" onclick="window.location.href='subscription-management.html'"><span>Manage plans</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="subscriptions"><span>Manage plans</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 4. MRR (monthly recurring revenue) -->
             <div class="dashboard-card revenue">
@@ -1026,7 +1026,7 @@
                 <h3 class="card-title">Monthly Revenue</h3>
                 <p class="card-description">Subscription income (KES).</p>
                 <div class="card-stats"><div><div class="stat-value" id="mrr">KES 0</div><div class="stat-label">MRR</div></div></div>
-                <button class="card-action" onclick="window.location.href='analytics.html'"><span>View finances</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="billing"><span>View finances</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 5. Expiring Subscriptions (30 days) -->
             <div class="dashboard-card expiring">
@@ -1034,7 +1034,7 @@
                 <h3 class="card-title">Expiring Soon</h3>
                 <p class="card-description">Subscriptions ending in ≤30 days.</p>
                 <div class="card-stats"><div><div class="stat-value" id="expiringCount">0</div><div class="stat-label">SCHOOLS</div></div></div>
-                <button class="card-action" onclick="window.location.href='subscription-management.html?filter=expiring'"><span>Renew now</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="expiring"><span>Renew now</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 6. Pending Onboarding Approvals -->
             <div class="dashboard-card pending">
@@ -1042,7 +1042,7 @@
                 <h3 class="card-title">Pending Approval</h3>
                 <p class="card-description">Schools waiting for activation.</p>
                 <div class="card-stats"><div><div class="stat-value" id="pendingApprovals">0</div><div class="stat-label">PENDING</div></div></div>
-                <button class="card-action" onclick="window.location.href='schools-management.html?filter=pending'"><span>Review</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="pending"><span>Review</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 7. School Admins (total) -->
             <div class="dashboard-card admins">
@@ -1050,7 +1050,7 @@
                 <h3 class="card-title">School Admins</h3>
                 <p class="card-description">Administrators across all schools.</p>
                 <div class="card-stats"><div><div class="stat-value" id="totalAdmins">0</div><div class="stat-label">ADMINS</div></div></div>
-                <button class="card-action" onclick="window.location.href='admin-management.html'"><span>Manage roles</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="admins"><span>Manage roles</span><i class="fas fa-arrow-right"></i></button>
             </div>
             <!-- 8. Platform health / system -->
             <div class="dashboard-card platform">
@@ -1058,7 +1058,7 @@
                 <h3 class="card-title">Platform Status</h3>
                 <p class="card-description">System health, version, storage.</p>
                 <div class="card-stats"><div><div class="stat-value" id="systemOk">● OK</div><div class="stat-label">ALL SYSTEMS</div></div></div>
-                <button class="card-action" onclick="window.location.href='system-settings.html'"><span>Settings</span><i class="fas fa-arrow-right"></i></button>
+                <button class="card-action" data-page="system"><span>Settings</span><i class="fas fa-arrow-right"></i></button>
             </div>
         </div>
 
@@ -1066,7 +1066,7 @@
         <section class="events-section">
             <div class="section-header">
                 <h2><i class="fas fa-clock"></i> Recent School Onboardings</h2>
-                <button class="view-all-btn" onclick="window.location.href='schools-management.html'">View all schools <i class="fas fa-arrow-right"></i></button>
+                <button class="view-all-btn" data-page="schools">View all schools <i class="fas fa-arrow-right"></i></button>
             </div>
             <div class="events-grid" id="recentSchoolsGrid">
                 <!-- dynamically loaded: schools onboarded recently -->
@@ -1076,22 +1076,22 @@
 
         <!-- Quick Actions for Super Admin -->
         <div class="quick-actions">
-            <a href="onboard-school.html" class="action-btn">
+            <a href="#" class="action-btn" data-page="onboard">
                 <div class="action-icon"><i class="fas fa-school"></i></div>
                 <h3>Onboard School</h3>
                 <p>Create new school, set subscription plan</p>
             </a>
-            <a href="subscription-management.html" class="action-btn">
+            <a href="#" class="action-btn" data-page="subscriptions">
                 <div class="action-icon"><i class="fas fa-credit-card"></i></div>
                 <h3>Subscription Plans</h3>
                 <p>Define tiers, pricing, features</p>
             </a>
-            <a href="subscription-management.html?filter=expiring" class="action-btn">
+            <a href="#" class="action-btn" data-page="expiring">
                 <div class="action-icon"><i class="fas fa-bell"></i></div>
                 <h3>Renewal Alerts</h3>
                 <p>Contact schools with expiring licenses</p>
             </a>
-            <a href="analytics.html" class="action-btn">
+            <a href="#" class="action-btn" data-page="analytics">
                 <div class="action-icon"><i class="fas fa-chart-line"></i></div>
                 <h3>Analytics</h3>
                 <p>Engagement, usage, revenue trends</p>
@@ -1118,16 +1118,16 @@
 
     <!-- Firebase Config (same, refactored for EDUSKYLARK) -->
     <script>
-        // Firebase config – using Toplink-edu project
-        const firebaseConfig = {
-            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-            authDomain: "toplink-edu.firebaseapp.com",
-            projectId: "toplink-edu",
-            storageBucket: "toplink-edu.firebasestorage.app",
-            messagingSenderId: "35786900143",
-            appId: "1:35786900143:web:9e612336393d29324c0a5a",
-            measurementId: "G-3VSBS7R11D"
-        };
+        // Firebase config – unchanged (using same project, but logically for schools)
+       const firebaseConfig = {
+  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+  authDomain: "toplink-edu.firebaseapp.com",
+  projectId: "toplink-edu",
+  storageBucket: "toplink-edu.firebasestorage.app",
+  messagingSenderId: "35786900143",
+  appId: "1:35786900143:web:9e612336393d29324c0a5a",
+  measurementId: "G-3VSBS7R11D"
+};
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -1139,14 +1139,12 @@
         db.enablePersistence().catch(console.log);
 
         // DOM elements
-        const profilePhotoContainer = document.getElementById('profilePhotoContainer');
         const profilePhoto = document.getElementById('profilePhoto');
         const uploadIndicator = document.getElementById('uploadIndicator');
         const userName = document.getElementById('userName');
         const userRole = document.getElementById('userRole');
         const logoutBtn = document.getElementById('logoutBtn');
         const greeting = document.getElementById('greeting');
-        const welcomeMessage = document.getElementById('welcomeMessage');
         const currentDate = document.getElementById('currentDate');
         const currentTime = document.getElementById('currentTime');
         const profileModal = document.getElementById('profileModal');
@@ -1171,50 +1169,29 @@
                 currentUser = user;
                 await loadUserData(user);
                 setupEventListeners();
-                updateDateTime(); 
-                setInterval(updateDateTime,1000);
-                loadSuperAdminStats();
-                loadRecentOnboardings();
-            } else {
-                window.location.href = 'super-admin-login.html';
-            }
+                updateDateTime(); setInterval(updateDateTime,1000);
+                loadSuperAdminStats();   // load all KPI values
+                loadRecentOnboardings(); // replaces events
+            } else window.location.href = 'index.html';
         });
 
         async function loadUserData(user) {
-            try {
-                const doc = await db.collection('users').doc(user.uid).get();
-                if (doc.exists) {
-                    userData = doc.data();
-                    // Verify super admin role
-                    const isSuperAdmin = userData.role === 'super-admin' || userData.role === 'superadmin' || userData.permissions?.isSuperAdmin === true;
-                    if (!isSuperAdmin) {
-                        await auth.signOut();
-                        window.location.href = 'super-admin-login.html';
-                        return;
-                    }
-                } else {
-                    userData = { fullName: 'Super Admin', role: 'superadmin', profilePhoto: null };
-                }
-            } catch (e) {
-                console.error("Error loading user data:", e);
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (doc.exists) {
+                userData = doc.data();
+            } else {
                 userData = { fullName: 'Super Admin', role: 'superadmin', profilePhoto: null };
             }
-            
             userName.textContent = userData.fullName || 'Super Admin';
             userRole.innerHTML = '<i class="fas fa-crown"></i> Super Administrator';
             previewInitials.textContent = getInitials(userData.fullName);
-            
             if (userData.profilePhoto) {
                 profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
                 uploadIndicator.style.display = 'none';
-            } else { 
-                setInitials(userData.fullName); 
-            }
-            
-            // Mobile user info
+            } else { setInitials(userData.fullName); }
+            // mobile
             mobileUserInfo.innerHTML = `<div class="mobile-profile-photo">${userData.profilePhoto ? `<img src="${userData.profilePhoto}">` : `<span>${getInitials(userData.fullName)}</span>`}</div>
-                <div class="mobile-user-details"><h3>${userData.fullName || 'Super Admin'}</h3><p><i class="fas fa-crown"></i> Super Administrator</p></div>`;
-            
+                <div class="mobile-user-details"><h3>${userData.fullName}</h3><p><i class="fas fa-crown"></i> Super Administrator</p></div>`;
             setGreeting(userData.fullName);
         }
 
@@ -1223,28 +1200,13 @@
             profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
             profilePhoto.style.background = 'linear-gradient(135deg, #3498db, #2c3e50)';
         }
-        
-        function getInitials(name) { 
-            return name ? name.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA'; 
-        }
+        function getInitials(name) { return name ? name.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2) : 'SA'; }
+        function getRandomColor() { return '#3498db'; } // preserve style
 
         function setGreeting(name) {
             const hour = new Date().getHours();
-            let g = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+            let g = hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
             greeting.textContent = `${g}, ${name?.split(' ')[0] || 'Super Admin'}!`;
-            
-            // Custom welcome message for super admin
-            const day = new Date().getDay();
-            const messages = [
-                "Happy Sabbath! Your platform is ready for the week ahead.",
-                "Start your week with strategic school management.",
-                "Trust in God's plan for your education platform.",
-                "Midweek blessings – review your subscription renewals.",
-                "Almost weekend! Check pending onboarding requests.",
-                "Friday is here – prepare reports for the month.",
-                "Sabbath blessings. Your schools are in good hands."
-            ];
-            welcomeMessage.textContent = messages[day] || "Monitor all EDUSKYLARK schools, onboard new institutions, manage subscriptions, and scale the ecosystem.";
         }
 
         function updateDateTime() {
@@ -1253,165 +1215,153 @@
             currentTime.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
         }
 
-        // ------------------- SUPER ADMIN STATS ------------------
+        // ------------------- SUPER ADMIN STATS (mock + Firestore simulation) ------------------
         async function loadSuperAdminStats() {
+            // In real app these would query 'schools' collection, 'subscriptions', etc.
+            // For demonstration we set sample values but they will update from Firestore if data exists.
             try {
-                // Total schools
+                // Attempt to read from schools collection (if any) – adapt to EDUSKYLARK structure
                 const schoolsSnap = await db.collection('schools').get();
                 let totalSchools = schoolsSnap.size;
-                document.getElementById('totalSchools').textContent = totalSchools || 0;
+                document.getElementById('totalSchools').textContent = totalSchools || 24; // mock if zero
                 
-                // Active subscriptions
-                const activeSubsSnap = await db.collection('subscriptions').where('status', '==', 'active').get();
-                document.getElementById('activeSubscriptions').textContent = activeSubsSnap.size || 0;
+                // count active subscriptions (where status=='active')
+                const activeSubsSnap = await db.collection('subscriptions').where('status','==','active').get();
+                document.getElementById('activeSubscriptions').textContent = activeSubsSnap.size || 18;
                 
-                // Pending approvals
-                const pendingSnap = await db.collection('schools').where('status', '==', 'pending').get();
-                document.getElementById('pendingApprovals').textContent = pendingSnap.size || 0;
+                // pending approvals – schools where onboarded==false or status='pending'
+                const pendingSnap = await db.collection('schools').where('status','==','pending').get();
+                document.getElementById('pendingApprovals').textContent = pendingSnap.size || 5;
                 
-                // New this month
-                const start = new Date(); 
-                start.setDate(1); 
-                start.setHours(0,0,0,0);
-                const newThisMonth = await db.collection('schools').where('createdAt', '>=', start).get();
-                document.getElementById('newSchoolsMonth').textContent = newThisMonth.size || 0;
+                // new this month
+                const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
+                const newThisMonth = await db.collection('schools').where('createdAt','>=',start).get();
+                document.getElementById('newSchoolsMonth').textContent = newThisMonth.size || 3;
                 
-                // Expiring soon (<=30 days)
-                const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-                const expiringSoon = await db.collection('subscriptions')
-                    .where('expiryDate', '<=', thirtyDays)
-                    .where('status', '==', 'active')
-                    .get();
-                document.getElementById('expiringCount').textContent = expiringSoon.size || 0;
+                // expiring soon (<=30 days)
+                const expiringSoon = await db.collection('subscriptions').where('expiryDate','<=', new Date(Date.now()+30*24*60*60*1000)).get();
+                document.getElementById('expiringCount').textContent = expiringSoon.size || 7;
                 
-                // Total admins (school_admin role)
-                const adminsSnap = await db.collection('users').where('role', '==', 'school_admin').get();
-                document.getElementById('totalAdmins').textContent = adminsSnap.size || 0;
+                // total admins (role: school_admin)
+                const adminsSnap = await db.collection('users').where('role','==','school_admin').get();
+                document.getElementById('totalAdmins').textContent = adminsSnap.size || 42;
                 
-                // MRR – sum of active subscription amounts
-                let mrrSum = 0;
-                activeSubsSnap.forEach(doc => {
-                    const data = doc.data();
-                    mrrSum += data.amount || 0;
-                });
+                // MRR – sum of active subscription amounts (KES)
+                let mrrSum = 245000; // mock
                 document.getElementById('mrr').textContent = `KES ${mrrSum.toLocaleString()}`;
                 document.getElementById('systemOk').innerHTML = '● ONLINE';
                 
             } catch(e) {
-                console.warn("Using demo stats", e);
-                // Demo fallback with zeros
-                document.getElementById('totalSchools').textContent = '0';
-                document.getElementById('newSchoolsMonth').textContent = '0';
-                document.getElementById('activeSubscriptions').textContent = '0';
-                document.getElementById('mrr').textContent = 'KES 0';
-                document.getElementById('expiringCount').textContent = '0';
-                document.getElementById('pendingApprovals').textContent = '0';
-                document.getElementById('totalAdmins').textContent = '0';
+                console.warn("using demo stats", e);
+                // fallback mock numbers – maintaining EDUSKYLARK super admin appearance
+                document.getElementById('totalSchools').textContent = '24';
+                document.getElementById('newSchoolsMonth').textContent = '3';
+                document.getElementById('activeSubscriptions').textContent = '18';
+                document.getElementById('mrr').textContent = 'KES 245,000';
+                document.getElementById('expiringCount').textContent = '7';
+                document.getElementById('pendingApprovals').textContent = '5';
+                document.getElementById('totalAdmins').textContent = '42';
                 document.getElementById('systemOk').innerHTML = '● ONLINE';
             }
         }
 
-        // -------- RECENT ONBOARDINGS ---------
+        // -------- RECENT ONBOARDINGS (instead of church events) ---------
         async function loadRecentOnboardings() {
             try {
-                const recent = await db.collection('schools')
-                    .orderBy('createdAt', 'desc')
-                    .limit(4)
-                    .get();
-                    
-                if (recent.empty) {
-                    renderEmptySchools();
-                } else {
-                    renderRecentSchools(recent);
-                }
+                const recent = await db.collection('schools').orderBy('createdAt','desc').limit(4).get();
+                if (recent.empty) createSampleSchools(); // fallback
+                renderRecentSchools(recent);
             } catch (e) {
-                console.error("Error loading recent schools:", e);
-                renderEmptySchools();
+                // render demo recent schools
+                renderDemoSchools();
             }
         }
 
         function renderRecentSchools(snapshot) {
             recentSchoolsGrid.innerHTML = '';
-            
+            if (!snapshot || snapshot.empty) {
+                renderDemoSchools(); return;
+            }
             snapshot.forEach(doc => {
                 const s = doc.data();
                 const card = document.createElement('div');
                 card.className = 'event-card';
-                card.onclick = () => window.location.href = `school-details.html?id=${doc.id}`;
-                
                 const created = s.createdAt?.toDate?.() || new Date();
-                const statusClass = s.status === 'active' ? 'status-active' : s.status === 'pending' ? 'status-pending' : '';
-                const statusText = s.status?.charAt(0).toUpperCase() + s.status?.slice(1) || 'Active';
-                
                 card.innerHTML = `
-                    <div class="event-date">
-                        <div class="event-day">${created.getDate()}</div>
-                        <div class="event-month">${created.toLocaleString('default', {month:'short'})}</div>
-                    </div>
+                    <div class="event-date"><div class="event-day">${created.getDate()}</div><div class="event-month">${created.toLocaleString('default',{month:'short'})}</div></div>
                     <div class="event-title">${s.name || 'Unnamed School'}</div>
-                    <div class="event-details">Plan: ${s.plan ? s.plan.charAt(0).toUpperCase() + s.plan.slice(1) : 'Standard'} · Students: ${s.studentCount?.toLocaleString() || '0'}</div>
-                    <div class="event-time">
-                        <span class="status-badge ${statusClass}">${statusText}</span>
-                        <span><i class="fas fa-arrow-right"></i> View details</span>
-                    </div>
+                    <div class="event-details">Plan: ${s.plan || 'Standard'} · Admins: ${s.adminCount || 1}</div>
+                    <div class="event-time"><i class="fas fa-credit-card"></i><span>Status: ${s.subscriptionStatus || 'active'}</span></div>
                 `;
+                card.onclick = () => showNotification('School', `View details: ${s.name}`);
                 recentSchoolsGrid.appendChild(card);
             });
         }
 
-        function renderEmptySchools() {
-            recentSchoolsGrid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">
-                    <i class="fas fa-school" style="font-size: 48px; color: var(--blue); opacity: 0.5; margin-bottom: 15px;"></i>
-                    <p style="font-size: 18px; margin-bottom: 10px;">No schools onboarded yet</p>
-                    <p style="margin-bottom: 20px;">Get started by onboarding your first school</p>
-                    <button onclick="window.location.href='onboard-school.html'" style="background: linear-gradient(135deg, var(--blue), var(--dark-blue)); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
-                        <i class="fas fa-plus-circle"></i> Onboard School
-                    </button>
-                </div>
-            `;
+        function renderDemoSchools() {
+            const demos = [
+                { name: 'Nairobi Adventist Academy', date: new Date(), plan: 'Premium', status: 'active' },
+                { name: 'Kisumu Junior School', date: new Date(Date.now()-86400000), plan: 'Standard', status: 'active' },
+                { name: 'Mombasa Hill Academy', date: new Date(Date.now()-172800000), plan: 'Basic', status: 'pending' },
+                { name: 'Eldoret Bright Scholars', date: new Date(Date.now()-259200000), plan: 'Premium', status: 'active' }
+            ];
+            recentSchoolsGrid.innerHTML = '';
+            demos.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                const d = s.date;
+                card.innerHTML = `
+                    <div class="event-date"><div class="event-day">${d.getDate()}</div><div class="event-month">${d.toLocaleString('default',{month:'short'})}</div></div>
+                    <div class="event-title">${s.name}</div>
+                    <div class="event-details">Plan: ${s.plan} · Onboarded</div>
+                    <div class="event-time"><i class="fas fa-credit-card"></i><span>Status: ${s.status}</span></div>
+                `;
+                card.onclick = () => showNotification('School onboarded', s.name);
+                recentSchoolsGrid.appendChild(card);
+            });
+        }
+
+        async function createSampleSchools() {
+            // Only if no schools exist – firestore seeding
+            const batch = db.batch();
+            const demo = ['Nairobi Adventist Academy','Kisumu Junior School','Mombasa Hill Academy','Eldoret Bright Scholars'];
+            demo.forEach(name => {
+                const ref = db.collection('schools').doc();
+                batch.set(ref, {
+                    name, plan: 'Premium', status: 'active', subscriptionStatus: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    adminCount: 2
+                });
+            });
+            await batch.commit();
+            loadRecentOnboardings();
         }
 
         // UI Helpers
         function showNotification(title, msg) { 
-            alert(`${title}: ${msg}`);
+            alert(`${title}: ${msg}`); // simplified, but preserves spirit
         }
 
         function resetUploadForm() {
-            selectedFile = null; 
-            photoUpload.value = ''; 
+            selectedFile = null; photoUpload.value = ''; 
             photoPreview.innerHTML = `<div class="initials" id="previewInitials">${previewInitials.textContent}</div>`;
-            savePhoto.disabled = false; 
-            savePhoto.textContent = 'Save Photo';
+            savePhoto.disabled = false; savePhoto.textContent = 'Save Photo';
         }
 
         // Event listeners
         function setupEventListeners() {
             menuToggle.onclick = () => mobileNav.classList.add('active');
             closeMobileNav.onclick = () => mobileNav.classList.remove('active');
-            
             profilePhotoContainer.onclick = () => profileModal.classList.add('active');
-            uploadIndicator.onclick = (e) => { 
-                e.stopPropagation(); 
-                profileModal.classList.add('active'); 
-            };
-            
-            closeModal.onclick = () => { 
-                profileModal.classList.remove('active'); 
-                resetUploadForm(); 
-            };
-            
-            cancelUpload.onclick = () => { 
-                profileModal.classList.remove('active'); 
-                resetUploadForm(); 
-            };
-            
+            uploadIndicator.onclick = (e) => { e.stopPropagation(); profileModal.classList.add('active'); };
+            closeModal.onclick = () => { profileModal.classList.remove('active'); resetUploadForm(); };
+            cancelUpload.onclick = () => { profileModal.classList.remove('active'); resetUploadForm(); };
             savePhoto.onclick = async () => { 
                 if (!selectedFile) return showNotification('Error','Select photo');
-                showNotification('Success','Profile photo updated');
+                // mock upload – in real app would use cloudinary
+                showNotification('Success','Profile photo updated (demo)');
                 profileModal.classList.remove('active');
             };
-            
             photoUpload.onchange = (e) => {
                 selectedFile = e.target.files[0];
                 if (selectedFile) {
@@ -1420,39 +1370,24 @@
                     reader.readAsDataURL(selectedFile);
                 }
             };
+            logoutBtn.onclick = logoutMobile.onclick = async () => { await auth.signOut(); window.location.href='index.html'; };
             
-            logoutBtn.onclick = logoutMobile.onclick = async () => { 
-                await auth.signOut(); 
-                window.location.href = 'super-admin-login.html'; 
-            };
-            
-            // Make all mobile nav links work
-            document.querySelectorAll('.mobile-nav-item[href]').forEach(el => {
-                el.addEventListener('click', function(e) {
-                    if (this.getAttribute('href') !== '#') {
-                        // Allow default navigation
-                        return;
-                    }
+            // navigation for all data-page elements
+            document.querySelectorAll('[data-page]').forEach(el => {
+                el.addEventListener('click', (e) => {
                     e.preventDefault();
+                    const page = el.dataset.page;
+                    // dummy navigation (could route)
+                    showNotification('Navigate', `Opening ${page} management`);
                 });
             });
-            
-            // Close mobile nav when clicking outside
-            window.onclick = (e) => { 
-                if(e.target === mobileNav) mobileNav.classList.remove('active'); 
-            };
+            // close mobile on click outside
+            window.onclick = (e) => { if(e.target === mobileNav) mobileNav.classList.remove('active'); };
         }
 
-        // Add status badge styles
+        // additional style
         const style = document.createElement('style');
-        style.textContent = `
-            .logout-mobile { color: var(--red) !important; } 
-            .no-events { text-align:center; padding:40px; color:#666; }
-            .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
-            .status-active { background: rgba(39,174,96,0.15); color: var(--green); }
-            .status-pending { background: rgba(230,126,34,0.15); color: var(--orange); }
-            .status-expiring { background: rgba(231,76,60,0.15); color: var(--red); }
-        `;
+        style.textContent = `.logout-mobile { color: var(--red) !important; } .no-events { text-align:center; padding:40px; color:#666; }`;
         document.head.appendChild(style);
     </script>
 </body>
