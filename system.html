@@ -2,137 +2,1406 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>EDUSKYLARK · System Settings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK 8.10.0 (exact match with auth page) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --green: #27ae60; }
-        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); font-family: 'Segoe UI', sans-serif; }
-        .header { background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%); color: white; padding: 20px 30px; }
-        .dashboard-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
-        .settings-grid { display: grid; grid-template-columns: 260px 1fr; gap: 30px; }
-        .settings-sidebar { background: white; border-radius: 20px; padding: 25px; height: fit-content; }
-        .settings-sidebar-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
-        .settings-sidebar-item:hover { background: rgba(52,152,219,0.1); }
-        .settings-sidebar-item.active { background: rgba(52,152,219,0.15); color: var(--blue); font-weight: 600; }
-        .settings-content { background: white; border-radius: 20px; padding: 30px; }
-        .form-group { margin-bottom: 25px; }
-        .form-label { font-weight: 600; display: block; margin-bottom: 8px; color: var(--dark-blue); }
-        .form-control { width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 12px; transition: all 0.3s; }
-        .form-control:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 4px rgba(52,152,219,0.1); }
-        .toggle-switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+        /* ------------------------------------------------------------
+           EDUSKYLARK · SYSTEM SETTINGS – AUTH-INTEGRATED, FULLY FUNCTIONAL
+           Mobile responsive, Firestore persistence, super-admin guard
+        ------------------------------------------------------------ */
+        :root { 
+            --blue: #3498db; 
+            --orange: #e67e22; 
+            --red: #e74c3c; 
+            --dark-blue: #2c3e50; 
+            --white: #ffffff; 
+            --light-blue: #ecf0f1; 
+            --green: #27ae60; 
+            --purple: #9b59b6; 
+            --gold: #f1c40f; 
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --shadow-hover: 0 15px 40px rgba(0,0,0,0.1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); 
+            min-height: 100vh; 
+            color: var(--dark-blue); 
+            line-height: 1.5;
+        }
+        
+        .background-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(52,152,219,0.1);
+            animation: float 15s infinite ease-in-out;
+        }
+        .bubble:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 10%; background: rgba(52,152,219,0.15); }
+        .bubble:nth-child(2) { width: 120px; height: 120px; top: 60%; right: 15%; background: rgba(230,126,34,0.1); animation-delay: 2s; }
+        .bubble:nth-child(3) { width: 60px; height: 60px; bottom: 20%; left: 20%; background: rgba(231,76,60,0.1); animation-delay: 4s; }
+        .bubble:nth-child(4) { width: 100px; height: 100px; top: 30%; right: 25%; background: rgba(44,62,80,0.1); animation-delay: 6s; }
+        
+        @keyframes float {
+            0%,100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        /* ---------- HEADER – DEEP NAVY, STICKY ---------- */
+        .header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1a2530 100%);
+            color: white;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .logo {
+            width: 52px;
+            height: 52px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .logo img { width: 40px; height: 40px; object-fit: contain; }
+        .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .brand-text p { font-size: 0.8rem; color: var(--blue); opacity: 0.9; }
+        .super-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, var(--gold), #f39c12);
+            color: var(--dark-blue);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.08);
+            padding: 6px 16px 6px 12px;
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .profile-photo {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            overflow: hidden;
+        }
+        .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .admin-name { font-weight: 600; font-size: 0.9rem; }
+        .logout-btn {
+            background: rgba(231,76,60,0.15);
+            border: 1.5px solid var(--red);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { background: var(--red); transform: scale(0.98); }
+
+        /* ---------- MOBILE MENU TOGGLE ---------- */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* ---------- MOBILE NAVIGATION ---------- */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44,62,80,0.98);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .mobile-nav.active { display: block; }
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--dark-blue);
+            color: white;
+        }
+        .mobile-nav-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+        .mobile-nav-links { padding: 20px; overflow-y: auto; max-height: calc(100vh - 140px); }
+        .mobile-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 4px;
+        }
+        .mobile-nav-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-profile-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        /* ---------- MAIN DASHBOARD CONTAINER ---------- */
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ---------- SETTINGS LAYOUT – FULLY RESPONSIVE ---------- */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+        }
+
+        /* ---------- SETTINGS SIDEBAR – CARD STYLE ---------- */
+        .settings-sidebar {
+            background: white;
+            border-radius: 24px;
+            padding: 24px 16px;
+            box-shadow: var(--shadow);
+            height: fit-content;
+            border: 1px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(8px);
+        }
+        .settings-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            border-radius: 16px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--dark-blue);
+            font-weight: 500;
+        }
+        .settings-sidebar-item i { width: 22px; color: var(--blue); }
+        .settings-sidebar-item:hover {
+            background: rgba(52,152,219,0.08);
+            transform: translateX(5px);
+        }
+        .settings-sidebar-item.active {
+            background: linear-gradient(135deg, rgba(52,152,219,0.12), rgba(44,62,80,0.05));
+            color: var(--blue);
+            font-weight: 700;
+            border-left: 4px solid var(--blue);
+            border-radius: 16px 8px 8px 16px;
+        }
+        .settings-sidebar-item.active i { color: var(--blue); }
+
+        /* ---------- SETTINGS CONTENT – DYNAMIC PANEL ---------- */
+        .settings-content {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(8px);
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .settings-header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .settings-header h2 i { color: var(--blue); }
+
+        /* ---------- FORM ELEMENTS – MODERN, CLEAN ---------- */
+        .form-group { margin-bottom: 28px; }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark-blue);
+            font-size: 0.95rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background: #fafcfc;
+        }
+        .form-control:focus {
+            border-color: var(--blue);
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(52,152,219,0.08);
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            padding-right: 48px;
+        }
+
+        /* ---------- TOGGLE SWITCH ---------- */
+        .toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f3f5;
+        }
+        .toggle-label { font-weight: 500; }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 30px;
+        }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: .3s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         input:checked + .slider { background-color: var(--blue); }
-        input:checked + .slider:before { transform: translateX(24px); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* ---------- SYSTEM HEALTH CARD ---------- */
+        .health-card {
+            background: #f8fafd;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #e9ecf0;
+        }
+        .health-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #dee4e9;
+        }
+        .health-item:last-child { border-bottom: none; }
+        .health-status { 
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%; 
+            display: inline-block; 
+            margin-right: 8px;
+        }
+        .status-online { background: var(--green); box-shadow: 0 0 0 2px rgba(39,174,96,0.2); }
+        .status-warning { background: var(--orange); box-shadow: 0 0 0 2px rgba(230,126,34,0.2); }
+        .status-offline { background: var(--red); box-shadow: 0 0 0 2px rgba(231,76,60,0.2); }
+
+        /* ---------- ACTION BUTTONS ---------- */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(145deg, var(--blue), #2980b9);
+            color: white;
+            box-shadow: 0 8px 18px rgba(52,152,219,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(52,152,219,0.35); }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--dark-blue);
+            border: 1px solid #d0d9e4;
+        }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        /* ---------- AUDIT LOGS TABLE ---------- */
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .audit-table th {
+            text-align: left;
+            padding: 16px 12px;
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 600;
+        }
+        .audit-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        /* ---------- LOADING OVERLAY & TOASTS ---------- */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            animation: slideInRight 0.3s;
+        }
+        .success-toast {
+            background: #27ae60;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ---------- RESPONSIVE BREAKPOINTS ---------- */
+        @media screen and (max-width: 1100px) {
+            .settings-grid { grid-template-columns: 1fr; gap: 20px; }
+            .settings-sidebar { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+            .settings-sidebar-item { margin-bottom: 0; }
+        }
+        @media screen and (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .user-area .admin-profile { display: none; }
+            .header-content { flex-wrap: wrap; }
+            .logo-section { width: calc(100% - 60px); }
+            .settings-sidebar { grid-template-columns: 1fr; }
+            .settings-content { padding: 24px 20px; }
+            .settings-header h2 { font-size: 22px; }
+            .action-buttons { justify-content: center; }
+            .btn { width: 100%; justify-content: center; }
+        }
+        @media screen and (max-width: 480px) {
+            .brand-text h1 { font-size: 1.2rem; }
+            .logo { width: 44px; height: 44px; }
+            .logo img { width: 32px; height: 32px; }
+            .settings-content { padding: 20px 16px; }
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div style="background: white; padding: 28px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+            <div class="spinner" style="border-top-color: #3498db;"></div>
+            <p style="color: #2c3e50; font-weight: 600; margin-top: 20px;">Loading settings...</p>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
+    <div class="background-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <!-- Header -->
     <header class="header">
-        <div class="header-content" style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; align-items:center; gap:20px;">
-                <div class="logo" style="width:60px; height:60px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                    <img src="logo.png" style="width:45px;">
+        <div class="header-content">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
                 </div>
-                <div>
-                    <h1 style="font-size:24px;">EDUSKYLARK · SYSTEM <span style="background:linear-gradient(135deg,#f1c40f,#f39c12); color:var(--dark-blue); padding:3px 10px; border-radius:15px; font-size:12px; margin-left:10px;"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
-                    <p style="color:var(--blue);">Global Configuration</p>
+                <div class="brand-text">
+                    <h1>
+                        EDUSKYLARK · SYSTEM
+                        <span class="super-badge"><i class="fas fa-crown"></i> SUPER ADMIN</span>
+                    </h1>
+                    <p>Global Configuration & Security</p>
                 </div>
             </div>
-            <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:8px 16px; border-radius:30px; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <div class="user-area">
+                <div class="admin-profile">
+                    <div class="profile-photo" id="profilePhoto"></div>
+                    <span class="admin-name" id="userNameDisplay">Loading...</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
         </div>
     </header>
 
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h3>EDUSKYLARK · SUPER ADMIN</h3>
+            <button class="mobile-nav-close" id="closeMobileNav">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mobile-user-info" id="mobileUserInfo"></div>
+        <div class="mobile-nav-links">
+            <a href="super-admin-dashboard.html" class="mobile-nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="schools-management.html" class="mobile-nav-item"><i class="fas fa-building"></i> All Schools</a>
+            <a href="onboard-school.html" class="mobile-nav-item"><i class="fas fa-school"></i> Onboard School</a>
+            <a href="subscription-management.html" class="mobile-nav-item"><i class="fas fa-credit-card"></i> Subscriptions</a>
+            <a href="pending-approvals.html" class="mobile-nav-item"><i class="fas fa-hourglass-half"></i> Pending Approval</a>
+            <a href="expiring-soon.html" class="mobile-nav-item"><i class="fas fa-clock"></i> Expiring Soon</a>
+            <a href="admin-management.html" class="mobile-nav-item"><i class="fas fa-user-tie"></i> School Admins</a>
+            <a href="analytics.html" class="mobile-nav-item"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="system-settings.html" class="mobile-nav-item active"><i class="fas fa-cog"></i> System Settings</a>
+            <a href="#" class="mobile-nav-item" id="logoutMobile"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <main class="dashboard-container">
         <div class="settings-grid">
-            <div class="settings-sidebar">
-                <div class="settings-sidebar-item active"><i class="fas fa-globe"></i> General</div>
-                <div class="settings-sidebar-item"><i class="fas fa-shield-alt"></i> Security</div>
-                <div class="settings-sidebar-item"><i class="fas fa-credit-card"></i> Billing</div>
-                <div class="settings-sidebar-item"><i class="fas fa-bell"></i> Notifications</div>
-                <div class="settings-sidebar-item"><i class="fas fa-database"></i> Data Management</div>
-                <div class="settings-sidebar-item"><i class="fas fa-code"></i> API & Integrations</div>
-                <div class="settings-sidebar-item"><i class="fas fa-users"></i> Roles & Permissions</div>
-                <div class="settings-sidebar-item"><i class="fas fa-history"></i> Audit Logs</div>
+            <!-- Settings Sidebar Navigation -->
+            <div class="settings-sidebar" id="settingsSidebar">
+                <div class="settings-sidebar-item active" data-section="general">
+                    <i class="fas fa-globe"></i> General
+                </div>
+                <div class="settings-sidebar-item" data-section="security">
+                    <i class="fas fa-shield-alt"></i> Security
+                </div>
+                <div class="settings-sidebar-item" data-section="billing">
+                    <i class="fas fa-credit-card"></i> Billing
+                </div>
+                <div class="settings-sidebar-item" data-section="notifications">
+                    <i class="fas fa-bell"></i> Notifications
+                </div>
+                <div class="settings-sidebar-item" data-section="data">
+                    <i class="fas fa-database"></i> Data Management
+                </div>
+                <div class="settings-sidebar-item" data-section="api">
+                    <i class="fas fa-code"></i> API & Integrations
+                </div>
+                <div class="settings-sidebar-item" data-section="roles">
+                    <i class="fas fa-users"></i> Roles & Permissions
+                </div>
+                <div class="settings-sidebar-item" data-section="audit">
+                    <i class="fas fa-history"></i> Audit Logs
+                </div>
             </div>
-            
-            <div class="settings-content">
-                <h2 style="font-size:24px; font-weight:700; margin-bottom:30px;">General Settings</h2>
-                
-                <div class="form-group">
-                    <label class="form-label">Platform Name</label>
-                    <input type="text" class="form-control" value="EDUSKYLARK School Management">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Support Email</label>
-                    <input type="email" class="form-control" value="support@eduskyark.com">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Default Currency</label>
-                    <select class="form-control">
-                        <option>KES - Kenyan Shilling</option>
-                        <option>UGX - Ugandan Shilling</option>
-                        <option>TZS - Tanzanian Shilling</option>
-                        <option>USD - US Dollar</option>
-                    </select>
-                </div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:20px;">
-                    <div>
-                        <h3 style="font-size:18px; font-weight:600; margin-bottom:20px;">Feature Toggles</h3>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <span>Multi-language Support</span>
-                            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <span>SMS Notifications</span>
-                            <label class="toggle-switch"><input type="checkbox"><span class="slider"></span></label>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <span>Parent Portal</span>
-                            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 style="font-size:18px; font-weight:600; margin-bottom:20px;">System Health</h3>
-                        <div style="background:#f9f9f9; border-radius:16px; padding:20px;">
-                            <p><i class="fas fa-circle" style="color:var(--green); margin-right:10px;"></i> Database: Connected</p>
-                            <p><i class="fas fa-circle" style="color:var(--green); margin-right:10px;"></i> Storage: Operational</p>
-                            <p><i class="fas fa-circle" style="color:var(--green); margin-right:10px;"></i> Authentication: Active</p>
-                            <p><i class="fas fa-circle" style="color:var(--orange); margin-right:10px;"></i> Backup: 12 hours ago</p>
-                            <p style="margin-top:20px; font-size:13px; color:#666;">Version: 2.1.0 · Last deployed: 12 Mar 2026</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-top:40px; display:flex; justify-content:flex-end; gap:15px;">
-                    <button style="background:#f0f0f0; color:var(--dark-blue); border:none; padding:12px 30px; border-radius:30px; font-weight:600;">Cancel</button>
-                    <button style="background:linear-gradient(135deg, var(--blue), var(--dark-blue)); color:white; border:none; padding:12px 30px; border-radius:30px; font-weight:600;">Save Changes</button>
+
+            <!-- Dynamic Settings Content Panel -->
+            <div class="settings-content" id="settingsContent">
+                <!-- Content loaded dynamically via JavaScript -->
+                <div style="display: flex; justify-content: center; padding: 60px;">
+                    <i class="fas fa-spinner fa-pulse" style="font-size: 32px; color: var(--blue);"></i>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-      const firebaseConfig = {
-  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-  authDomain: "toplink-edu.firebaseapp.com",
-  projectId: "toplink-edu",
-  storageBucket: "toplink-edu.firebasestorage.app",
-  messagingSenderId: "35786900143",
-  appId: "1:35786900143:web:9e612336393d29324c0a5a",
-  measurementId: "G-3VSBS7R11D"
-};
-        firebase.initializeApp(firebaseConfig);
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
+        // --------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
-        auth.onAuthStateChanged((user) => { if (!user) window.location.href = 'super-admin-login.html'; });
-        document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'super-admin-login.html'; });
+        const db = firebase.firestore();
+
+        // --------------------------------------------------------------
+        // DOM ELEMENTS
+        // --------------------------------------------------------------
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const mobileUserInfo = document.getElementById('mobileUserInfo');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeMobileNav = document.getElementById('closeMobileNav');
+        const mobileNav = document.getElementById('mobileNav');
+        const settingsSidebar = document.getElementById('settingsSidebar');
+        const settingsContent = document.getElementById('settingsContent');
+
+        // --------------------------------------------------------------
+        // HELPER FUNCTIONS
+        // --------------------------------------------------------------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        function showSuccess(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast success-toast';
+            toast.style.background = '#27ae60';
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            document.body.appendChild(toast);
+            toast.style.display = 'flex';
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // --------------------------------------------------------------
+        // AUTH GUARD – STRICT SUPER ADMIN VERIFICATION
+        // --------------------------------------------------------------
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.replace('super-admin-login.html');
+                return;
+            }
+
+            try {
+                loadingOverlay.style.display = 'flex';
+                
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                const userData = userDoc.data();
+                
+                // SUPER-ADMIN ROLE CHECK
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || 
+                                    role === 'superadmin' || 
+                                    userData.isSuperAdmin === true || 
+                                    userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(() => {});
+
+                // Load user profile
+                loadUserProfile(user, userData);
+                
+                // Load system settings from Firestore
+                await loadSystemSettings();
+                
+                loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error('Auth error:', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
+                setTimeout(() => window.location.href = 'super-admin-login.html', 2000);
+            }
+        });
+
+        // --------------------------------------------------------------
+        // LOAD USER PROFILE
+        // --------------------------------------------------------------
+        function loadUserProfile(user, userData) {
+            const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+            userNameDisplay.textContent = displayName;
+            
+            // Set profile photo
+            if (userData.profilePhoto) {
+                profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
+            } else {
+                const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA';
+                profilePhoto.innerHTML = `<span style="font-size: 18px; font-weight: bold; color: white;">${initials}</span>`;
+            }
+            
+            // Mobile user info
+            const mobileInitials = userData.profilePhoto ? '' : 
+                (displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'SA');
+            
+            mobileUserInfo.innerHTML = `
+                <div class="mobile-profile-photo">
+                    ${userData.profilePhoto ? `<img src="${userData.profilePhoto}">` : `<span style="font-size: 22px; font-weight: bold; color: white;">${mobileInitials}</span>`}
+                </div>
+                <div>
+                    <h3 style="color: white; margin-bottom: 5px;">${displayName}</h3>
+                    <p style="color: var(--blue); font-size: 14px;"><i class="fas fa-crown"></i> Super Administrator</p>
+                </div>
+            `;
+        }
+
+        // --------------------------------------------------------------
+        // SYSTEM SETTINGS – FIRESTORE PERSISTENCE
+        // --------------------------------------------------------------
+        let systemSettings = {
+            platformName: 'EDUSKYLARK School Management',
+            supportEmail: 'support@eduskyark.com',
+            currency: 'KES',
+            features: {
+                multiLanguage: true,
+                smsNotifications: false,
+                parentPortal: true,
+                autoBackup: true,
+                twoFactorAuth: false,
+                apiAccess: false
+            },
+            updatedAt: null,
+            updatedBy: null
+        };
+
+        // Load settings from Firestore
+        async function loadSystemSettings() {
+            try {
+                const settingsDoc = await db.collection('system').doc('settings').get();
+                if (settingsDoc.exists) {
+                    systemSettings = { ...systemSettings, ...settingsDoc.data() };
+                } else {
+                    // Create default settings document
+                    await db.collection('system').doc('settings').set(systemSettings);
+                }
+                
+                // Load active section (default: general)
+                const activeSection = document.querySelector('.settings-sidebar-item.active')?.dataset.section || 'general';
+                renderSettingsSection(activeSection);
+                
+            } catch (err) {
+                console.error('Error loading settings:', err);
+                showError('Failed to load system settings');
+                renderSettingsSection('general');
+            }
+        }
+
+        // Save settings to Firestore
+        async function saveSystemSettings() {
+            loadingOverlay.style.display = 'flex';
+            try {
+                systemSettings.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                systemSettings.updatedBy = auth.currentUser?.uid;
+                systemSettings.updatedByEmail = auth.currentUser?.email;
+                
+                await db.collection('system').doc('settings').set(systemSettings, { merge: true });
+                
+                // Also log this action in audit logs
+                await db.collection('auditLogs').add({
+                    action: 'system_settings_updated',
+                    user: auth.currentUser?.uid,
+                    userEmail: auth.currentUser?.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    section: document.querySelector('.settings-sidebar-item.active')?.dataset.section || 'general'
+                });
+                
+                showSuccess('System settings saved successfully');
+                
+            } catch (err) {
+                console.error('Error saving settings:', err);
+                showError('Failed to save settings: ' + err.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // --------------------------------------------------------------
+        // RENDER DYNAMIC SETTINGS SECTIONS
+        // --------------------------------------------------------------
+        function renderSettingsSection(section) {
+            let html = '';
+            
+            switch(section) {
+                case 'general':
+                    html = renderGeneralSettings();
+                    break;
+                case 'security':
+                    html = renderSecuritySettings();
+                    break;
+                case 'billing':
+                    html = renderBillingSettings();
+                    break;
+                case 'notifications':
+                    html = renderNotificationSettings();
+                    break;
+                case 'data':
+                    html = renderDataManagementSettings();
+                    break;
+                case 'api':
+                    html = renderApiSettings();
+                    break;
+                case 'roles':
+                    html = renderRolesSettings();
+                    break;
+                case 'audit':
+                    html = renderAuditLogs();
+                    break;
+                default:
+                    html = renderGeneralSettings();
+            }
+            
+            settingsContent.innerHTML = html;
+            
+            // Attach event listeners after content is loaded
+            attachSettingsEventListeners(section);
+        }
+
+        // --------------------------------------------------------------
+        // SETTINGS SECTION RENDERERS
+        // --------------------------------------------------------------
+        function renderGeneralSettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-globe" style="color: var(--blue);"></i> General Settings</h2>
+                    <span style="background: rgba(52,152,219,0.1); padding: 8px 16px; border-radius: 40px; font-size: 14px;">
+                        <i class="fas fa-sync-alt"></i> Auto-save enabled
+                    </span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-tag" style="margin-right: 8px; color: var(--blue);"></i> Platform Name</label>
+                    <input type="text" class="form-control" id="platformName" value="${escapeHtml(systemSettings.platformName || 'EDUSKYLARK School Management')}" placeholder="EDUSKYLARK">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-envelope" style="margin-right: 8px; color: var(--blue);"></i> Support Email</label>
+                    <input type="email" class="form-control" id="supportEmail" value="${escapeHtml(systemSettings.supportEmail || 'support@eduskyark.com')}" placeholder="support@eduskyark.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-coins" style="margin-right: 8px; color: var(--blue);"></i> Default Currency</label>
+                    <select class="form-control" id="defaultCurrency">
+                        <option value="KES" ${systemSettings.currency === 'KES' ? 'selected' : ''}>KES - Kenyan Shilling</option>
+                        <option value="UGX" ${systemSettings.currency === 'UGX' ? 'selected' : ''}>UGX - Ugandan Shilling</option>
+                        <option value="TZS" ${systemSettings.currency === 'TZS' ? 'selected' : ''}>TZS - Tanzanian Shilling</option>
+                        <option value="USD" ${systemSettings.currency === 'USD' ? 'selected' : ''}>USD - US Dollar</option>
+                    </select>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:30px;">
+                    <div>
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+                            <i class="fas fa-toggle-on" style="color: var(--blue);"></i> Feature Toggles
+                        </h3>
+                        <div class="toggle-item">
+                            <span class="toggle-label"><i class="fas fa-language" style="margin-right: 10px; color: #666;"></i> Multi-language Support</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="featureMultiLanguage" ${systemSettings.features?.multiLanguage ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label"><i class="fas fa-sms" style="margin-right: 10px; color: #666;"></i> SMS Notifications</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="featureSmsNotifications" ${systemSettings.features?.smsNotifications ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label"><i class="fas fa-user-graduate" style="margin-right: 10px; color: #666;"></i> Parent Portal</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="featureParentPortal" ${systemSettings.features?.parentPortal ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-item">
+                            <span class="toggle-label"><i class="fas fa-database" style="margin-right: 10px; color: #666;"></i> Auto Backup</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="featureAutoBackup" ${systemSettings.features?.autoBackup ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+                            <i class="fas fa-heartbeat" style="color: var(--blue);"></i> System Health
+                        </h3>
+                        <div class="health-card" id="systemHealthCard">
+                            <div class="health-item">
+                                <span class="health-status status-online"></span>
+                                <span style="font-weight:600;">Database:</span> Connected
+                            </div>
+                            <div class="health-item">
+                                <span class="health-status status-online"></span>
+                                <span style="font-weight:600;">Storage:</span> Operational
+                            </div>
+                            <div class="health-item">
+                                <span class="health-status status-online"></span>
+                                <span style="font-weight:600;">Authentication:</span> Active
+                            </div>
+                            <div class="health-item">
+                                <span class="health-status status-warning"></span>
+                                <span style="font-weight:600;">Backup:</span> ${systemSettings.updatedAt ? formatDate(systemSettings.updatedAt) : '12 hours ago'}
+                            </div>
+                            <div style="margin-top:20px; padding-top:16px; border-top:1px solid #e2e8f0; font-size:13px; color:#4a5f6e;">
+                                <i class="fas fa-code-branch"></i> Version: 2.1.0 · 
+                                Last updated: ${systemSettings.updatedAt ? formatDate(systemSettings.updatedAt) : 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="resetSettingsForm()">Reset</button>
+                    <button class="btn btn-primary" id="saveGeneralSettings"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            `;
+        }
+
+        function renderSecuritySettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-shield-alt" style="color: var(--blue);"></i> Security Settings</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-lock" style="margin-right: 8px;"></i> Session Timeout (minutes)</label>
+                    <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="120">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-key" style="margin-right: 8px;"></i> Password Policy</label>
+                    <select class="form-control" id="passwordPolicy">
+                        <option value="standard">Standard (8+ chars, 1 number)</option>
+                        <option value="strong" selected>Strong (12+ chars, mixed case, numbers, symbols)</option>
+                        <option value="strict">Strict (14+ chars, all character types)</option>
+                    </select>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3 style="font-size:18px; font-weight:600; margin-bottom:20px;">Two-Factor Authentication</h3>
+                    <div class="toggle-item">
+                        <span class="toggle-label"><i class="fas fa-mobile-alt"></i> Require 2FA for Super Admins</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="require2FA" ${systemSettings.features?.twoFactorAuth ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span class="toggle-label"><i class="fas fa-shield"></i> Enforce 2FA for all School Admins</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="enforce2FAAll">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-secondary">Cancel</button>
+                    <button class="btn btn-primary" id="saveSecuritySettings"><i class="fas fa-save"></i> Save Security Settings</button>
+                </div>
+            `;
+        }
+
+        function renderBillingSettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-credit-card" style="color: var(--blue);"></i> Billing Configuration</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Payment Gateway</label>
+                    <select class="form-control" id="paymentGateway">
+                        <option value="stripe">Stripe</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="mpesa" selected>M-PESA</option>
+                        <option value="pesapal">PesaPal</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Invoice Prefix</label>
+                    <input type="text" class="form-control" value="INV-2026-" id="invoicePrefix">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tax Rate (%)</label>
+                    <input type="number" class="form-control" value="16" id="taxRate" step="0.1" min="0" max="30">
+                </div>
+                
+                <div class="toggle-item" style="margin-top:20px;">
+                    <span class="toggle-label">Auto-charge on renewal</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked id="autoCharge">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="saveBillingSettings"><i class="fas fa-save"></i> Save Billing Settings</button>
+                </div>
+            `;
+        }
+
+        function renderNotificationSettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-bell" style="color: var(--blue);"></i> Notification Preferences</h2>
+                </div>
+                
+                <h3 style="font-size:18px; margin-bottom:16px;">Email Notifications</h3>
+                <div class="toggle-item"><span>Subscription Renewal Reminders</span><label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                <div class="toggle-item"><span>New School Onboarding</span><label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                <div class="toggle-item"><span>Payment Failures</span><label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                
+                <h3 style="font-size:18px; margin:30px 0 16px;">SMS Alerts</h3>
+                <div class="toggle-item"><span>Critical System Alerts</span><label class="toggle-switch"><input type="checkbox"><span class="slider"></span></label></div>
+                <div class="toggle-item"><span>Daily Backup Reports</span><label class="toggle-switch"><input type="checkbox"><span class="slider"></span></label></div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="saveNotificationSettings"><i class="fas fa-save"></i> Save Notification Settings</button>
+                </div>
+            `;
+        }
+
+        function renderDataManagementSettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-database" style="color: var(--blue);"></i> Data Management</h2>
+                </div>
+                
+                <div style="background: #f8fafd; border-radius: 16px; padding: 24px; margin-bottom: 30px;">
+                    <h3 style="font-size:18px; margin-bottom:16px;">Backup Configuration</h3>
+                    <div class="form-group">
+                        <label class="form-label">Backup Frequency</label>
+                        <select class="form-control">
+                            <option>Daily</option>
+                            <option selected>Weekly</option>
+                            <option>Monthly</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" style="margin-top:10px;"><i class="fas fa-play"></i> Run Backup Now</button>
+                </div>
+                
+                <div style="background: #fff0db; border-radius: 16px; padding: 24px; border-left: 4px solid var(--orange);">
+                    <h3 style="font-size:18px; margin-bottom:12px; color: var(--orange);"><i class="fas fa-exclamation-triangle"></i> Data Retention</h3>
+                    <p style="margin-bottom:16px;">Automatically delete audit logs older than:</p>
+                    <select class="form-control" style="max-width:200px;">
+                        <option>90 days</option>
+                        <option>180 days</option>
+                        <option selected>365 days</option>
+                        <option>Never</option>
+                    </select>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary"><i class="fas fa-save"></i> Save Data Settings</button>
+                </div>
+            `;
+        }
+
+        function renderApiSettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-code" style="color: var(--blue);"></i> API & Integrations</h2>
+                </div>
+                
+                <div style="background: #f8fafd; border-radius: 16px; padding: 24px; margin-bottom: 30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3 style="font-size:18px;">API Access</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="apiEnabled" ${systemSettings.features?.apiAccess ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <p style="color: #666; margin-bottom:20px;">Enable REST API for third-party integrations</p>
+                    
+                    <div id="apiKeysSection" style="display: ${systemSettings.features?.apiAccess ? 'block' : 'none'};">
+                        <div style="background: white; border-radius: 12px; padding: 20px;">
+                            <label class="form-label">Primary API Key</label>
+                            <div style="display:flex; gap:10px;">
+                                <input type="text" class="form-control" value="sk_live_eduskyark_••••••••••••••••" readonly style="background:#f9f9f9;">
+                                <button class="btn btn-secondary" style="white-space:nowrap;">Regenerate</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="saveApiSettings"><i class="fas fa-save"></i> Save API Settings</button>
+                </div>
+            `;
+        }
+
+        function renderRolesSettings() {
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-users" style="color: var(--blue);"></i> Roles & Permissions</h2>
+                </div>
+                
+                <div style="margin-bottom:30px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h3 style="font-size:18px;">Administrator Roles</h3>
+                        <button class="btn btn-secondary"><i class="fas fa-plus"></i> Add Role</button>
+                    </div>
+                    
+                    <div style="border:1px solid #e2e8f0; border-radius:16px; overflow:hidden;">
+                        <div style="display:grid; grid-template-columns:1fr 2fr 1fr; padding:16px; background:#f8fafc; font-weight:600;">
+                            <div>Role</div><div>Permissions</div><div>Actions</div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 2fr 1fr; padding:16px; border-top:1px solid #e2e8f0;">
+                            <div><span style="font-weight:700;">Super Admin</span></div><div>Full system access</div><div><i class="fas fa-edit" style="color:var(--blue);"></i></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 2fr 1fr; padding:16px; border-top:1px solid #e2e8f0;">
+                            <div><span style="font-weight:700;">School Admin</span></div><div>Manage own school, view reports</div><div><i class="fas fa-edit" style="color:var(--blue);"></i></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderAuditLogs() {
+            // Fetch recent audit logs
+            let logsHtml = '';
+            try {
+                const logsSnap = await db.collection('auditLogs')
+                    .orderBy('timestamp', 'desc')
+                    .limit(20)
+                    .get();
+                
+                if (logsSnap.empty) {
+                    logsHtml = '<tr><td colspan="4" style="text-align:center; padding:40px;">No audit logs found</td></tr>';
+                } else {
+                    logsSnap.forEach(doc => {
+                        const log = doc.data();
+                        logsHtml += `<tr>
+                            <td>${formatDate(log.timestamp)}</td>
+                            <td>${escapeHtml(log.userEmail || 'N/A')}</td>
+                            <td>${escapeHtml(log.action || '—')}</td>
+                            <td>${escapeHtml(log.section || '—')}</td>
+                        </tr>`;
+                    });
+                }
+            } catch (err) {
+                logsHtml = `<tr><td colspan="4" style="text-align:center; padding:40px; color: var(--red);">Error loading audit logs</td></tr>`;
+            }
+            
+            return `
+                <div class="settings-header">
+                    <h2><i class="fas fa-history" style="color: var(--blue);"></i> Audit Logs</h2>
+                    <button class="btn btn-secondary" onclick="refreshAuditLogs()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="audit-table">
+                        <thead>
+                            <tr><th>Timestamp</th><th>User</th><th>Action</th><th>Section</th></tr>
+                        </thead>
+                        <tbody id="auditLogsBody">
+                            ${logsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // --------------------------------------------------------------
+        // EVENT LISTENERS & FORM HANDLERS
+        // --------------------------------------------------------------
+        function attachSettingsEventListeners(section) {
+            // Sidebar navigation
+            document.querySelectorAll('.settings-sidebar-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('.settings-sidebar-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    const sectionName = this.dataset.section;
+                    renderSettingsSection(sectionName);
+                });
+            });
+
+            // Save buttons
+            if (section === 'general') {
+                const saveBtn = document.getElementById('saveGeneralSettings');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        // Update systemSettings object from form
+                        systemSettings.platformName = document.getElementById('platformName')?.value || systemSettings.platformName;
+                        systemSettings.supportEmail = document.getElementById('supportEmail')?.value || systemSettings.supportEmail;
+                        systemSettings.currency = document.getElementById('defaultCurrency')?.value || systemSettings.currency;
+                        systemSettings.features = {
+                            ...systemSettings.features,
+                            multiLanguage: document.getElementById('featureMultiLanguage')?.checked || false,
+                            smsNotifications: document.getElementById('featureSmsNotifications')?.checked || false,
+                            parentPortal: document.getElementById('featureParentPortal')?.checked || false,
+                            autoBackup: document.getElementById('featureAutoBackup')?.checked || false
+                        };
+                        saveSystemSettings();
+                    });
+                }
+            }
+            
+            if (section === 'security') {
+                const saveBtn = document.getElementById('saveSecuritySettings');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        systemSettings.features = {
+                            ...systemSettings.features,
+                            twoFactorAuth: document.getElementById('require2FA')?.checked || false
+                        };
+                        saveSystemSettings();
+                    });
+                }
+            }
+            
+            if (section === 'billing') {
+                const saveBtn = document.getElementById('saveBillingSettings');
+                if (saveBtn) saveBtn.addEventListener('click', saveSystemSettings);
+            }
+            
+            if (section === 'notifications') {
+                const saveBtn = document.getElementById('saveNotificationSettings');
+                if (saveBtn) saveBtn.addEventListener('click', saveSystemSettings);
+            }
+            
+            if (section === 'api') {
+                const apiToggle = document.getElementById('apiEnabled');
+                const apiKeysSection = document.getElementById('apiKeysSection');
+                if (apiToggle && apiKeysSection) {
+                    apiToggle.addEventListener('change', function() {
+                        apiKeysSection.style.display = this.checked ? 'block' : 'none';
+                    });
+                }
+                const saveBtn = document.getElementById('saveApiSettings');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        systemSettings.features = {
+                            ...systemSettings.features,
+                            apiAccess: document.getElementById('apiEnabled')?.checked || false
+                        };
+                        saveSystemSettings();
+                    });
+                }
+            }
+        }
+
+        // Reset form to last saved values
+        window.resetSettingsForm = function() {
+            if (confirm('Reset all unsaved changes?')) {
+                loadSystemSettings();
+            }
+        };
+
+        // Refresh audit logs
+        window.refreshAuditLogs = function() {
+            renderSettingsSection('audit');
+        };
+
+        // API Keys section toggle (for API settings)
+        window.toggleApiKeys = function(checked) {
+            const section = document.getElementById('apiKeysSection');
+            if (section) section.style.display = checked ? 'block' : 'none';
+        };
+
+        // --------------------------------------------------------------
+        // ESCAPE HTML (XSS PROTECTION)
+        // --------------------------------------------------------------
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --------------------------------------------------------------
+        // LOGOUT
+        // --------------------------------------------------------------
+        const logout = async () => {
+            loadingOverlay.style.display = 'flex';
+            await auth.signOut();
+            window.location.href = 'super-admin-login.html';
+        };
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('logoutMobile').addEventListener('click', logout);
+
+        // --------------------------------------------------------------
+        // MOBILE MENU
+        // --------------------------------------------------------------
+        menuToggle.addEventListener('click', () => {
+            mobileNav.classList.add('active');
+        });
+        closeMobileNav.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === mobileNav) {
+                mobileNav.classList.remove('active');
+            }
+        });
+
+        // --------------------------------------------------------------
+        // MAKE FUNCTIONS GLOBAL FOR ONCLICK HANDLERS
+        // --------------------------------------------------------------
+        window.renderSettingsSection = renderSettingsSection;
+        window.saveSystemSettings = saveSystemSettings;
+        window.resetSettingsForm = resetSettingsForm;
+        window.refreshAuditLogs = refreshAuditLogs;
+        window.toggleApiKeys = toggleApiKeys;
     </script>
 </body>
 </html>
