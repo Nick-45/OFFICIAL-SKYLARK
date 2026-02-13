@@ -1373,14 +1373,16 @@
             logoutBtn.onclick = logoutMobile.onclick = async () => { await auth.signOut(); window.location.href='index.html'; };
             
             // navigation for all data-page elements
-            document.querySelectorAll('[data-page]').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = el.dataset.page;
-                    // dummy navigation (could route)
-                    showNotification('Navigate', `Opening ${page} management`);
-                });
-            });
+document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = el.dataset.page;
+
+        // route to page.html
+        window.location.href = `${page}.html`;
+    });
+});
+
             // close mobile on click outside
             window.onclick = (e) => { if(e.target === mobileNav) mobileNav.classList.remove('active'); };
         }
