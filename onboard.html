@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDUSKYLARK · Onboard School</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK 8.10.0 (exact match with auth page) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        /* Same CSS as dashboard - include all styles */
+        /* ------------------------------------------------------------
+           EDUSKYLARK · ONBOARD SCHOOL – AUTH-INTEGRATED
+           Same design language as dashboard, strict super-admin guard
+        ------------------------------------------------------------ */
         :root { --blue: #3498db; --orange: #e67e22; --red: #e74c3c; --dark-blue: #2c3e50; --white: #ffffff; --light-blue: #ecf0f1; --green: #27ae60; --purple: #9b59b6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); min-height: 100vh; color: var(--dark-blue); }
@@ -91,9 +95,65 @@
         .action-btn { background: white; border-radius: 15px; padding: 25px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.08); transition: all 0.3s; cursor: pointer; text-decoration: none; color: inherit; }
         .action-btn:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
         .action-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; color: white; background: linear-gradient(135deg, var(--blue), #2980b9); }
+
+        /* Loading overlay - matches auth page */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(231,76,60,0.3);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
+    <!-- Loading overlay (exact match with auth page) -->
+    <div id="loadingOverlay">
+        <div class="bg-white p-6 rounded-2xl flex flex-col items-center shadow-2xl" style="background: white; border-radius: 16px; padding: 24px;">
+            <div class="spinner" style="border-top-color: #3498db;"></div>
+            <p class="mt-4" style="color: #2c3e50; font-weight: 500;">Authenticating & loading...</p>
+        </div>
+    </div>
+
+    <!-- Error toast -->
+    <div id="errorToast" class="error-toast">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">Error</span>
+    </div>
+
     <div class="background-animation">
         <div class="bubble" style="width:80px; height:80px; top:10%; left:10%;"></div>
         <div class="bubble" style="width:120px; height:120px; top:60%; right:15%; background:rgba(230,126,34,0.1);"></div>
@@ -111,8 +171,8 @@
                 </div>
             </div>
             <div style="display:flex; align-items:center; gap:20px;">
-                <span style="color:white;" id="userNameDisplay">Super Admin</span>
-                <button class="logout-btn" id="logoutBtn" style="padding:8px 16px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <span style="color:white;" id="userNameDisplay">Loading...</span>
+                <button class="logout-btn" id="logoutBtn" style="padding:8px 16px; background: rgba(231,76,60,0.1); border: 1px solid #e74c3c; color: white; border-radius: 40px; cursor: pointer;"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
     </header>
@@ -131,11 +191,11 @@
                 <div class="form-grid">
                     <div>
                         <div class="form-group">
-                            <label class="form-label"><i class="fas fa-school"></i> School Name</label>
+                            <label class="form-label"><i class="fas fa-school"></i> School Name *</label>
                             <input type="text" class="form-control" id="schoolName" placeholder="e.g., Nairobi Adventist Academy" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label"><i class="fas fa-envelope"></i> School Email</label>
+                            <label class="form-label"><i class="fas fa-envelope"></i> School Email *</label>
                             <input type="email" class="form-control" id="schoolEmail" placeholder="admin@school.edu" required>
                         </div>
                         <div class="form-group">
@@ -162,11 +222,11 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label"><i class="fas fa-user-tie"></i> Admin Full Name</label>
+                            <label class="form-label"><i class="fas fa-user-tie"></i> Admin Full Name *</label>
                             <input type="text" class="form-control" id="adminName" placeholder="John Mwangi" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label"><i class="fas fa-user"></i> Admin Email</label>
+                            <label class="form-label"><i class="fas fa-user"></i> Admin Email *</label>
                             <input type="email" class="form-control" id="adminEmail" placeholder="john@school.edu" required>
                         </div>
                     </div>
@@ -177,7 +237,7 @@
                 </h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; margin-bottom: 30px;">
-                    <div class="plan-card" id="planBasic" onclick="selectPlan('basic')">
+                    <div class="plan-card" id="planBasic" onclick="window.selectPlan('basic')">
                         <div class="plan-name">Basic</div>
                         <div class="plan-price">KES 5,000<span>/month</span></div>
                         <ul class="plan-features">
@@ -187,7 +247,7 @@
                             <li><i class="fas fa-check"></i> Email support</li>
                         </ul>
                     </div>
-                    <div class="plan-card" id="planStandard" onclick="selectPlan('standard')">
+                    <div class="plan-card" id="planStandard" onclick="window.selectPlan('standard')">
                         <div class="plan-name">Standard</div>
                         <div class="plan-price">KES 12,000<span>/month</span></div>
                         <ul class="plan-features">
@@ -198,7 +258,7 @@
                             <li><i class="fas fa-check"></i> Custom branding</li>
                         </ul>
                     </div>
-                    <div class="plan-card" id="planPremium" onclick="selectPlan('premium')">
+                    <div class="plan-card" id="planPremium" onclick="window.selectPlan('premium')">
                         <span class="popular">POPULAR</span>
                         <div class="plan-name">Premium</div>
                         <div class="plan-price">KES 25,000<span>/month</span></div>
@@ -214,7 +274,7 @@
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
-                    <label class="form-label"><i class="fas fa-calendar-alt"></i> Subscription Start Date</label>
+                    <label class="form-label"><i class="fas fa-calendar-alt"></i> Subscription Start Date *</label>
                     <input type="date" class="form-control" id="startDate" style="max-width: 300px;" required>
                 </div>
 
@@ -240,82 +300,207 @@
     </main>
 
     <script>
-        // Firebase config
-       const firebaseConfig = {
-  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-  authDomain: "toplink-edu.firebaseapp.com",
-  projectId: "toplink-edu",
-  storageBucket: "toplink-edu.firebasestorage.app",
-  messagingSenderId: "35786900143",
-  appId: "1:35786900143:web:9e612336393d29324c0a5a",
-  measurementId: "G-3VSBS7R11D"
-};
-        firebase.initializeApp(firebaseConfig);
+        // --------------------------------------------------------------
+        // FIREBASE – PRODUCTION CONFIG (EXACT MATCH WITH AUTH PAGE)
+        // --------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
+        };
+
+        // Initialize Firebase (only once)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Auth check
+        // --------------------------------------------------------------
+        // DOM ELEMENTS & GLOBAL STATE
+        // --------------------------------------------------------------
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const onboardForm = document.getElementById('onboardForm');
+
+        // Plan selection state
+        let selectedPlan = 'premium'; // default
+
+        // --------------------------------------------------------------
+        // HELPER: Show error toast (matches auth page)
+        // --------------------------------------------------------------
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.style.display = 'flex';
+            setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
+        }
+
+        // --------------------------------------------------------------
+        // AUTH GUARD – STRICT SUPER ADMIN VERIFICATION (INTEGRATED WITH LOGIN PAGE)
+        // --------------------------------------------------------------
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'super-admin-login.html';
-            else {
+            if (!user) {
+                // Not logged in - redirect to login page
+                window.location.replace('super-admin-login.html');
+                return;
+            }
+
+            try {
+                loadingOverlay.style.display = 'flex';
+                
+                // Fetch user document from 'users' collection (same as login page)
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                if (!userDoc.exists || (userDoc.data().role !== 'super-admin' && !userDoc.data().permissions?.isSuperAdmin)) {
+                
+                if (!userDoc.exists) {
+                    // No user document - sign out and redirect
                     await auth.signOut();
+                    loadingOverlay.style.display = 'none';
                     window.location.href = 'super-admin-login.html';
+                    return;
                 }
+
+                const userData = userDoc.data();
+                
+                // SUPER-ADMIN ROLE CHECK (exact same logic as login page)
+                const role = userData.role ? userData.role.toLowerCase() : '';
+                const isSuperAdmin = role === 'super-admin' || 
+                                    role === 'superadmin' || 
+                                    userData.isSuperAdmin === true || 
+                                    userData.permissions?.isSuperAdmin === true;
+
+                if (!isSuperAdmin) {
+                    // Valid credentials but not super-admin – sign out and reject
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    showError('Access restricted to super administrators only.');
+                    window.location.href = 'super-admin-login.html';
+                    return;
+                }
+
+                // ✅ SUPER ADMIN CONFIRMED
+                // Update last login timestamp (optional, same as login page)
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                }).catch(err => console.warn('Could not update lastLogin', err));
+
+                // Set user greeting with name from Firestore or auth
+                const displayName = userData.fullName || userData.displayName || user.email || 'Super Admin';
+                userNameDisplay.textContent = displayName;
+
+                // Set default date to today
+                document.getElementById('startDate').valueAsDate = new Date();
+                
+                // Initialize plan selection UI
+                initializePlanSelection();
+                
+                loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error('Auth verification error:', err);
+                loadingOverlay.style.display = 'none';
+                showError('Authentication error. Please login again.');
+                
+                // Still redirect to login on error
+                setTimeout(() => {
+                    window.location.href = 'super-admin-login.html';
+                }, 2000);
             }
         });
 
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // --------------------------------------------------------------
+        // PLAN SELECTION UI
+        // --------------------------------------------------------------
+        function initializePlanSelection() {
+            // Set default selected plan (Premium)
+            document.getElementById('planPremium').classList.add('selected');
+            selectedPlan = 'premium';
+        }
+
+        window.selectPlan = function(plan) {
+            selectedPlan = plan;
+            ['basic', 'standard', 'premium'].forEach(p => {
+                const element = document.getElementById(`plan${p.charAt(0).toUpperCase() + p.slice(1)}`);
+                if (element) {
+                    element.classList.remove('selected');
+                }
+            });
+            const selectedElement = document.getElementById(`plan${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
+            if (selectedElement) {
+                selectedElement.classList.add('selected');
+            }
+        };
+
+        // --------------------------------------------------------------
+        // LOGOUT (exact match with auth page)
+        // --------------------------------------------------------------
+        logoutBtn.addEventListener('click', async () => {
+            loadingOverlay.style.display = 'flex';
             await auth.signOut();
             window.location.href = 'super-admin-login.html';
         });
 
-        // Plan selection
-        let selectedPlan = 'premium';
-        document.getElementById('planPremium').classList.add('selected');
-        
-        window.selectPlan = function(plan) {
-            selectedPlan = plan;
-            ['basic', 'standard', 'premium'].forEach(p => {
-                document.getElementById(`plan${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.remove('selected');
-            });
-            document.getElementById(`plan${plan.charAt(0).toUpperCase() + plan.slice(1)}`).classList.add('selected');
-        };
-
-        // Set default date
-        document.getElementById('startDate').valueAsDate = new Date();
-
-        // Form submission
-        document.getElementById('onboardForm').addEventListener('submit', async (e) => {
+        // --------------------------------------------------------------
+        // FORM SUBMISSION – ONBOARD NEW SCHOOL (REAL FIRESTORE)
+        // --------------------------------------------------------------
+        onboardForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
+            
+            // Ensure user is still authenticated
+            const user = auth.currentUser;
+            if (!user) {
+                showError('Your session has expired. Please login again.');
+                window.location.href = 'super-admin-login.html';
+                return;
+            }
+
+            // Disable submit button
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onboarding...';
 
             try {
+                // Get form values
                 const schoolData = {
-                    name: document.getElementById('schoolName').value,
-                    email: document.getElementById('schoolEmail').value,
-                    phone: document.getElementById('schoolPhone').value,
-                    address: document.getElementById('schoolAddress').value,
-                    city: document.getElementById('schoolCity').value,
+                    name: document.getElementById('schoolName').value.trim(),
+                    email: document.getElementById('schoolEmail').value.trim(),
+                    phone: document.getElementById('schoolPhone').value.trim() || null,
+                    address: document.getElementById('schoolAddress').value.trim() || null,
+                    city: document.getElementById('schoolCity').value.trim() || null,
                     country: document.getElementById('schoolCountry').value,
-                    adminName: document.getElementById('adminName').value,
-                    adminEmail: document.getElementById('adminEmail').value,
+                    adminName: document.getElementById('adminName').value.trim(),
+                    adminEmail: document.getElementById('adminEmail').value.trim(),
                     plan: selectedPlan,
-                    status: 'pending',
+                    status: 'pending', // requires approval
                     subscriptionStatus: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: auth.currentUser?.uid,
+                    createdBy: user.uid,
+                    createdByEmail: user.email,
                     studentCount: 0,
-                    staffCount: 0
+                    staffCount: 0,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
+
+                // Validate required fields
+                if (!schoolData.name || !schoolData.email || !schoolData.adminName || !schoolData.adminEmail) {
+                    throw new Error('Please fill in all required fields.');
+                }
 
                 // Create school document
                 const schoolRef = await db.collection('schools').add(schoolData);
                 
+                // Calculate amount based on plan
+                let amount = 0;
+                if (selectedPlan === 'basic') amount = 5000;
+                else if (selectedPlan === 'standard') amount = 12000;
+                else if (selectedPlan === 'premium') amount = 25000;
+
                 // Create subscription record
                 await db.collection('subscriptions').add({
                     schoolId: schoolRef.id,
@@ -323,20 +508,40 @@
                     plan: selectedPlan,
                     status: 'pending',
                     startDate: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('startDate').value)),
-                    amount: selectedPlan === 'basic' ? 5000 : selectedPlan === 'standard' ? 12000 : 25000,
+                    amount: amount,
                     currency: 'KES',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    billingCycle: 'monthly',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: user.uid
                 });
 
-                alert('✅ School onboarded successfully! Pending approval.');
-                window.location.href = 'schools-management.html';
+                // Success! Show toast and redirect
+                const successToast = document.createElement('div');
+                successToast.className = 'error-toast';
+                successToast.style.background = '#27ae60';
+                successToast.innerHTML = `<i class="fas fa-check-circle"></i> School onboarded successfully! Pending approval.`;
+                document.body.appendChild(successToast);
+                successToast.style.display = 'flex';
+                
+                setTimeout(() => {
+                    successToast.remove();
+                    window.location.href = 'super-admin-dashboard.html';
+                }, 2000);
+
             } catch (error) {
-                console.error(error);
-                alert('❌ Error: ' + error.message);
+                console.error('Onboarding error:', error);
+                showError('Error: ' + error.message);
+                
+                // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Onboard School';
             }
         });
+
+        // --------------------------------------------------------------
+        // CANCEL BUTTON HANDLER
+        // --------------------------------------------------------------
+        // Already handled inline with onclick
     </script>
 </body>
 </html>
