@@ -23,11 +23,14 @@
         .logout-btn:hover { background: var(--red); }
         .btn-primary { background: linear-gradient(135deg, var(--blue), var(--dark-blue)); color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-warning { background: linear-gradient(135deg, var(--orange), #d35400); color: white; border: none; padding: 8px 20px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-warning:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .filter-search { background: white; border-radius: 30px; padding: 5px 5px 5px 20px; display: flex; align-items: center; width: 100%; border: 2px solid #e9ecef; }
         .filter-search input { flex:1; padding:12px 0; border:none; background:transparent; outline:none; }
         .badge-active { background: rgba(39,174,96,0.15); color: var(--green); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .badge-pending { background: rgba(230,126,34,0.15); color: var(--orange); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .badge-verified { background: rgba(52,152,219,0.15); color: var(--blue); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-disabled { background: rgba(231,76,60,0.1); color: var(--red); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .icon-btn { background: none; border: none; font-size: 16px; margin-left: 5px; cursor: pointer; color: #555; }
         .icon-btn:hover { color: var(--blue); }
         .icon-btn.delete:hover { color: var(--red); }
@@ -41,7 +44,8 @@
         .close-modal { font-size: 28px; cursor: pointer; color: #888; }
         .form-group { margin-bottom: 18px; }
         .form-group label { font-weight: 600; display: block; margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 12px 18px; border: 2px solid #e9ecef; border-radius: 16px; font-size: 15px; }
+        .form-control { width: 100%; padding: 12px 18px; border: 2px solid #e9ecef; border-radius: 16px; font-size: 15px; background: white; }
+        .form-control:disabled { background: #f8f9fa; color: #6c757d; cursor: not-allowed; }
         .flex-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .flex-row .form-group { flex: 1 1 200px; }
         .status-indicator { display: inline-flex; align-items: center; }
@@ -52,6 +56,7 @@
         .verification-badge { display: inline-flex; align-items: center; gap: 5px; background: #edf2fa; border-radius: 30px; padding: 3px 12px; font-size: 12px; }
         .text-success { color: var(--green); }
         .text-muted { color: #6c757d; }
+        .role-warning { color: var(--orange); font-size: 12px; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -63,7 +68,7 @@
                 </div>
                 <div>
                     <h1 style="font-size:24px;">EDUSKYLARK · ADMINS <span style="background:linear-gradient(135deg,#f1c40f,#f39c12); color:var(--dark-blue); padding:3px 10px; border-radius:15px; font-size:12px; margin-left:10px;"><i class="fas fa-crown"></i> SUPER ADMIN</span></h1>
-                    <p style="color:var(--blue);">Manage School Administrators – full Firebase Auth + Email verification</p>
+                    <p style="color:var(--blue);">Manage School Administrators – One role per school</p>
                 </div>
             </div>
             <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -108,7 +113,7 @@
         <div id="noResultMsg" style="display:none; text-align:center; padding:50px; background:white; border-radius:30px;">👨‍🏫 No admins match the filters</div>
     </main>
 
-    <!-- INVITE MODAL with PASSWORD & VERIFICATION -->
+    <!-- INVITE MODAL with SCHOOLS FROM COLLECTION + ROLE AVAILABILITY -->
     <div id="inviteModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -140,11 +145,15 @@
                         <option>Academic Admin</option>
                         <option>Finance Admin</option>
                     </select>
+                    <div id="roleAvailabilityMsg" class="role-warning"></div>
                 </div>
             </div>
             <div class="form-group">
-                <label class="required">School Name</label>
-                <input type="text" id="inviteSchool" class="form-control" placeholder="e.g. Nairobi Adventist Academy">
+                <label class="required">School</label>
+                <select id="inviteSchoolSelect" class="form-control">
+                    <option value="">-- Select School --</option>
+                </select>
+                <div class="small-note"><i class="fas fa-building"></i> Schools loaded from 'schools' collection</div>
             </div>
             <div class="form-group">
                 <label>Initial Status (Firestore)</label>
@@ -158,7 +167,7 @@
         </div>
     </div>
 
-    <!-- EDIT MODAL (profile updates, no password change here) -->
+    <!-- EDIT MODAL (profile updates, with role/school availability check) -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -174,7 +183,7 @@
             <div class="form-group">
                 <label class="required">Email</label>
                 <input type="email" id="editEmail" class="form-control" readonly>
-                <div class="small-note"><i class="fas fa-lock"></i> Email cannot be changed; delete and recreate if needed.</div>
+                <div class="small-note"><i class="fas fa-lock"></i> Email cannot be changed</div>
             </div>
             <div class="flex-row">
                 <div class="form-group">
@@ -188,11 +197,14 @@
                         <option>Academic Admin</option>
                         <option>Finance Admin</option>
                     </select>
+                    <div id="editRoleAvailabilityMsg" class="role-warning"></div>
                 </div>
             </div>
             <div class="form-group">
                 <label class="required">School</label>
-                <input type="text" id="editSchool" class="form-control">
+                <select id="editSchoolSelect" class="form-control">
+                    <option value="">-- Select School --</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Status</label>
@@ -205,7 +217,7 @@
         </div>
     </div>
 
-    <!-- DELETE CONFIRM MODAL – also deletes Auth user -->
+    <!-- DELETE CONFIRM MODAL -->
     <div id="deleteModal" class="modal">
         <div class="modal-content" style="max-width:400px;">
             <div class="modal-header">
@@ -224,7 +236,7 @@
 
     <script>
         (function() {
-            // 🔥 firebase config
+            // Firebase config
             const firebaseConfig = {
                 apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
                 authDomain: "toplink-edu.firebaseapp.com",
@@ -238,14 +250,16 @@
             const auth = firebase.auth();
             const db = firebase.firestore();
 
-            // 🔐 Auth guard
+            // Auth guard
             auth.onAuthStateChanged((user) => { if (!user) window.location.href = 'super-admin-login.html'; });
 
-            // logout
+            // Logout
             document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'super-admin-login.html'; });
 
             // ---------- GLOBAL STATE ----------
-            let allAdmins = [];         // raw from firestore
+            let allAdmins = [];         // raw from firestore (admins collection)
+            let allSchools = [];        // from schools collection {id, name}
+            let assignedRolesMap = new Map(); // key: "schoolName_role" -> true if taken
             let schoolsSet = new Set();
 
             const adminGrid = document.getElementById('adminGridContainer');
@@ -254,70 +268,195 @@
             const roleFilter = document.getElementById('roleFilterSelect');
             const searchInput = document.getElementById('searchInput');
 
-            // ---------- MODAL CONTROLS ----------
+            // Modal elements
             const inviteModal = document.getElementById('inviteModal');
             const editModal = document.getElementById('editModal');
             const deleteModal = document.getElementById('deleteModal');
+            const inviteSchoolSelect = document.getElementById('inviteSchoolSelect');
+            const editSchoolSelect = document.getElementById('editSchoolSelect');
+            const inviteRoleSelect = document.getElementById('inviteRole');
+            const editRoleSelect = document.getElementById('editRole');
+            const roleAvailabilityMsg = document.getElementById('roleAvailabilityMsg');
+            const editRoleAvailabilityMsg = document.getElementById('editRoleAvailabilityMsg');
 
-            // close buttons
+            // Close modal handlers
             document.getElementById('closeInviteModal').onclick = () => inviteModal.style.display = 'none';
             document.getElementById('closeEditModal').onclick = () => editModal.style.display = 'none';
             document.getElementById('closeDeleteModal').onclick = () => deleteModal.style.display = 'none';
             document.getElementById('cancelDeleteBtn').onclick = () => deleteModal.style.display = 'none';
 
-            window.onclick = (e) => { if (e.target === inviteModal) inviteModal.style.display = 'none'; if (e.target === editModal) editModal.style.display = 'none'; if (e.target === deleteModal) deleteModal.style.display = 'none'; };
+            window.onclick = (e) => { 
+                if (e.target === inviteModal) inviteModal.style.display = 'none'; 
+                if (e.target === editModal) editModal.style.display = 'none'; 
+                if (e.target === deleteModal) deleteModal.style.display = 'none'; 
+            };
+
+            // ---------- LOAD SCHOOLS FROM COLLECTION ----------
+            async function loadSchools() {
+                try {
+                    const snapshot = await db.collection('schools').orderBy('name').get();
+                    allSchools = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Populate school dropdowns
+                    let options = '<option value="">-- Select School --</option>';
+                    allSchools.forEach(school => {
+                        const schoolName = school.name || 'Unnamed School';
+                        options += `<option value="${schoolName.replace(/"/g, '&quot;')}">${schoolName}</option>`;
+                    });
+                    
+                    if (inviteSchoolSelect) inviteSchoolSelect.innerHTML = options;
+                    if (editSchoolSelect) editSchoolSelect.innerHTML = options;
+                    
+                    // Also update filter dropdown
+                    updateSchoolFilterOptions();
+                } catch (e) {
+                    console.warn('Could not load schools collection, using fallback', e);
+                    // Fallback options if schools collection doesn't exist
+                    const fallback = ['Nairobi Adventist Academy', 'Kisumu Junior School', 'Mombasa Hill Academy'];
+                    let options = '<option value="">-- Select School --</option>';
+                    fallback.forEach(s => options += `<option>${s}</option>`);
+                    if (inviteSchoolSelect) inviteSchoolSelect.innerHTML = options;
+                    if (editSchoolSelect) editSchoolSelect.innerHTML = options;
+                }
+            }
+
+            // ---------- BUILD ROLE ASSIGNMENT MAP ----------
+            function buildRoleAssignmentMap(admins) {
+                assignedRolesMap.clear();
+                admins.forEach(admin => {
+                    const data = admin.data;
+                    if (data.school && data.role && data.status === 'Active') {
+                        const key = `${data.school}_${data.role}`;
+                        assignedRolesMap.set(key, admin.id); // store doc id for reference
+                    }
+                });
+            }
+
+            // ---------- CHECK IF ROLE IS AVAILABLE FOR SCHOOL ----------
+            function isRoleAvailable(school, role, excludeDocId = null) {
+                if (!school || !role) return true;
+                const key = `${school}_${role}`;
+                const existingDocId = assignedRolesMap.get(key);
+                if (!existingDocId) return true;
+                // If editing, allow same document to keep its role
+                return excludeDocId && existingDocId === excludeDocId;
+            }
+
+            // ---------- UPDATE ROLE AVAILABILITY MESSAGE (Invite) ----------
+            function updateInviteRoleAvailability() {
+                const school = inviteSchoolSelect.value;
+                const role = inviteRoleSelect.value;
+                if (!school || !role) {
+                    roleAvailabilityMsg.innerHTML = '';
+                    document.getElementById('saveInviteBtn').disabled = false;
+                    return;
+                }
+                
+                const available = isRoleAvailable(school, role);
+                if (available) {
+                    roleAvailabilityMsg.innerHTML = '<span style="color: var(--green);"><i class="fas fa-check-circle"></i> Role available</span>';
+                    document.getElementById('saveInviteBtn').disabled = false;
+                } else {
+                    roleAvailabilityMsg.innerHTML = '<span style="color: var(--red);"><i class="fas fa-times-circle"></i> This role is already assigned to an active admin at this school</span>';
+                    document.getElementById('saveInviteBtn').disabled = true;
+                }
+            }
+
+            // ---------- UPDATE ROLE AVAILABILITY MESSAGE (Edit) ----------
+            function updateEditRoleAvailability() {
+                const school = editSchoolSelect.value;
+                const role = editRoleSelect.value;
+                const docId = document.getElementById('editDocId').value;
+                
+                if (!school || !role) {
+                    editRoleAvailabilityMsg.innerHTML = '';
+                    document.getElementById('updateAdminBtn').disabled = false;
+                    return;
+                }
+                
+                const available = isRoleAvailable(school, role, docId);
+                if (available) {
+                    editRoleAvailabilityMsg.innerHTML = '<span style="color: var(--green);"><i class="fas fa-check-circle"></i> Role available</span>';
+                    document.getElementById('updateAdminBtn').disabled = false;
+                } else {
+                    editRoleAvailabilityMsg.innerHTML = '<span style="color: var(--red);"><i class="fas fa-times-circle"></i> This role is already assigned to another active admin</span>';
+                    document.getElementById('updateAdminBtn').disabled = true;
+                }
+            }
 
             // ---------- INVITE: CREATE AUTH USER + SEND VERIFICATION + SAVE TO FIRESTORE ----------
             document.getElementById('inviteAdminBtn').addEventListener('click', () => {
-                // clear but keep default password
+                // Clear form
                 document.getElementById('inviteName').value = ''; 
                 document.getElementById('inviteEmail').value = ''; 
                 document.getElementById('invitePhone').value = ''; 
                 document.getElementById('inviteRole').value = 'Principal'; 
-                document.getElementById('inviteSchool').value = ''; 
                 document.getElementById('inviteStatus').value = 'Pending';
-                document.getElementById('invitePassword').value = 'EduSkylark123!'; // default easy
+                document.getElementById('invitePassword').value = 'EduSkylark123!';
+                
+                // Reset school dropdown and load schools
+                loadSchools().then(() => {
+                    if (inviteSchoolSelect) inviteSchoolSelect.value = '';
+                });
+                
+                roleAvailabilityMsg.innerHTML = '';
+                document.getElementById('saveInviteBtn').disabled = false;
                 inviteModal.style.display = 'flex';
             });
 
-            // save invite -> create auth user, send verification, add firestore doc
+            // Role/school change listeners for invite modal
+            inviteSchoolSelect.addEventListener('change', updateInviteRoleAvailability);
+            inviteRoleSelect.addEventListener('change', updateInviteRoleAvailability);
+
+            // Save invite
             document.getElementById('saveInviteBtn').addEventListener('click', async () => {
                 const name = document.getElementById('inviteName').value.trim();
                 const email = document.getElementById('inviteEmail').value.trim();
                 const password = document.getElementById('invitePassword').value.trim();
                 const phone = document.getElementById('invitePhone').value.trim();
                 const role = document.getElementById('inviteRole').value;
-                const school = document.getElementById('inviteSchool').value.trim();
+                const school = document.getElementById('inviteSchoolSelect').value;
                 const status = document.getElementById('inviteStatus').value;
 
-                if (!name || !email || !password || !phone || !school) { alert('All required fields must be filled.'); return; }
-                if (password.length < 6) { alert('Password must be at least 6 characters'); return; }
+                if (!name || !email || !password || !phone || !school) { 
+                    alert('All required fields must be filled.'); 
+                    return; 
+                }
+                if (password.length < 6) { 
+                    alert('Password must be at least 6 characters'); 
+                    return; 
+                }
+
+                // Double-check role availability
+                if (!isRoleAvailable(school, role)) {
+                    alert('This role is already taken at this school. Please choose another role.');
+                    return;
+                }
 
                 try {
-                    // 1. create Firebase Auth user
+                    // Create Firebase Auth user
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                     const firebaseUser = userCredential.user;
                     
-                    // 2. send verification email
+                    // Send verification email
                     await firebaseUser.sendEmailVerification({
-                        url: 'https://toplink-edu.firebaseapp.com/admin-login', // redirect after verification
+                        url: 'https://toplink-edu.firebaseapp.com/admin-login',
                         handleCodeInApp: true
                     });
                     
-                    // 3. prepare Firestore doc – store authUid, emailVerified status etc.
+                    // Prepare Firestore doc
                     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
                     const newAdmin = {
                         authUid: firebaseUser.uid,
                         name, email, phone, role, school, status,
-                        emailVerified: firebaseUser.emailVerified, // initially false
+                        emailVerified: firebaseUser.emailVerified,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         initials,
-                        // store password hint? no, never store plain password
                     };
                     
                     await db.collection('admins').add(newAdmin);
                     
-                    // Optional: update displayName on auth profile
+                    // Update displayName
                     await firebaseUser.updateProfile({ displayName: name });
                     
                     inviteModal.style.display = 'none';
@@ -329,79 +468,88 @@
                 }
             });
 
-            // ---------- EDIT: populate & show – only update Firestore ----------
-            window.openEditModal = (docId, adminData) => {
+            // ---------- EDIT: populate & show ----------
+            window.openEditModal = async (docId, adminData) => {
                 document.getElementById('editDocId').value = docId;
                 document.getElementById('editAuthUid').value = adminData.authUid || '';
                 document.getElementById('editName').value = adminData.name || '';
-                document.getElementById('editEmail').value = adminData.email || ''; // read only
+                document.getElementById('editEmail').value = adminData.email || '';
                 document.getElementById('editPhone').value = adminData.phone || '';
                 document.getElementById('editRole').value = adminData.role || 'Principal';
-                document.getElementById('editSchool').value = adminData.school || '';
                 document.getElementById('editStatus').value = adminData.status || 'Active';
+                
+                // Load schools and set selected
+                await loadSchools();
+                if (editSchoolSelect) {
+                    editSchoolSelect.value = adminData.school || '';
+                }
+                
+                editRoleAvailabilityMsg.innerHTML = '';
+                document.getElementById('updateAdminBtn').disabled = false;
                 editModal.style.display = 'flex';
             };
 
+            // Role/school change listeners for edit modal
+            editSchoolSelect.addEventListener('change', updateEditRoleAvailability);
+            editRoleSelect.addEventListener('change', updateEditRoleAvailability);
+
+            // Update admin
             document.getElementById('updateAdminBtn').addEventListener('click', async () => {
                 const docId = document.getElementById('editDocId').value;
+                const school = document.getElementById('editSchoolSelect').value;
+                const role = document.getElementById('editRole').value;
+                
+                // Check role availability (excluding current doc)
+                if (!isRoleAvailable(school, role, docId)) {
+                    alert('This role is already assigned to another active admin at this school.');
+                    return;
+                }
+
                 const updated = {
                     name: document.getElementById('editName').value.trim(),
                     phone: document.getElementById('editPhone').value.trim(),
-                    role: document.getElementById('editRole').value,
-                    school: document.getElementById('editSchool').value.trim(),
+                    role: role,
+                    school: school,
                     status: document.getElementById('editStatus').value,
                     initials: document.getElementById('editName').value.trim().split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2)
                 };
-                if (!updated.name || !updated.phone || !updated.school) { alert('Fill required fields'); return; }
+                
+                if (!updated.name || !updated.phone || !updated.school) { 
+                    alert('Fill required fields'); 
+                    return; 
+                }
+                
                 try {
                     await db.collection('admins').doc(docId).update(updated);
-                    // Also update Auth displayName if changed
-                    const authUid = document.getElementById('editAuthUid').value;
-                    if (authUid) {
-                        const currentUser = auth.currentUser;
-                        // To update another user, we need admin SDK – but we skip; only self update possible. We'll just ignore for now.
-                        // optional: use Firebase Admin? Not possible client-side. So only super admin can change own name if it's current. skip.
-                    }
                     editModal.style.display = 'none';
                     fetchAdmins();
-                } catch(e) { alert(e); }
+                } catch(e) { 
+                    alert(e); 
+                }
             });
 
-            // ---------- DELETE: remove Auth user (using custom function) + Firestore doc ----------
+            // ---------- DELETE ----------
             window.openDeleteModal = (docId, authUid) => {
                 document.getElementById('deleteDocId').value = docId;
                 document.getElementById('deleteAuthUid').value = authUid || '';
                 deleteModal.style.display = 'flex';
             };
             
-            // delete function – uses Firebase Auth REST API to delete user (requires Admin SDK normally)
-            // Since client-side cannot delete arbitrary users, we implement a cloud function trigger or use user self-delete?
-            // Workaround: Show warning that super admin must delete via console? We'll use custom function: attempt to delete using current super admin's token? 
-            // Better: use Firebase Admin SDK via cloud function. For simplicity, we mimic deletion: remove Firestore doc, and show alert.
-            // Real implementation: we call a cloud function (opt). Here we assume we cannot delete auth, but we mark as archived.
-            // To keep demo realistic: we just delete Firestore doc and display that auth remains. But we'll enhance: use HTTPS callable? 
-            // I'll implement best possible: store authUid, attempt to delete using super admin's token if same? Not possible.
-            // Instead: we will remove Firestore and set a flag. But requirement says "even send verification email" which works; delete Auth is hard.
-            // Since we are in super admin context, we will show that auth must be deleted manually from console. 
-            // However we can implement using Firebase Auth REST API with OAuth2? Complex. Instead we will just delete firestore doc and show note.
-            // I'll do proper flow: use fetch with Auth admin SDK key? Not safe. So I'll add warning: console deletion.
-            // To meet the expectation: we'll call a dummy cloud function name 'deleteUser' – we can simulate:
             document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
                 const docId = document.getElementById('deleteDocId').value;
                 const authUid = document.getElementById('deleteAuthUid').value;
                 try {
-                    // Delete Firestore doc first
                     await db.collection('admins').doc(docId).delete();
                     
-                    // Attempt to delete Auth user via cloud function? We'll just simulate.
                     if (authUid) {
-                        // You could call a cloud function here. For demonstration, we show alert.
-                        console.warn('Auth user not deleted client-side. Use Firebase Console or Cloud Function.');
+                        console.warn('Auth user not deleted client-side. Use Firebase Console.');
                         alert(`Firestore admin deleted. Auth user (${authUid}) was NOT deleted automatically. Please delete manually from Firebase Console for complete removal.`);
                     }
                     deleteModal.style.display = 'none';
                     fetchAdmins();
-                } catch(e) { alert('Delete error: '+ e); }
+                } catch(e) { 
+                    alert('Delete error: '+ e); 
+                }
             });
 
             // ---------- WHATSAPP INTEGRATION ----------
@@ -413,9 +561,13 @@
                 window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
             };
 
-            // ---------- RENDER ADMIN CARDS with emailVerified status ----------
+            // ---------- RENDER ADMIN CARDS ----------
             function renderAdmins(adminsArray) {
-                if (!adminsArray.length) { adminGrid.innerHTML = ''; noResult.style.display = 'block'; return; }
+                if (!adminsArray.length) { 
+                    adminGrid.innerHTML = ''; 
+                    noResult.style.display = 'block'; 
+                    return; 
+                }
                 noResult.style.display = 'none';
                 let html = '';
                 adminsArray.forEach(admin => {
@@ -425,7 +577,6 @@
                     const initials = data.initials || (name.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2));
                     const statusClass = status === 'Active' ? 'badge-active' : 'badge-pending';
                     
-                    // email verified indicator
                     const emailVerified = data.emailVerified === true; 
                     const verifiedBadge = emailVerified ? 
                         '<span class="verification-badge" style="background:#e3f2fd;"><i class="fas fa-check-circle text-success"></i> Verified</span>' : 
@@ -453,7 +604,7 @@
                 adminGrid.innerHTML = html;
             }
 
-            // filter function
+            // Filter function
             function filterAndRender() {
                 let filtered = allAdmins;
                 const schoolVal = schoolFilter.value;
@@ -472,28 +623,53 @@
                 renderAdmins(filtered);
             }
 
-            // fetch from firestore & update filters – also include emailVerified from auth? 
-            // we store emailVerified in doc during creation; but we may refresh? we can update via cloud function ideally.
+            // Update school filter dropdown based on admins
+            function updateSchoolFilterOptions() {
+                let schoolOptions = '<option value="all">All Schools</option>';
+                Array.from(schoolsSet).sort().forEach(s => schoolOptions += `<option>${s}</option>`);
+                schoolFilter.innerHTML = schoolOptions;
+            }
+
+            // Fetch admins and update state
             async function fetchAdmins() {
                 try {
                     const snapshot = await db.collection('admins').orderBy('createdAt', 'desc').get();
                     allAdmins = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
                     
+                    // Update schools set from admins
                     schoolsSet.clear();
                     allAdmins.forEach(a => { if (a.data.school) schoolsSet.add(a.data.school); });
-                    let schoolOptions = '<option value="all">All Schools</option>';
-                    Array.from(schoolsSet).sort().forEach(s => schoolOptions += `<option>${s}</option>`);
-                    schoolFilter.innerHTML = schoolOptions;
-
+                    
+                    // Build role assignment map
+                    buildRoleAssignmentMap(allAdmins);
+                    
+                    // Update filter dropdown
+                    updateSchoolFilterOptions();
+                    
                     filterAndRender();
                 } catch (e) { 
-                    console.warn('fetch err, seeding sample with auth?'); 
+                    console.warn('fetch err, seeding sample?', e); 
                     seedSample(); 
                 }
             }
 
-            // Seed sample with authUid mock – for demo if empty
+            // Seed sample data if empty
             async function seedSample() {
+                // First ensure schools exist
+                const schoolsRef = db.collection('schools');
+                const schoolsSnapshot = await schoolsRef.get();
+                if (schoolsSnapshot.empty) {
+                    const sampleSchools = [
+                        { name: 'Nairobi Adventist Academy', code: 'NAA' },
+                        { name: 'Kisumu Junior School', code: 'KJS' },
+                        { name: 'Mombasa Hill Academy', code: 'MHA' }
+                    ];
+                    for (let s of sampleSchools) {
+                        await schoolsRef.add(s);
+                    }
+                }
+                
+                // Sample admins
                 const sample = [
                     { name: 'John Mwangi', email: 'john@naa.edu', phone: '+254722111222', role: 'Principal', school: 'Nairobi Adventist Academy', status: 'Active', initials: 'JM', authUid: 'mockUid1', emailVerified: true, createdAt: new Date() },
                     { name: 'Alice Odhiambo', email: 'alice@kjs.edu', phone: '+254733333444', role: 'Academic Admin', school: 'Kisumu Junior School', status: 'Active', initials: 'AO', authUid: 'mockUid2', emailVerified: false, createdAt: new Date() },
@@ -502,18 +678,21 @@
                 for (let s of sample) {
                     await db.collection('admins').add(s);
                 }
+                
+                // Reload everything
+                await loadSchools();
                 fetchAdmins();
             }
 
-            // event listeners filter
+            // Event listeners for filters
             schoolFilter.addEventListener('change', filterAndRender);
             roleFilter.addEventListener('change', filterAndRender);
             searchInput.addEventListener('input', filterAndRender);
 
-            // initial load
-            fetchAdmins();
+            // Initial load
+            loadSchools().then(() => fetchAdmins());
 
-            // expose to window for inline onclick
+            // Expose to window
             window.openEditModal = window.openEditModal;
             window.openDeleteModal = window.openDeleteModal;
             window.whatsappRedirect = window.whatsappRedirect;
