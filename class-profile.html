@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDUSKYLARK · Class Profile (upgraded)</title>
+    <title>EDUSKYLARK · Class Profile (live data)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Firebase SDK (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -232,7 +232,7 @@
 </main>
 
 <script>
-    // ========== CONFIG ==========
+    // ========== FIREBASE CONFIG ==========
     const firebaseConfig = {
         apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
         authDomain: "toplink-edu.firebaseapp.com",
@@ -245,7 +245,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ---------- DOM elements ----------
+    // ========== DOM ELEMENTS ==========
     const schoolNameHeader = document.getElementById('schoolNameHeader');
     const schoolNameSub = document.getElementById('schoolNameSub');
     const adminNameSpan = document.getElementById('adminName');
@@ -269,35 +269,66 @@
     const backBtn = document.getElementById('backBtn');
     const classNameBreadcrumb = document.getElementById('classNameBreadcrumb');
 
-    // ---------- state ----------
-    let currentUser = null, adminData = null, classId = null, classData = null;
+    // ========== STATE ==========
+    let currentUser = null;
+    let adminData = null;
+    let classId = null;
+    let classData = null;
 
-    // ---------- auth ----------
+    // ========== AUTH ==========
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = user;
-            await loadAdminData(user);
-            if (!adminData) { alert('Admin not found'); auth.signOut(); window.location = 'school-login.html'; return; }
-            if (adminData.status !== 'Active') { alert('Account inactive'); auth.signOut(); window.location = 'school-login.html'; return; }
-            updateUI();
+            try {
+                await loadAdminData(user);
+                if (!adminData) {
+                    alert('Admin record not found. Please contact support.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                updateUI();
 
-            const urlParams = new URLSearchParams(window.location.search);
-            classId = urlParams.get('id') || sessionStorage.getItem('viewClassId');
-            if (!classId) { alert('No class selected'); window.location = 'school-classes.html'; return; }
-
-            await loadClassData();
+                // Get class ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                classId = urlParams.get('id') || sessionStorage.getItem('viewClassId');
+                
+                if (!classId) {
+                    alert('No class selected');
+                    window.location.href = 'school-classes.html';
+                    return;
+                }
+                
+                await loadClassData();
+            } catch (error) {
+                console.error('Auth error:', error);
+                alert('Authentication error. Please login again.');
+                await auth.signOut();
+                window.location.href = 'school-login.html';
+            }
         } else {
-            window.location = 'school-login.html';
+            window.location.href = 'school-login.html';
         }
     });
 
+    // ========== LOAD ADMIN DATA ==========
     async function loadAdminData(user) {
-        try {
-            const snap = await db.collection('admins').where('authUid', '==', user.uid).limit(1).get();
-            if (!snap.empty) { adminData = snap.docs[0].data(); adminData.id = snap.docs[0].id; }
-        } catch (e) { console.warn('admin fetch fail', e); }
+        const snap = await db.collection('admins')
+            .where('authUid', '==', user.uid)
+            .limit(1)
+            .get();
+        if (!snap.empty) {
+            adminData = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        }
     }
 
+    // ========== UPDATE UI ==========
     function updateUI() {
         if (!adminData) return;
         adminNameSpan.textContent = adminData.name ? adminData.name.split(' ')[0] : 'Admin';
@@ -306,67 +337,83 @@
         schoolNameSub.textContent = school;
     }
 
-    // ---------- load class ----------
+    // ========== LOAD CLASS DATA (REAL ONLY) ==========
     async function loadClassData() {
         try {
-            const doc = await db.collection('classes').doc(classId).get();
-            if (!doc.exists) throw new Error('class missing');
-            classData = { id: doc.id, ...doc.data() };
-
+            const classDoc = await db.collection('classes').doc(classId).get();
+            
+            if (!classDoc.exists) {
+                alert('Class not found');
+                window.location.href = 'school-classes.html';
+                return;
+            }
+            
+            classData = { id: classDoc.id, ...classDoc.data() };
+            
+            // Verify class belongs to admin's school
             const classSchool = classData.schoolId || classData.school;
             const adminSchool = adminData.schoolId || adminData.school;
-            if (classSchool !== adminSchool) { alert('permission denied'); window.location = 'school-classes.html'; return; }
-
-            renderClass();
-            loadStudents();
-        } catch (err) {
-            console.warn('using fallback mock data');
-            loadMockClass();
+            
+            if (classSchool !== adminSchool) {
+                alert('You do not have permission to view this class');
+                window.location.href = 'school-classes.html';
+                return;
+            }
+            
+            renderClassProfile();
+            await loadStudentsInClass();
+            await loadTeacherDetails();
+            
+        } catch (error) {
+            console.error('Error loading class:', error);
+            alert('Failed to load class data. Please try again.');
+            window.location.href = 'school-classes.html';
         }
     }
 
-    function renderClass() {
+    // ========== RENDER CLASS PROFILE ==========
+    function renderClassProfile() {
         if (!classData) return;
-        classNameDisplay.textContent = classData.name || 'Form X';
+        
+        // Header
+        classNameDisplay.textContent = classData.name || 'Unnamed Class';
         classNameBreadcrumb.textContent = classData.name || 'class';
+        
         const grade = classData.grade || classData.gradeLevel || '—';
         classGradeDisplay.textContent = grade;
         classStreamDesc.textContent = classData.stream || classData.description || 'Main stream';
-
-        const studentCount = classData.studentCount || (classData.students?.length) || 0;
+        
+        // Meta items - calculate real student count from loaded students later
+        const studentCount = classData.studentCount || 0;
         const capacity = classData.capacity || '—';
-        const teacher = classData.teacherName || 'unassigned';
+        const teacher = classData.teacherName || 'Not assigned';
+        
         classMetaGrid.innerHTML = `
             <div class="meta-pill"><i class="fas fa-users"></i><span><strong>${studentCount}</strong> Students</span></div>
             <div class="meta-pill"><i class="fas fa-door-open"></i><span><strong>${capacity}</strong> Capacity</span></div>
             <div class="meta-pill"><i class="fas fa-user-tie"></i><span><strong>${teacher}</strong> Teacher</span></div>
         `;
-
-        // schedule
-        if (classData.schedule && classData.schedule.length) {
-            let html = '';
-            classData.schedule.forEach(s => {
-                html += `<tr><td><span class="day-badge">${s.day || '—'}</span></td><td>${s.subject || '—'}</td><td>${s.startTime || '??'} – ${s.endTime || '??'}</td></tr>`;
+        
+        // Schedule
+        if (classData.schedule && classData.schedule.length > 0) {
+            let scheduleHtml = '';
+            classData.schedule.forEach(item => {
+                scheduleHtml += `
+                    <tr>
+                        <td><span class="day-badge">${item.day || '—'}</span></td>
+                        <td>${item.subject || '—'}</td>
+                        <td>${item.startTime || '??'} – ${item.endTime || '??'}</td>
+                    </tr>
+                `;
             });
-            scheduleBody.innerHTML = html;
+            scheduleBody.innerHTML = scheduleHtml;
             noScheduleMsg.style.display = 'none';
         } else {
             scheduleBody.innerHTML = '';
             noScheduleMsg.style.display = 'block';
         }
-
-        // teacher area
-        if (classData.teacherName) {
-            teacherContainer.innerHTML = `
-                <div class="teacher-card">
-                    <div class="teacher-avatar"><i class="fas fa-user-graduate"></i></div>
-                    <div><h3 style="font-size:1.5rem;">${classData.teacherName}</h3><p style="color: #2c3e50;"><i class="fas fa-envelope"></i> ${classData.teacherEmail || 'teacher@school.com'}</p><span style="background: #d0f0e5; padding:4px 14px; border-radius:40px;">class teacher</span></div>
-                </div>
-            `;
-        } else {
-            teacherContainer.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i> <p>No teacher assigned</p></div>`;
-        }
-
+        
+        // Details
         roomDisplay.textContent = classData.room || '—';
         capacityDisplay.textContent = classData.capacity || '—';
         yearDisplay.textContent = classData.academicYear || new Date().getFullYear();
@@ -376,87 +423,151 @@
         statusDisplay.style.color = classData.status === 'Active' ? '#1e7e4a' : '#c0392b';
     }
 
-    async function loadStudents() {
+    // ========== LOAD STUDENTS IN CLASS ==========
+    async function loadStudentsInClass() {
         if (!classData || !classData.name) return;
+        
         try {
-            const q = await db.collection('students').where('class', '==', classData.name).limit(15).get();
-            if (!q.empty) {
+            // Query students where class matches this class name
+            const studentsQuery = await db.collection('students')
+                .where('class', '==', classData.name)
+                .where('schoolId', '==', adminData.schoolId || adminData.school)
+                .limit(50)
+                .get();
+            
+            if (!studentsQuery.empty) {
                 let html = '';
-                q.forEach(doc => {
+                studentsQuery.forEach(doc => {
                     const s = doc.data();
-                    const initials = s.fullName ? s.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : 'ST';
-                    html += `<div class="student-item">
-                        <div class="student-avatar-sm">${initials}</div>
-                        <div class="student-info-sm">
-                            <div class="student-name-sm">${s.fullName || 'Student'}</div>
-                            <div class="student-meta-sm"><span><i class="fas fa-hashtag"></i> ${s.admissionNo || '—'}</span><span><i class="fas fa-phone-alt"></i> ${s.phone || '—'}</span></div>
+                    const initials = s.fullName ? s.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) : 'ST';
+                    html += `
+                        <div class="student-item">
+                            <div class="student-avatar-sm">${initials}</div>
+                            <div class="student-info-sm">
+                                <div class="student-name-sm">${s.fullName || 'Student'}</div>
+                                <div class="student-meta-sm">
+                                    <span><i class="fas fa-hashtag"></i> ${s.admissionNo || '—'}</span>
+                                    <span><i class="fas fa-phone-alt"></i> ${s.phone || '—'}</span>
+                                </div>
+                            </div>
+                            <button class="btn" style="padding:6px 14px;" onclick="viewStudent('${doc.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
-                        <button class="btn" style="padding:6px 14px;" onclick="viewStudent('${doc.id}')"><i class="fas fa-eye"></i></button>
-                    </div>`;
+                    `;
                 });
                 studentsList.innerHTML = html;
-                studentCountBadge.textContent = q.size;
+                studentCountBadge.textContent = studentsQuery.size;
+                
+                // Update student count in meta if it differs
+                if (classData.studentCount !== studentsQuery.size) {
+                    // Optionally update the class document with correct count
+                    const metaCount = document.querySelector('.meta-pill strong');
+                    if (metaCount) metaCount.textContent = studentsQuery.size;
+                }
             } else {
-                studentsList.innerHTML = `<div class="empty-state"><i class="fas fa-user-graduate"></i> <p>No students yet</p></div>`;
+                studentsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-graduate"></i>
+                        <p>No students enrolled yet</p>
+                    </div>
+                `;
                 studentCountBadge.textContent = '0';
             }
-        } catch (e) {
-            loadMockStudents();
+        } catch (error) {
+            console.error('Error loading students:', error);
+            studentsList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error loading students</p>
+                </div>
+            `;
+            studentCountBadge.textContent = '?';
         }
     }
 
-    // mocks
-    function loadMockClass() {
-        classData = {
-            id: 'mockC',
-            name: 'Form 3C',
-            grade: 'Form 3',
-            stream: 'Science',
-            teacherName: 'Mr. John Mwangi',
-            teacherEmail: 'j.mwangi@eduskylark.sch',
-            studentCount: 42,
-            capacity: 45,
-            room: 'Lab 204',
-            academicYear: '2025',
-            status: 'Active',
-            schedule: [
-                { day: 'Monday', subject: 'Mathematics', startTime: '08:00', endTime: '09:30' },
-                { day: 'Tuesday', subject: 'Physics', startTime: '10:00', endTime: '11:30' },
-                { day: 'Wednesday', subject: 'Chemistry', startTime: '08:00', endTime: '09:30' },
-                { day: 'Thursday', subject: 'Biology', startTime: '13:00', endTime: '14:30' },
-                { day: 'Friday', subject: 'English', startTime: '09:00', endTime: '10:30' }
-            ]
-        };
-        renderClass();
-        loadMockStudents();
+    // ========== LOAD TEACHER DETAILS ==========
+    async function loadTeacherDetails() {
+        if (!classData || !classData.teacherId && !classData.teacherName) {
+            teacherContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-user-slash"></i>
+                    <p>No teacher assigned</p>
+                </div>
+            `;
+            return;
+        }
+
+        // If we have teacherId, try to load full teacher details
+        if (classData.teacherId) {
+            try {
+                const teacherDoc = await db.collection('teachers').doc(classData.teacherId).get();
+                if (teacherDoc.exists) {
+                    const teacher = teacherDoc.data();
+                    teacherContainer.innerHTML = `
+                        <div class="teacher-card">
+                            <div class="teacher-avatar"><i class="fas fa-user-graduate"></i></div>
+                            <div>
+                                <h3 style="font-size:1.5rem;">${teacher.fullName || classData.teacherName}</h3>
+                                <p style="color: #2c3e50;"><i class="fas fa-envelope"></i> ${teacher.email || '—'}</p>
+                                <p style="color: #2c3e50;"><i class="fas fa-phone"></i> ${teacher.phone || '—'}</p>
+                                <span style="background: #d0f0e5; padding:4px 14px; border-radius:40px;">class teacher</span>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+            } catch (error) {
+                console.warn('Could not load teacher details', error);
+            }
+        }
+
+        // Fallback to just teacher name if available
+        if (classData.teacherName) {
+            teacherContainer.innerHTML = `
+                <div class="teacher-card">
+                    <div class="teacher-avatar"><i class="fas fa-user-graduate"></i></div>
+                    <div>
+                        <h3 style="font-size:1.5rem;">${classData.teacherName}</h3>
+                        <p style="color: #2c3e50;">Class Teacher</p>
+                        <span style="background: #d0f0e5; padding:4px 14px; border-radius:40px;">assigned</span>
+                    </div>
+                </div>
+            `;
+        }
     }
 
-    function loadMockStudents() {
-        const m = [
-            { fullName: 'John Mwangi', admissionNo: '2025-001', phone: '+254722111222' },
-            { fullName: 'Mary Atieno', admissionNo: '2025-042', phone: '+254733333444' },
-            { fullName: 'Peter Kamau', admissionNo: '2024-128', phone: '+254711555666' },
-            { fullName: 'Alice Odhiambo', admissionNo: '2023-215', phone: '+254722777888' }
-        ];
-        let html = '';
-        m.forEach(s => {
-            const ini = s.fullName.split(' ').map(n=>n[0]).join('').toUpperCase();
-            html += `<div class="student-item"><div class="student-avatar-sm">${ini}</div><div class="student-info-sm"><div class="student-name-sm">${s.fullName}</div><div class="student-meta-sm"><span><i class="fas fa-hashtag"></i> ${s.admissionNo}</span><span><i class="fas fa-phone-alt"></i> ${s.phone}</span></div></div><button class="btn" style="padding:6px 14px;" onclick="viewStudent('mock')"><i class="fas fa-eye"></i></button></div>`;
-        });
-        studentsList.innerHTML = html;
-        studentCountBadge.textContent = m.length;
-    }
-
-    window.viewStudent = function(id) {
-        sessionStorage.setItem('viewStudentId', id);
-        window.location.href = `school-student-details.html?id=${id}`;
+    // ========== NAVIGATION ==========
+    window.viewStudent = function(studentId) {
+        sessionStorage.setItem('viewStudentId', studentId);
+        window.location.href = `school-student-details.html?id=${studentId}`;
     };
 
-    // navigation
-    logoutBtn.addEventListener('click', async () => { await auth.signOut(); window.location = 'school-login.html'; });
-    editClassBtn.addEventListener('click', () => alert('✏️ edit class flow – would open school-edit-class.html?id='+classId));
-    attendanceBtn.addEventListener('click', () => alert('📋 take attendance for ' + (classData?.name || 'class')));
-    backBtn.addEventListener('click', () => window.location.href = 'school-classes.html');
+    // ========== EVENT LISTENERS ==========
+    logoutBtn.addEventListener('click', async () => {
+        await auth.signOut();
+        window.location.href = 'school-login.html';
+    });
+
+    editClassBtn.addEventListener('click', () => {
+        if (classId) {
+            window.location.href = `school-edit-class.html?id=${classId}`;
+        } else {
+            alert('Class ID not available');
+        }
+    });
+
+    attendanceBtn.addEventListener('click', () => {
+        if (classId && classData?.name) {
+            window.location.href = `school-attendance.html?classId=${classId}&className=${encodeURIComponent(classData.name)}`;
+        } else {
+            alert('Class information not available');
+        }
+    });
+
+    backBtn.addEventListener('click', () => {
+        window.location.href = 'school-classes.html';
+    });
 </script>
 </body>
 </html>
