@@ -96,6 +96,13 @@
             color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600;
             display: flex; align-items: center; gap: 8px; cursor: pointer;
         }
+
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600;
+            transition: all 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .logout-btn:hover { background: var(--red); }
     </style>
 </head>
 <body>
@@ -108,13 +115,15 @@
             <div class="logo-section">
                 <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
                 <div class="church-info">
-                    <h1>EDUSKYLARK · STUDENTS <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
-                    <p>Manage Student Records</p>
+                    <h1>EDUSKYLARK · STUDENTS <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">SCHOOL ADMIN</span></span></h1>
+                    <p>Manage Student Records · <span id="schoolNameSub">Loading...</span></p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 20px;">
-                <span style="color: white;" id="schoolName">Loading...</span>
-                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;" id="adminRoleDisplay">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
     </header>
@@ -130,16 +139,16 @@
         <div class="stats-cards">
             <div class="stat-card">
                 <div style="color: #666; font-size: 14px;">Total Students</div>
-                <div class="stat-value" id="totalStudents">1,248</div>
-                <div style="margin-top: 5px; color: var(--school-green);">+24 this term</div>
+                <div class="stat-value" id="totalStudents">0</div>
+                <div style="margin-top: 5px; color: var(--school-green);" id="studentGrowth">Loading...</div>
             </div>
             <div class="stat-card">
                 <div style="color: #666; font-size: 14px;">Male</div>
-                <div class="stat-value" style="color: var(--blue);" id="maleStudents">648</div>
+                <div class="stat-value" style="color: var(--blue);" id="maleStudents">0</div>
             </div>
             <div class="stat-card">
                 <div style="color: #666; font-size: 14px;">Female</div>
-                <div class="stat-value" style="color: #e84393;" id="femaleStudents">600</div>
+                <div class="stat-value" style="color: #e84393;" id="femaleStudents">0</div>
             </div>
             <div class="stat-card">
                 <div style="color: #666; font-size: 14px;">Avg. Attendance</div>
@@ -151,25 +160,16 @@
             <div class="filter-group">
                 <label>Class:</label>
                 <select class="filter-select" id="classFilter">
-                    <option>All Classes</option>
-                    <option>Form 1A</option>
-                    <option>Form 1B</option>
-                    <option>Form 2A</option>
-                    <option>Form 2B</option>
-                    <option>Form 3A</option>
-                    <option>Form 3B</option>
-                    <option>Form 3C</option>
-                    <option>Form 4A</option>
-                    <option>Form 4B</option>
+                    <option value="all">All Classes</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>Status:</label>
                 <select class="filter-select" id="statusFilter">
-                    <option>All</option>
-                    <option>Active</option>
-                    <option>Graduated</option>
-                    <option>Transferred</option>
+                    <option value="all">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Graduated">Graduated</option>
+                    <option value="Transferred">Transferred</option>
                 </select>
             </div>
             <div class="search-box">
@@ -180,10 +180,15 @@
 
         <div class="students-grid" id="studentsGrid">
             <!-- Dynamic student cards will be loaded here -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 30px; color: var(--school-green);"></i>
+                <p style="margin-top: 20px; color: #666;">Loading students...</p>
+            </div>
         </div>
     </main>
 
     <script>
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -197,151 +202,302 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const adminRoleDisplay = document.getElementById('adminRoleDisplay');
+        const totalStudentsEl = document.getElementById('totalStudents');
+        const maleStudentsEl = document.getElementById('maleStudents');
+        const femaleStudentsEl = document.getElementById('femaleStudents');
+        const avgAttendanceEl = document.getElementById('avgAttendance');
+        const studentGrowthEl = document.getElementById('studentGrowth');
+        const studentsGrid = document.getElementById('studentsGrid');
+        const classFilter = document.getElementById('classFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;      // from 'admins' collection
+        let allStudents = [];      // cached for filtering
+        let uniqueClasses = new Set();
+
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'school-login.html';
-            else {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    if (data.role !== 'school_admin' && data.role !== 'admin') {
-                        await auth.signOut();
-                        window.location.href = 'school-login.html';
-                    } else {
-                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
-                        loadStudents(data.schoolId);
-                    }
+            if (user) {
+                currentUser = user;
+                await loadAdminData(user);
+                if (!adminData) {
+                    console.error('No admin record found for this user');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
                 }
+                // Verify admin is active
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                // Load students for this admin's school
+                await loadStudents();
+                setupEventListeners();
+            } else {
+                window.location.href = 'school-login.html';
             }
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await auth.signOut();
-            window.location.href = 'school-login.html';
-        });
-
-        async function loadStudents(schoolId) {
-            const grid = document.getElementById('studentsGrid');
-            
+        // ========== LOAD ADMIN DATA FROM 'admins' COLLECTION ==========
+        async function loadAdminData(user) {
             try {
-                const studentsSnap = await db.collection('students')
-                    .where('schoolId', '==', schoolId)
-                    .orderBy('fullName')
+                // Query admins collection where authUid matches current user uid
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
                     .get();
 
-                if (!studentsSnap.empty) {
-                    let html = '';
-                    studentsSnap.forEach(doc => {
-                        const s = doc.data();
-                        const initials = s.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-                        html += `
-                            <div class="student-card">
-                                <div class="student-avatar">${initials}</div>
-                                <div class="student-info">
-                                    <div class="student-name">${s.fullName}</div>
-                                    <div style="color: #666; font-size: 13px;">Adm: ${s.admissionNo || 'N/A'}</div>
-                                    <div class="student-meta">
-                                        <span class="badge badge-class"><i class="fas fa-door-open"></i> ${s.class || 'Form 3C'}</span>
-                                        <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> ${s.attendanceRate || '94%'}</span>
-                                    </div>
-                                </div>
-                                <button class="btn-view" onclick="viewStudent('${doc.id}')">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                            </div>
-                        `;
-                    });
-                    grid.innerHTML = html;
-                    document.getElementById('totalStudents').textContent = studentsSnap.size;
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                    
+                    // Update UI with admin data
+                    const fullName = adminData.name || 'School Administrator';
+                    adminName.textContent = fullName.split(' ')[0] || 'Admin';
+                    
+                    // Display school name
+                    const schoolName = adminData.school || 'Your School';
+                    schoolNameHeader.textContent = schoolName;
+                    schoolNameSub.textContent = schoolName;
+                    
+                    // Update role display
+                    const roleSpan = adminRoleDisplay.querySelector('i')?.parentNode || adminRoleDisplay;
+                    if (adminData.role) {
+                        roleSpan.innerHTML = `<i class="fas fa-user-shield"></i> ${adminData.role}`;
+                    }
+                    
+                    console.log('Admin data loaded:', adminData);
                 } else {
-                    // Demo data
-                    grid.innerHTML = getDemoStudents();
+                    console.error('No admin document found for authUid:', user.uid);
                 }
             } catch (error) {
-                console.error('Error loading students:', error);
-                grid.innerHTML = getDemoStudents();
+                console.error('Error loading admin data:', error);
             }
         }
 
-        function getDemoStudents() {
-            return `
-                <div class="student-card">
-                    <div class="student-avatar">JM</div>
-                    <div class="student-info">
-                        <div class="student-name">John Mwangi</div>
-                        <div style="color: #666; font-size: 13px;">Adm: 2025-001</div>
-                        <div class="student-meta">
-                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
-                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 94%</span>
-                        </div>
-                    </div>
-                    <button class="btn-view" onclick="viewStudent('1')"><i class="fas fa-eye"></i> View</button>
-                </div>
-                <div class="student-card">
-                    <div class="student-avatar">MA</div>
-                    <div class="student-info">
-                        <div class="student-name">Mary Atieno</div>
-                        <div style="color: #666; font-size: 13px;">Adm: 2025-042</div>
-                        <div class="student-meta">
-                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
-                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 98%</span>
-                        </div>
-                    </div>
-                    <button class="btn-view" onclick="viewStudent('2')"><i class="fas fa-eye"></i> View</button>
-                </div>
-                <div class="student-card">
-                    <div class="student-avatar">PK</div>
-                    <div class="student-info">
-                        <div class="student-name">Peter Kamau</div>
-                        <div style="color: #666; font-size: 13px;">Adm: 2024-128</div>
-                        <div class="student-meta">
-                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 4A</span>
-                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 88%</span>
-                        </div>
-                    </div>
-                    <button class="btn-view" onclick="viewStudent('3')"><i class="fas fa-eye"></i> View</button>
-                </div>
-                <div class="student-card">
-                    <div class="student-avatar">AO</div>
-                    <div class="student-info">
-                        <div class="student-name">Alice Odhiambo</div>
-                        <div style="color: #666; font-size: 13px;">Adm: 2023-215</div>
-                        <div class="student-meta">
-                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
-                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 95%</span>
-                        </div>
-                    </div>
-                    <button class="btn-view" onclick="viewStudent('4')"><i class="fas fa-eye"></i> View</button>
-                </div>
-                <div class="student-card">
-                    <div class="student-avatar">BM</div>
-                    <div class="student-info">
-                        <div class="student-name">Brian Muthama</div>
-                        <div style="color: #666; font-size: 13px;">Adm: 2023-218</div>
-                        <div class="student-meta">
-                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 3C</span>
-                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 91%</span>
-                        </div>
-                    </div>
-                    <button class="btn-view" onclick="viewStudent('5')"><i class="fas fa-eye"></i> View</button>
-                </div>
-                <div class="student-card">
-                    <div class="student-avatar">SN</div>
-                    <div class="student-info">
-                        <div class="student-name">Sarah Njeri</div>
-                        <div style="color: #666; font-size: 13px;">Adm: 2022-089</div>
-                        <div class="student-meta">
-                            <span class="badge badge-class"><i class="fas fa-door-open"></i> Form 4A</span>
-                            <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> 96%</span>
-                        </div>
-                    </div>
-                    <button class="btn-view" onclick="viewStudent('6')"><i class="fas fa-eye"></i> View</button>
+        // ========== LOAD STUDENTS ==========
+        async function loadStudents() {
+            if (!adminData) return;
+
+            // Show loading state
+            studentsGrid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 30px; color: var(--school-green);"></i>
+                    <p style="margin-top: 20px; color: #666;">Loading students...</p>
                 </div>
             `;
+
+            try {
+                // Determine school filter - support both schoolId and school name
+                let studentsQuery;
+                
+                if (adminData.schoolId) {
+                    // If we have a schoolId reference, use it
+                    studentsQuery = db.collection('students')
+                        .where('schoolId', '==', adminData.schoolId);
+                } else {
+                    // Fallback to school name string
+                    studentsQuery = db.collection('students')
+                        .where('school', '==', adminData.school);
+                }
+
+                const studentsSnap = await studentsQuery.get();
+                
+                // Map to array with ids
+                allStudents = studentsSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Update stats
+                updateStats(allStudents);
+                
+                // Extract unique classes for filter
+                extractUniqueClasses(allStudents);
+                
+                // Render students
+                renderStudents(allStudents);
+
+            } catch (error) {
+                console.error('Error loading students:', error);
+                // Show demo data if no students exist
+                loadDemoData();
+            }
         }
 
+        // ========== UPDATE STATISTICS ==========
+        function updateStats(students) {
+            const total = students.length;
+            totalStudentsEl.textContent = total || 0;
+            
+            const maleCount = students.filter(s => s.gender?.toLowerCase() === 'male').length;
+            const femaleCount = students.filter(s => s.gender?.toLowerCase() === 'female').length;
+            
+            maleStudentsEl.textContent = maleCount || 0;
+            femaleStudentsEl.textContent = femaleCount || 0;
+            
+            // Calculate average attendance (mock for now)
+            const avgAttendance = students.length > 0 
+                ? Math.round(students.reduce((sum, s) => sum + (parseInt(s.attendanceRate) || 94), 0) / students.length) 
+                : 94;
+            avgAttendanceEl.textContent = `${avgAttendance}%`;
+            
+            // Growth indicator (mock)
+            studentGrowthEl.textContent = total > 0 ? `+${Math.floor(total * 0.05)} this term` : 'No data';
+        }
+
+        // ========== EXTRACT UNIQUE CLASSES ==========
+        function extractUniqueClasses(students) {
+            uniqueClasses.clear();
+            students.forEach(s => {
+                if (s.class) uniqueClasses.add(s.class);
+            });
+            
+            // Populate class filter dropdown
+            let options = '<option value="all">All Classes</option>';
+            Array.from(uniqueClasses).sort().forEach(className => {
+                options += `<option value="${className}">${className}</option>`;
+            });
+            classFilter.innerHTML = options;
+        }
+
+        // ========== RENDER STUDENTS ==========
+        function renderStudents(students) {
+            if (!students || students.length === 0) {
+                studentsGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 50px; background: white; border-radius: 20px;">
+                        <i class="fas fa-user-graduate" style="font-size: 48px; color: #ccc;"></i>
+                        <p style="margin-top: 20px; color: #666; font-size: 16px;">No students found</p>
+                        <button onclick="window.location.href='school-add-student.html'" 
+                                style="margin-top: 20px; background: var(--school-green); color: white; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer;">
+                            <i class="fas fa-user-plus"></i> Add First Student
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            students.forEach(s => {
+                const initials = s.fullName 
+                    ? s.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                    : 'ST';
+                
+                const admissionNo = s.admissionNo || s.admissionNumber || 'N/A';
+                const className = s.class || 'Form 1A';
+                const attendance = s.attendanceRate || s.attendance || '94%';
+                
+                html += `
+                    <div class="student-card">
+                        <div class="student-avatar">${initials}</div>
+                        <div class="student-info">
+                            <div class="student-name">${s.fullName || 'Student'}</div>
+                            <div style="color: #666; font-size: 13px;">Adm: ${admissionNo}</div>
+                            <div class="student-meta">
+                                <span class="badge badge-class"><i class="fas fa-door-open"></i> ${className}</span>
+                                <span class="badge badge-attendance"><i class="fas fa-calendar-check"></i> ${attendance}</span>
+                                ${s.gender ? `<span style="margin-left: 5px;"><i class="fas fa-${s.gender === 'male' ? 'mars' : 'venus'}"></i> ${s.gender}</span>` : ''}
+                            </div>
+                        </div>
+                        <button class="btn-view" onclick="viewStudent('${s.id}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                `;
+            });
+            studentsGrid.innerHTML = html;
+        }
+
+        // ========== FILTER STUDENTS ==========
+        function filterStudents() {
+            let filtered = [...allStudents];
+            
+            // Filter by class
+            const classValue = classFilter.value;
+            if (classValue !== 'all') {
+                filtered = filtered.filter(s => s.class === classValue);
+            }
+            
+            // Filter by status
+            const statusValue = statusFilter.value;
+            if (statusValue !== 'all') {
+                filtered = filtered.filter(s => s.status === statusValue);
+            }
+            
+            // Filter by search
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            if (searchTerm) {
+                filtered = filtered.filter(s => 
+                    (s.fullName?.toLowerCase().includes(searchTerm)) ||
+                    (s.admissionNo?.toLowerCase().includes(searchTerm)) ||
+                    (s.admissionNumber?.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderStudents(filtered);
+        }
+
+        // ========== LOAD DEMO DATA (if no students exist) ==========
+        function loadDemoData() {
+            const demoStudents = [
+                { id: 'demo1', fullName: 'John Mwangi', admissionNo: '2025-001', class: 'Form 3C', gender: 'male', attendanceRate: '94%', status: 'Active' },
+                { id: 'demo2', fullName: 'Mary Atieno', admissionNo: '2025-042', class: 'Form 3C', gender: 'female', attendanceRate: '98%', status: 'Active' },
+                { id: 'demo3', fullName: 'Peter Kamau', admissionNo: '2024-128', class: 'Form 4A', gender: 'male', attendanceRate: '88%', status: 'Active' },
+                { id: 'demo4', fullName: 'Alice Odhiambo', admissionNo: '2023-215', class: 'Form 3C', gender: 'female', attendanceRate: '95%', status: 'Active' },
+                { id: 'demo5', fullName: 'Brian Muthama', admissionNo: '2023-218', class: 'Form 3C', gender: 'male', attendanceRate: '91%', status: 'Active' },
+                { id: 'demo6', fullName: 'Sarah Njeri', admissionNo: '2022-089', class: 'Form 4A', gender: 'female', attendanceRate: '96%', status: 'Active' }
+            ];
+            
+            allStudents = demoStudents;
+            updateStats(allStudents);
+            extractUniqueClasses(allStudents);
+            renderStudents(allStudents);
+            
+            totalStudentsEl.textContent = '1,248'; // Override with demo count
+            maleStudentsEl.textContent = '648';
+            femaleStudentsEl.textContent = '600';
+            studentGrowthEl.textContent = '+24 this term';
+        }
+
+        // ========== EVENT LISTENERS ==========
+        function setupEventListeners() {
+            // Logout
+            logoutBtn.addEventListener('click', async () => {
+                await auth.signOut();
+                window.location.href = 'school-login.html';
+            });
+            
+            // Filter events
+            classFilter.addEventListener('change', filterStudents);
+            statusFilter.addEventListener('change', filterStudents);
+            searchInput.addEventListener('input', filterStudents);
+            searchBtn.addEventListener('click', filterStudents);
+        }
+
+        // ========== VIEW STUDENT DETAILS ==========
         window.viewStudent = function(id) {
+            // Store student ID in session for details page
+            sessionStorage.setItem('viewStudentId', id);
             window.location.href = `school-student-details.html?id=${id}`;
         };
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            // Any additional initialization
+        });
     </script>
 </body>
 </html>
