@@ -256,6 +256,12 @@
             box-shadow: 0 10px 25px rgba(39, 174, 96, 0.4);
         }
 
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-secondary {
             background: #f0f0f0;
             color: var(--dark-blue);
@@ -264,6 +270,21 @@
         .btn-secondary:hover {
             background: #e0e0e0;
         }
+
+        .logout-btn {
+            background: rgba(231,76,60,0.2); 
+            color: white; 
+            border: 2px solid var(--red); 
+            padding: 10px 20px; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover { background: var(--red); }
 
         @media (max-width: 768px) {
             .form-grid {
@@ -290,13 +311,15 @@
                     <img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
                 </div>
                 <div class="church-info">
-                    <h1>EDUSKYLARK · ADD STUDENT <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
-                    <p>Enroll New Student</p>
+                    <h1>EDUSKYLARK · ADD STUDENT <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">SCHOOL ADMIN</span></span></h1>
+                    <p>Enroll New Student · <span id="schoolNameSub">Loading...</span></p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 20px;">
-                <span style="color: white;" id="schoolName">Loading...</span>
-                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;" id="adminInfo">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
+                <button class="logout-btn" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
@@ -315,19 +338,19 @@
             <form id="addStudentForm">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label"><i class="fas fa-user"></i> Full Name</label>
+                        <label class="form-label"><i class="fas fa-user"></i> Full Name *</label>
                         <input type="text" class="form-control" id="fullName" placeholder="Enter full name" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label"><i class="fas fa-hashtag"></i> Admission Number</label>
+                        <label class="form-label"><i class="fas fa-hashtag"></i> Admission Number *</label>
                         <input type="text" class="form-control" id="admissionNo" placeholder="e.g., 2025-001" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth</label>
+                        <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth *</label>
                         <input type="date" class="form-control" id="dob" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label"><i class="fas fa-venus-mars"></i> Gender</label>
+                        <label class="form-label"><i class="fas fa-venus-mars"></i> Gender *</label>
                         <select class="form-control" id="gender" required>
                             <option value="">Select Gender</option>
                             <option value="male">Male</option>
@@ -336,7 +359,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label"><i class="fas fa-graduation-cap"></i> Class</label>
+                        <label class="form-label"><i class="fas fa-graduation-cap"></i> Class *</label>
                         <select class="form-control" id="class" required>
                             <option value="">Select Class</option>
                             <option value="Form 1A">Form 1A</option>
@@ -393,6 +416,7 @@
     </main>
 
     <script>
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -406,65 +430,155 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const addStudentForm = document.getElementById('addStudentForm');
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;      // from 'admins' collection
+
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'school-login.html';
-            else {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    if (data.role !== 'school_admin' && data.role !== 'admin') {
-                        await auth.signOut();
-                        window.location.href = 'school-login.html';
-                    } else {
-                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
-                    }
+            if (user) {
+                currentUser = user;
+                await loadAdminData(user);
+                if (!adminData) {
+                    console.error('No admin record found for this user');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
                 }
+                // Verify admin is active
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                // Update UI with admin info
+                updateUI();
+            } else {
+                window.location.href = 'school-login.html';
             }
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // ========== LOAD ADMIN DATA FROM 'admins' COLLECTION ==========
+        async function loadAdminData(user) {
+            try {
+                // Query admins collection where authUid matches current user uid
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                    console.log('Admin data loaded:', adminData);
+                } else {
+                    console.error('No admin document found for authUid:', user.uid);
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // ========== UPDATE UI WITH ADMIN DATA ==========
+        function updateUI() {
+            if (!adminData) return;
+            
+            // Display admin name
+            const fullName = adminData.name || 'School Administrator';
+            adminName.textContent = fullName.split(' ')[0] || 'Admin';
+            
+            // Display school name
+            const schoolName = adminData.school || 'Your School';
+            schoolNameHeader.textContent = schoolName;
+            schoolNameSub.textContent = schoolName;
+        }
+
+        // ========== LOGOUT ==========
+        logoutBtn.addEventListener('click', async () => {
             await auth.signOut();
             window.location.href = 'school-login.html';
         });
 
-        document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
+        // ========== FORM SUBMISSION ==========
+        addStudentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
+            
+            // Disable submit button
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
 
             try {
-                const user = auth.currentUser;
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                const schoolId = userDoc.data().schoolId;
+                // Ensure we have admin data
+                if (!adminData) {
+                    throw new Error('Admin data not loaded. Please refresh.');
+                }
 
+                // Prepare student data
                 const studentData = {
-                    fullName: document.getElementById('fullName').value,
-                    admissionNo: document.getElementById('admissionNo').value,
+                    fullName: document.getElementById('fullName').value.trim(),
+                    admissionNo: document.getElementById('admissionNo').value.trim(),
+                    admissionNumber: document.getElementById('admissionNo').value.trim(), // duplicate for compatibility
                     dob: document.getElementById('dob').value,
                     gender: document.getElementById('gender').value,
                     class: document.getElementById('class').value,
-                    phone: document.getElementById('phone').value,
-                    email: document.getElementById('email').value,
-                    address: document.getElementById('address').value,
-                    parentName: document.getElementById('parentName').value,
-                    parentPhone: document.getElementById('parentPhone').value,
-                    nationality: document.getElementById('nationality').value,
-                    idNumber: document.getElementById('idNumber').value,
-                    schoolId: schoolId,
-                    status: 'active',
+                    phone: document.getElementById('phone').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    address: document.getElementById('address').value.trim(),
+                    parentName: document.getElementById('parentName').value.trim(),
+                    parentPhone: document.getElementById('parentPhone').value.trim(),
+                    nationality: document.getElementById('nationality').value.trim(),
+                    idNumber: document.getElementById('idNumber').value.trim(),
+                    status: 'Active',
                     enrollmentDate: firebase.firestore.FieldValue.serverTimestamp(),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
+                // Add school identifier based on what we have
+                if (adminData.schoolId) {
+                    studentData.schoolId = adminData.schoolId;
+                } else {
+                    studentData.school = adminData.school; // fallback to school name string
+                }
+
+                // Optional: add attendance rate placeholder
+                studentData.attendanceRate = '94%'; // default
+
+                // Validate required fields
+                if (!studentData.fullName || !studentData.admissionNo || !studentData.dob || !studentData.gender || !studentData.class) {
+                    throw new Error('Please fill all required fields');
+                }
+
+                // Add to Firestore
                 await db.collection('students').add(studentData);
+                
                 alert('✅ Student added successfully!');
                 window.location.href = 'school-students.html';
+                
             } catch (error) {
                 console.error('Error adding student:', error);
                 alert('❌ Error adding student: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Student';
+            }
+        });
+
+        // Optional: set minimum date for DOB (not older than 5 years from today)
+        window.addEventListener('load', function() {
+            const today = new Date();
+            const minDate = new Date(today.setFullYear(today.getFullYear() - 5)).toISOString().split('T')[0];
+            const maxDate = new Date().toISOString().split('T')[0];
+            const dobInput = document.getElementById('dob');
+            if (dobInput) {
+                dobInput.setAttribute('max', maxDate);
             }
         });
     </script>
