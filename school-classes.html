@@ -133,7 +133,7 @@
         .logout-btn {
             background: rgba(231,76,60,0.15); color: white; border: 2px solid var(--red); 
             padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600;
-            transition: 0.2s;
+            transition: 0.2s; display: flex; align-items: center; gap: 8px;
         }
         .logout-btn:hover { background: var(--red); }
 
@@ -153,12 +153,14 @@
             <div class="logo-section">
                 <div class="logo"><img src="https://cdn-icons-png.flaticon.com/512/217/217853.png" alt="EDUSKYLARK"></div>
                 <div class="church-info">
-                    <h1>EDUSKYLARK · CLASSES <span class="school-badge"><i class="fas fa-school"></i> ACADEMICS</span></h1>
-                    <p>Manage Classes & Sections</p>
+                    <h1>EDUSKYLARK · CLASSES <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">ACADEMICS</span></span></h1>
+                    <p>Manage Classes & Sections · <span id="schoolNameSub">Loading...</span></p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 20px;">
-                <span style="color: white;" id="schoolName">Loading...</span>
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;" id="adminInfo">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
                 <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
@@ -211,22 +213,26 @@
     </main>
 
     <script>
-        // Firebase config (replace with your actual project config)
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyReplaceWithYourOwn",
-            authDomain: "eduskylark-demo.firebaseapp.com",
-            projectId: "eduskylark-demo",
-            storageBucket: "eduskylark-demo.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abc123def"
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
         };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // DOM elements
-        const schoolNameSpan = document.getElementById('schoolName');
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const addClassBtn = document.getElementById('addClassBtn');
         const classesGrid = document.getElementById('classesGrid');
         const totalClassesSpan = document.getElementById('totalClasses');
         const totalStudentsSpan = document.getElementById('totalStudents');
@@ -236,52 +242,107 @@
         const teacherFilter = document.getElementById('teacherFilter');
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const addClassBtn = document.getElementById('addClassBtn');
 
-        // State
-        let allClasses = [];                // raw class data
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;           // from 'admins' collection
+        let allClasses = [];             // raw class data
         let filteredClasses = [];
-        let teacherOptions = new Set();      // for filter dropdown
-        let currentUserSchool = "EDUSKYLARK International School";
+        let teacherOptions = new Set();   // for filter dropdown
 
-        // --- AUTH ---
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                window.location.href = '/login.html';
+                window.location.href = 'school-login.html';
                 return;
             }
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists && userDoc.data().schoolName) {
-                    currentUserSchool = userDoc.data().schoolName;
-                } else {
-                    currentUserSchool = "EDUSKYLARK · " + (user.email?.split('@')[1] || "School");
-                }
-            } catch (e) {
-                console.warn("Using default school name");
+            currentUser = user;
+            await loadAdminData(user);
+            if (!adminData) {
+                console.error('No admin record found for this user');
+                await auth.signOut();
+                window.location.href = 'school-login.html';
+                return;
             }
-            schoolNameSpan.textContent = currentUserSchool;
-
-            // Real-time listener for classes (filtered by school)
-            db.collection('classes')
-                .where('school', '==', currentUserSchool)
-                .onSnapshot(snapshot => {
-                    allClasses = [];
-                    teacherOptions.clear();
-                    snapshot.forEach(doc => {
-                        const cls = { id: doc.id, ...doc.data() };
-                        allClasses.push(cls);
-                        if (cls.teacherName) teacherOptions.add(cls.teacherName);
-                    });
-                    populateTeacherFilter();
-                    applyFilters();
-                }, error => {
-                    console.error("Firestore error, using mock classes", error);
-                    useMockData();
-                });
+            // Verify admin is active
+            if (adminData.status !== 'Active') {
+                alert('Your account is not active. Please contact super admin.');
+                await auth.signOut();
+                window.location.href = 'school-login.html';
+                return;
+            }
+            // Update UI with admin info
+            updateUI();
+            
+            // Set up real-time listener for classes
+            setupClassesListener();
         });
 
+        // ========== LOAD ADMIN DATA FROM 'admins' COLLECTION ==========
+        async function loadAdminData(user) {
+            try {
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                    console.log('Admin data loaded:', adminData);
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // ========== UPDATE UI WITH ADMIN DATA ==========
+        function updateUI() {
+            if (!adminData) return;
+            
+            // Display admin name
+            const fullName = adminData.name || 'School Administrator';
+            adminName.textContent = fullName.split(' ')[0] || 'Admin';
+            
+            // Display school name
+            const schoolName = adminData.school || 'Your School';
+            schoolNameHeader.textContent = schoolName;
+            schoolNameSub.textContent = schoolName;
+        }
+
+        // ========== SETUP CLASSES LISTENER ==========
+        function setupClassesListener() {
+            if (!adminData) return;
+
+            // Build query based on available school identifier
+            let classesQuery;
+            if (adminData.schoolId) {
+                classesQuery = db.collection('classes')
+                    .where('schoolId', '==', adminData.schoolId);
+            } else {
+                classesQuery = db.collection('classes')
+                    .where('school', '==', adminData.school);
+            }
+
+            classesQuery.onSnapshot(snapshot => {
+                allClasses = [];
+                teacherOptions.clear();
+                
+                snapshot.forEach(doc => {
+                    const cls = { id: doc.id, ...doc.data() };
+                    allClasses.push(cls);
+                    if (cls.teacherName) teacherOptions.add(cls.teacherName);
+                });
+                
+                populateTeacherFilter();
+                applyFilters();
+            }, error => {
+                console.error('Firestore error, using mock data', error);
+                useMockData();
+            });
+        }
+
+        // ========== POPULATE TEACHER FILTER ==========
         function populateTeacherFilter() {
             let html = '<option value="all">All teachers</option>';
             [...teacherOptions].sort().forEach(t => {
@@ -290,16 +351,19 @@
             teacherFilter.innerHTML = html;
         }
 
-        // Mock data
+        // ========== MOCK DATA (if no classes exist) ==========
         function useMockData() {
+            if (!adminData) return;
+            const schoolName = adminData.school || 'Demo School';
+            
             allClasses = [
-                { id: 'c1', name: 'Mathematics 10A', grade: 'Grade 10', teacherName: 'Emily Clarke', studentCount: 28, room: '201', schedule: 'Mon/Wed 10:30', school: currentUserSchool },
-                { id: 'c2', name: 'Physics 11', grade: 'Grade 11', teacherName: 'James Okonkwo', studentCount: 24, room: '305', schedule: 'Tue/Thu 08:00', school: currentUserSchool },
-                { id: 'c3', name: 'English Literature 9', grade: 'Grade 9', teacherName: 'Sophie Müller', studentCount: 30, room: '112', schedule: 'Mon/Wed/Fri 13:00', school: currentUserSchool },
-                { id: 'c4', name: 'World History 10', grade: 'Grade 10', teacherName: 'David Kim', studentCount: 26, room: '204', schedule: 'Tue/Thu 14:30', school: currentUserSchool },
-                { id: 'c5', name: 'Chemistry 12', grade: 'Grade 12', teacherName: 'Maria Santos', studentCount: 18, room: '401', schedule: 'Wed/Fri 09:00', school: currentUserSchool },
-                { id: 'c6', name: 'Algebra 8', grade: 'Grade 8', teacherName: 'John Agyekum', studentCount: 32, room: '108', schedule: 'Mon/Wed 08:30', school: currentUserSchool },
-                { id: 'c7', name: 'French 7', grade: 'Grade 7', teacherName: 'Linda Zhang', studentCount: 22, room: '109', schedule: 'Tue/Thu 11:00', school: currentUserSchool },
+                { id: 'c1', name: 'Mathematics 10A', grade: 'Grade 10', teacherName: 'Emily Clarke', studentCount: 28, room: '201', schedule: 'Mon/Wed 10:30', school: schoolName },
+                { id: 'c2', name: 'Physics 11', grade: 'Grade 11', teacherName: 'James Okonkwo', studentCount: 24, room: '305', schedule: 'Tue/Thu 08:00', school: schoolName },
+                { id: 'c3', name: 'English Literature 9', grade: 'Grade 9', teacherName: 'Sophie Müller', studentCount: 30, room: '112', schedule: 'Mon/Wed/Fri 13:00', school: schoolName },
+                { id: 'c4', name: 'World History 10', grade: 'Grade 10', teacherName: 'David Kim', studentCount: 26, room: '204', schedule: 'Tue/Thu 14:30', school: schoolName },
+                { id: 'c5', name: 'Chemistry 12', grade: 'Grade 12', teacherName: 'Maria Santos', studentCount: 18, room: '401', schedule: 'Wed/Fri 09:00', school: schoolName },
+                { id: 'c6', name: 'Algebra 8', grade: 'Grade 8', teacherName: 'John Agyekum', studentCount: 32, room: '108', schedule: 'Mon/Wed 08:30', school: schoolName },
+                { id: 'c7', name: 'French 7', grade: 'Grade 7', teacherName: 'Linda Zhang', studentCount: 22, room: '109', schedule: 'Tue/Thu 11:00', school: schoolName },
             ];
             teacherOptions.clear();
             allClasses.forEach(c => { if (c.teacherName) teacherOptions.add(c.teacherName); });
@@ -307,7 +371,7 @@
             applyFilters();
         }
 
-        // Filter + render
+        // ========== FILTER + RENDER ==========
         function applyFilters() {
             const grade = gradeFilter.value;
             const teacher = teacherFilter.value;
@@ -317,7 +381,9 @@
                 if (grade !== 'all' && c.grade !== grade) return false;
                 if (teacher !== 'all' && c.teacherName !== teacher) return false;
                 if (query) {
-                    return c.name?.toLowerCase().includes(query) || c.teacherName?.toLowerCase().includes(query) || c.room?.toLowerCase().includes(query);
+                    return c.name?.toLowerCase().includes(query) || 
+                           c.teacherName?.toLowerCase().includes(query) || 
+                           c.room?.toLowerCase().includes(query);
                 }
                 return true;
             });
@@ -326,6 +392,7 @@
             renderClasses();
         }
 
+        // ========== UPDATE STATS ==========
         function updateStats() {
             totalClassesSpan.textContent = filteredClasses.length;
             const totalStudents = filteredClasses.reduce((acc, c) => acc + (c.studentCount || 0), 0);
@@ -337,6 +404,7 @@
             totalTeachersAssignedSpan.textContent = uniqueTeachers;
         }
 
+        // ========== RENDER CLASSES ==========
         function renderClasses() {
             if (filteredClasses.length === 0) {
                 classesGrid.innerHTML = `<div class="empty-state"><i class="fas fa-chalkboard"></i><h3>No classes found</h3><p>Try adjusting filters or add a new class.</p></div>`;
@@ -370,28 +438,31 @@
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
+                    // Store class ID for details page
+                    sessionStorage.setItem('viewClassId', id);
                     alert(`View details for class ID: ${id}\n(Would navigate to class profile page.)`);
                 });
             });
         }
 
-        // Event listeners
+        // ========== EVENT LISTENERS ==========
         gradeFilter.addEventListener('change', applyFilters);
         teacherFilter.addEventListener('change', applyFilters);
         searchBtn.addEventListener('click', applyFilters);
         searchInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') applyFilters(); });
 
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut().then(() => window.location.href = '/login.html');
+        logoutBtn.addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
         });
 
         addClassBtn.addEventListener('click', () => {
-            alert('Navigate to add class form. (Implement modal or /add-class.html)');
+            alert('Navigate to add class form. (Would open /school-add-class.html)');
         });
 
-        // Fallback mock if no data after 3 seconds
+        // Fallback mock if no data after 4 seconds
         setTimeout(() => {
-            if (allClasses.length === 0) useMockData();
+            if (allClasses.length === 0 && adminData) useMockData();
         }, 4000);
     </script>
 </body>
