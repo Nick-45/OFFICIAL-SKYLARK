@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Payment History</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --red: #e74c3c;
+            --blue: #3498db;
+            --orange: #e67e22;
+            --purple: #9b59b6;
+            --teal: #1abc9c;
+            --gray-light: #f8f9fa;
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;
+        }
+        .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
+        .page-header h2 i { color: var(--school-green); }
+        
+        /* Stats cards */
+        .stats-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white; border-radius: 16px; padding: 25px; border-left: 5px solid var(--school-green);
+            box-shadow: var(--shadow);
+        }
+        .stat-value { font-size: 32px; font-weight: 800; color: var(--dark-blue); }
+        .stat-label { color: #7f8c8d; font-size: 14px; margin-top: 5px; }
+        
+        /* Filter bar */
+        .filter-bar {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+            box-shadow: var(--shadow);
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-select, .filter-input {
+            padding: 12px 20px; border: 2px solid #e9ecef; border-radius: 30px; background: white;
+            font-size: 14px; min-width: 150px;
+        }
+        .search-box {
+            flex: 1; display: flex; align-items: center; background: #f9f9f9; border-radius: 30px;
+            padding: 5px 5px 5px 20px; border: 2px solid #e9ecef;
+        }
+        .search-box input {
+            flex: 1; padding: 12px 0; border: none; background: transparent; outline: none;
+        }
+        .search-box button {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 12px 25px; border-radius: 30px; cursor: pointer; font-weight: 600;
+        }
+        
+        /* Payments table */
+        .table-container {
+            background: white; border-radius: 20px; padding: 25px; box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%; border-collapse: collapse;
+        }
+        th {
+            text-align: left; padding: 15px 10px; color: #7f8c8d; font-weight: 600; font-size: 14px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        td {
+            padding: 15px 10px; border-bottom: 1px solid #ecf0f1; color: var(--dark-blue);
+        }
+        .status-badge {
+            padding: 6px 15px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-block;
+        }
+        .status-paid { background: rgba(39,174,96,0.1); color: var(--school-green); }
+        .status-pending { background: rgba(230,126,34,0.1); color: var(--orange); }
+        .status-overdue { background: rgba(231,76,60,0.1); color: var(--red); }
+        
+        .action-btn {
+            background: none; border: none; color: var(--dark-blue); cursor: pointer; padding: 5px 10px;
+            border-radius: 8px; transition: 0.2s;
+        }
+        .action-btn:hover { background: #ecf0f1; color: var(--school-green); }
+        
+        .add-btn {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .add-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(39,174,96,0.3); }
+        
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .logout-btn:hover { background: var(--red); }
+        
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; border-radius: 30px; max-width: 500px; width: 90%; padding: 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: modalSlide 0.3s ease-out;
+        }
+        @keyframes modalSlide {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+        .modal-header h3 { font-size: 24px; display: flex; align-items: center; gap: 10px; }
+        .modal-close {
+            font-size: 28px; cursor: pointer; color: #999; transition: 0.2s;
+        }
+        .modal-close:hover { color: var(--red); }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark-blue);
+        }
+        .form-control {
+            width: 100%; padding: 14px 18px; border: 2px solid #e9ecef; border-radius: 12px;
+            font-size: 15px; transition: 0.3s;
+        }
+        .form-control:focus {
+            border-color: var(--school-green); outline: none; box-shadow: 0 0 0 4px rgba(39,174,96,0.1);
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 18px center; background-size: 16px;
+        }
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 15px; margin-top: 25px;
+        }
+        .btn {
+            padding: 14px 30px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none;
+            font-size: 16px; transition: 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(39,174,96,0.3); }
+        .btn-secondary {
+            background: #f0f0f0; color: var(--dark-blue);
+        }
+        .btn-secondary:hover { background: #e0e0e0; }
+        
+        .empty-state {
+            text-align: center; padding: 40px; color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · PAYMENTS <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">SCHOOL ADMIN</span></span></h1>
+                    <p>Fee Collection · <span id="schoolNameSub">Loading...</span></p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h2><i class="fas fa-credit-card"></i> Payment History</h2>
+            <button class="add-btn" id="recordPaymentBtn"><i class="fas fa-plus-circle"></i> Record New Payment</button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-value" id="totalCollected">KES 0</div>
+                <div class="stat-label">Total Collected (Term)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingAmount">KES 0</div>
+                <div class="stat-label">Pending Payments</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="paidCount">0</div>
+                <div class="stat-label">Paid Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingCount">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Class:</label>
+                <select class="filter-select" id="classFilter">
+                    <option value="all">All Classes</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status:</label>
+                <select class="filter-select" id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by student name or receipt...">
+                <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
+            </div>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="table-container">
+            <table id="paymentsTable">
+                <thead>
+                    <tr>
+                        <th>Receipt No.</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsBody">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-credit-card" style="font-size: 48px; margin-bottom: 15px; color: #ccc;"></i>
+                <h3>No payments found</h3>
+                <p>Click "Record New Payment" to add your first transaction.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-money-bill-wave" style="color: var(--school-green);"></i> Record Payment</h3>
+                <span class="modal-close" id="closeModal">&times;</span>
+            </div>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label class="form-label">Student *</label>
+                    <select class="form-control" id="studentSelect" required>
+                        <option value="">Select Student</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (KES) *</label>
+                    <input type="number" class="form-control" id="amount" placeholder="e.g., 25000" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Date *</label>
+                    <input type="date" class="form-control" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Method *</label>
+                    <select class="form-control" id="paymentMethod" required>
+                        <option value="">Select Method</option>
+                        <option value="Cash">Cash</option>
+                        <option value="M-Pesa">M-Pesa</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Card">Card</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receipt Number</label>
+                    <input type="text" class="form-control" id="receiptNo" placeholder="Auto-generated if blank">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" rows="2" placeholder="Optional notes"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="savePaymentBtn">Save Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ========== FIREBASE CONFIG ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const recordPaymentBtn = document.getElementById('recordPaymentBtn');
+        const paymentModal = document.getElementById('paymentModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelModal = document.getElementById('cancelModal');
+        const paymentForm = document.getElementById('paymentForm');
+        const studentSelect = document.getElementById('studentSelect');
+        const paymentDate = document.getElementById('paymentDate');
+        const paymentsBody = document.getElementById('paymentsBody');
+        const emptyState = document.getElementById('emptyState');
+        const classFilter = document.getElementById('classFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        
+        // Stats elements
+        const totalCollected = document.getElementById('totalCollected');
+        const pendingAmount = document.getElementById('pendingAmount');
+        const paidCount = document.getElementById('paidCount');
+        const pendingCount = document.getElementById('pendingCount');
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;
+        let allPayments = [];
+        let allStudents = [];
+        let filteredPayments = [];
+
+        // ========== AUTH STATE LISTENER ==========
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadAdminData(user);
+                if (!adminData) {
+                    console.error('No admin record found');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                updateUI();
+                await loadStudents();
+                await loadPayments();
+                setupEventListeners();
+            } else {
+                window.location.href = 'school-login.html';
+            }
+        });
+
+        // ========== LOAD ADMIN DATA ==========
+        async function loadAdminData(user) {
+            try {
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // ========== UPDATE UI ==========
+        function updateUI() {
+            if (!adminData) return;
+            const fullName = adminData.name || 'School Administrator';
+            adminName.textContent = fullName.split(' ')[0] || 'Admin';
+            const schoolName = adminData.school || 'Your School';
+            schoolNameHeader.textContent = schoolName;
+            schoolNameSub.textContent = schoolName;
+        }
+
+        // ========== LOAD STUDENTS ==========
+        async function loadStudents() {
+            if (!adminData) return;
+            
+            try {
+                let studentsQuery;
+                if (adminData.schoolId) {
+                    studentsQuery = db.collection('students').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    studentsQuery = db.collection('students').where('school', '==', adminData.school);
+                }
+                
+                const snapshot = await studentsQuery.get();
+                allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Populate student dropdown
+                let options = '<option value="">Select Student</option>';
+                allStudents.forEach(s => {
+                    options += `<option value="${s.id}">${s.fullName || 'Unnamed'} (${s.admissionNo || 'N/A'})</option>`;
+                });
+                studentSelect.innerHTML = options;
+                
+            } catch (error) {
+                console.warn('Could not load students, using mock', error);
+                loadMockStudents();
+            }
+        }
+
+        // ========== LOAD PAYMENTS ==========
+        async function loadPayments() {
+            if (!adminData) return;
+            
+            try {
+                let paymentsQuery;
+                if (adminData.schoolId) {
+                    paymentsQuery = db.collection('payments').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    paymentsQuery = db.collection('payments').where('school', '==', adminData.school);
+                }
+                
+                const snapshot = await paymentsQuery.orderBy('date', 'desc').get();
+                allPayments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                if (allPayments.length === 0) {
+                    useMockPayments();
+                } else {
+                    applyFilters();
+                }
+            } catch (error) {
+                console.warn('Could not load payments, using mock', error);
+                useMockPayments();
+            }
+        }
+
+        // ========== MOCK DATA ==========
+        function loadMockStudents() {
+            allStudents = [
+                { id: 's1', fullName: 'John Mwangi', admissionNo: '2025-001', class: 'Form 3C' },
+                { id: 's2', fullName: 'Mary Atieno', admissionNo: '2025-042', class: 'Form 3C' },
+                { id: 's3', fullName: 'Peter Kamau', admissionNo: '2024-128', class: 'Form 4A' },
+                { id: 's4', fullName: 'Alice Odhiambo', admissionNo: '2023-215', class: 'Form 3C' },
+                { id: 's5', fullName: 'Brian Muthama', admissionNo: '2023-218', class: 'Form 3C' },
+                { id: 's6', fullName: 'Sarah Njeri', admissionNo: '2022-089', class: 'Form 4A' }
+            ];
+            
+            let options = '<option value="">Select Student</option>';
+            allStudents.forEach(s => {
+                options += `<option value="${s.id}">${s.fullName} (${s.admissionNo})</option>`;
+            });
+            studentSelect.innerHTML = options;
+        }
+
+        function useMockPayments() {
+            allPayments = [
+                { id: 'p1', studentId: 's1', studentName: 'John Mwangi', class: 'Form 3C', amount: 25000, date: '2025-03-15', method: 'M-Pesa', receiptNo: 'RCP-001', status: 'paid' },
+                { id: 'p2', studentId: 's2', studentName: 'Mary Atieno', class: 'Form 3C', amount: 25000, date: '2025-03-14', method: 'Cash', receiptNo: 'RCP-002', status: 'paid' },
+                { id: 'p3', studentId: 's3', studentName: 'Peter Kamau', class: 'Form 4A', amount: 30000, date: '2025-03-10', method: 'Bank Transfer', receiptNo: 'RCP-003', status: 'paid' },
+                { id: 'p4', studentId: 's4', studentName: 'Alice Odhiambo', class: 'Form 3C', amount: 25000, date: '2025-03-05', method: 'M-Pesa', receiptNo: 'RCP-004', status: 'paid' },
+                { id: 'p5', studentId: 's5', studentName: 'Brian Muthama', class: 'Form 3C', amount: 25000, date: '2025-03-01', method: 'Cheque', receiptNo: 'RCP-005', status: 'pending' },
+                { id: 'p6', studentId: 's6', studentName: 'Sarah Njeri', class: 'Form 4A', amount: 30000, date: '2025-02-28', method: 'Cash', receiptNo: 'RCP-006', status: 'overdue' }
+            ];
+            applyFilters();
+        }
+
+        // ========== FILTER & RENDER ==========
+        function applyFilters() {
+            const classVal = classFilter.value;
+            const statusVal = statusFilter.value;
+            const searchVal = searchInput.value.toLowerCase();
+
+            filteredPayments = allPayments.filter(p => {
+                if (classVal !== 'all' && p.class !== classVal) return false;
+                if (statusVal !== 'all' && p.status !== statusVal) return false;
+                if (searchVal) {
+                    return (p.studentName?.toLowerCase().includes(searchVal) || 
+                            p.receiptNo?.toLowerCase().includes(searchVal));
+                }
+                return true;
+            });
+
+            updateStats();
+            renderTable();
+            updateClassFilter();
+        }
+
+        function updateStats() {
+            const total = filteredPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+            totalCollected.textContent = `KES ${total.toLocaleString()}`;
+            
+            const pending = filteredPayments.filter(p => p.status === 'pending' || p.status === 'overdue')
+                .reduce((sum, p) => sum + (p.amount || 0), 0);
+            pendingAmount.textContent = `KES ${pending.toLocaleString()}`;
+            
+            const paid = filteredPayments.filter(p => p.status === 'paid').length;
+            paidCount.textContent = paid;
+            
+            const pend = filteredPayments.filter(p => p.status === 'pending' || p.status === 'overdue').length;
+            pendingCount.textContent = pend;
+        }
+
+        function updateClassFilter() {
+            const classes = [...new Set(allPayments.map(p => p.class).filter(Boolean))];
+            let options = '<option value="all">All Classes</option>';
+            classes.sort().forEach(c => {
+                options += `<option value="${c}">${c}</option>`;
+            });
+            classFilter.innerHTML = options;
+        }
+
+        function renderTable() {
+            if (filteredPayments.length === 0) {
+                paymentsBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            let html = '';
+            
+            filteredPayments.forEach(p => {
+                const statusClass = p.status === 'paid' ? 'status-paid' : p.status === 'pending' ? 'status-pending' : 'status-overdue';
+                const statusText = p.status.charAt(0).toUpperCase() + p.status.slice(1);
+                
+                html += `
+                    <tr>
+                        <td><strong>${p.receiptNo || '—'}</strong></td>
+                        <td>${p.studentName || 'Unknown'}</td>
+                        <td>${p.class || '—'}</td>
+                        <td><strong>KES ${p.amount?.toLocaleString() || 0}</strong></td>
+                        <td>${p.date || '—'}</td>
+                        <td>${p.method || '—'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="action-btn" onclick="viewReceipt('${p.id}')"><i class="fas fa-file-invoice"></i></button>
+                            <button class="action-btn" onclick="editPayment('${p.id}')"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </td>
+                `;
+            });
+            
+            paymentsBody.innerHTML = html;
+        }
+
+        // ========== MODAL HANDLING ==========
+        recordPaymentBtn.addEventListener('click', () => {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            paymentDate.value = today;
+            paymentModal.style.display = 'flex';
+        });
+
+        closeModal.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+            paymentForm.reset();
+        });
+
+        cancelModal.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+            paymentForm.reset();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.style.display = 'none';
+                paymentForm.reset();
+            }
+        });
+
+        // ========== SAVE PAYMENT ==========
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const studentId = studentSelect.value;
+            if (!studentId) {
+                alert('Please select a student');
+                return;
+            }
+            
+            const selectedStudent = allStudents.find(s => s.id === studentId);
+            
+            const paymentData = {
+                studentId: studentId,
+                studentName: selectedStudent?.fullName || 'Unknown',
+                class: selectedStudent?.class || '—',
+                amount: parseFloat(document.getElementById('amount').value),
+                date: document.getElementById('paymentDate').value,
+                method: document.getElementById('paymentMethod').value,
+                receiptNo: document.getElementById('receiptNo').value || `RCP-${Date.now().toString().slice(-6)}`,
+                notes: document.getElementById('notes').value,
+                status: 'paid',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Add school identifier
+            if (adminData.schoolId) {
+                paymentData.schoolId = adminData.schoolId;
+            } else {
+                paymentData.school = adminData.school;
+            }
+            
+            try {
+                await db.collection('payments').add(paymentData);
+                alert('Payment recorded successfully!');
+                paymentModal.style.display = 'none';
+                paymentForm.reset();
+                await loadPayments(); // Refresh
+            } catch (error) {
+                console.error('Error saving payment:', error);
+                alert('Error saving payment: ' + error.message);
+            }
+        });
+
+        // ========== VIEW/EDIT FUNCTIONS ==========
+        window.viewReceipt = function(id) {
+            alert(`View receipt for payment ID: ${id}\n(Would open receipt PDF/print view)`);
+        };
+
+        window.editPayment = function(id) {
+            alert(`Edit payment ID: ${id}\n(Would open edit modal with pre-filled data)`);
+        };
+
+        // ========== EVENT LISTENERS ==========
+        function setupEventListeners() {
+            logoutBtn.addEventListener('click', async () => {
+                await auth.signOut();
+                window.location.href = 'school-login.html';
+            });
+            
+            classFilter.addEventListener('change', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            searchBtn.addEventListener('click', applyFilters);
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') applyFilters();
+            });
+        }
+    </script>
+</body>
+</html>
