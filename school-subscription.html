@@ -521,8 +521,9 @@
         });
 
         viewInvoicesBtn.addEventListener('click', () => {
-            alert('View invoices page (would navigate to billing history)');
-        });
+    window.location.href = "billing-history.html";
+});
+
 
         updatePaymentBtn.addEventListener('click', () => {
             alert('Update payment method (would open payment modal)');
