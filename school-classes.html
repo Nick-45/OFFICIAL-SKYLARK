@@ -435,14 +435,19 @@
             classesGrid.innerHTML = html;
 
             document.querySelectorAll('.view-class').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = btn.dataset.id;
-                    // Store class ID for details page
-                    sessionStorage.setItem('viewClassId', id);
-                    alert(`View details for class ID: ${id}\n(Would navigate to class profile page.)`);
-                });
-            });
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        const id = btn.dataset.id;
+
+        // Store class ID for details page
+        sessionStorage.setItem('viewClassId', id);
+
+        // Open class profile page
+        window.location.href = 'class-profile.html';
+    });
+});
+
         }
 
      // ========== EVENT LISTENERS ==========
