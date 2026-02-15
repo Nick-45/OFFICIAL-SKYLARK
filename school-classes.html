@@ -453,11 +453,11 @@
 
         logoutBtn.addEventListener('click', async () => {
             await auth.signOut();
-            window.location.href = 'school-login.html';
+            window.location.href = 'school-admin-login.html';
         });
 
         addClassBtn.addEventListener('click', () => {
-            alert('Navigate to add class form. (Would open /school-add-class.html)');
+            alert('Navigate to add class form. (Would open /school-create-class.html)');
         });
 
         // Fallback mock if no data after 4 seconds
