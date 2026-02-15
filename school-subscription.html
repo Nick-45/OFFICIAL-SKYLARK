@@ -93,6 +93,12 @@
             width: 100%; padding: 14px; background: var(--school-green); color: white;
             border: none; border-radius: 30px; font-weight: 700; cursor: not-allowed; margin-top: 20px;
         }
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .logout-btn:hover { background: var(--red); }
     </style>
 </head>
 <body>
@@ -105,13 +111,15 @@
             <div class="logo-section">
                 <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
                 <div class="church-info">
-                    <h1>EDUSKYLARK · SUBSCRIPTION <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
-                    <p>Manage Your Plan & Billing</p>
+                    <h1>EDUSKYLARK · SUBSCRIPTION <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">SCHOOL ADMIN</span></span></h1>
+                    <p>Manage Your Plan & Billing · <span id="schoolNameSub">Loading...</span></p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 20px;">
-                <span style="color: white;" id="schoolName">Loading...</span>
-                <button class="logout-btn" id="logoutBtn" style="background:rgba(231,76,60,0.2); color:white; border:2px solid var(--red); padding:10px 20px; border-radius:30px; cursor:pointer;">Logout</button>
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
     </header>
@@ -133,7 +141,7 @@
                 </div>
             </div>
 
-            <div class="features-grid">
+            <div class="features-grid" id="featuresGrid">
                 <div class="feature-item"><i class="fas fa-check-circle"></i> Unlimited students</div>
                 <div class="feature-item"><i class="fas fa-check-circle"></i> Advanced analytics</div>
                 <div class="feature-item"><i class="fas fa-check-circle"></i> 24/7 priority support</div>
@@ -146,32 +154,32 @@
                 <h3 style="margin-bottom: 20px; font-size: 20px;">Usage Statistics</h3>
                 <div class="stat-row">
                     <span><i class="fas fa-users"></i> Students</span>
-                    <span style="font-weight: 700;">1,248 / 2,000</span>
+                    <span style="font-weight: 700;" id="studentUsage">1,248 / 2,000</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: 62%;"></div>
+                    <div class="progress-fill" id="studentProgress" style="width: 62%;"></div>
                 </div>
                 <div class="stat-row" style="margin-top: 20px;">
                     <span><i class="fas fa-chalkboard-teacher"></i> Staff</span>
-                    <span style="font-weight: 700;">42 / 100</span>
+                    <span style="font-weight: 700;" id="staffUsage">42 / 100</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: 42%;"></div>
+                    <div class="progress-fill" id="staffProgress" style="width: 42%;"></div>
                 </div>
                 <div class="stat-row" style="margin-top: 20px;">
                     <span><i class="fas fa-database"></i> Storage</span>
-                    <span style="font-weight: 700;">45.2 GB / 100 GB</span>
+                    <span style="font-weight: 700;" id="storageUsage">45.2 GB / 100 GB</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: 45%;"></div>
+                    <div class="progress-fill" id="storageProgress" style="width: 45%;"></div>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 20px;">
-                <button style="background: none; border: 2px solid var(--dark-blue); padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                <button id="viewInvoicesBtn" style="background: none; border: 2px solid var(--dark-blue); padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
                     <i class="fas fa-file-invoice"></i> View Invoices
                 </button>
-                <button style="background: var(--red); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                <button id="updatePaymentBtn" style="background: var(--red); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
                     <i class="fas fa-credit-card"></i> Update Payment Method
                 </button>
             </div>
@@ -179,7 +187,7 @@
 
         <h3 style="font-size: 24px; margin-bottom: 20px;">Available Plans</h3>
         <div class="plan-cards">
-            <div class="plan-card">
+            <div class="plan-card" id="basicPlanCard">
                 <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Basic</h4>
                 <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 5,000<span style="font-size: 14px; color: #666;">/mo</span></div>
                 <ul style="list-style: none; margin-top: 20px;">
@@ -189,9 +197,9 @@
                     <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Email support</li>
                     <li style="margin-bottom: 12px;"><i class="fas fa-times" style="color: var(--red);"></i> API access</li>
                 </ul>
-                <button class="btn-upgrade">Downgrade</button>
+                <button class="btn-upgrade" id="basicPlanBtn">Downgrade</button>
             </div>
-            <div class="plan-card recommended">
+            <div class="plan-card recommended" id="standardPlanCard">
                 <span class="recommended-badge">RECOMMENDED</span>
                 <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Standard</h4>
                 <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 12,000<span style="font-size: 14px; color: #666;">/mo</span></div>
@@ -202,9 +210,9 @@
                     <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Priority support</li>
                     <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Custom branding</li>
                 </ul>
-                <button class="btn-upgrade">Upgrade</button>
+                <button class="btn-upgrade" id="standardPlanBtn">Upgrade</button>
             </div>
-            <div class="plan-card">
+            <div class="plan-card" id="premiumPlanCard">
                 <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Premium</h4>
                 <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 25,000<span style="font-size: 14px; color: #666;">/mo</span></div>
                 <ul style="list-style: none; margin-top: 20px;">
@@ -215,12 +223,13 @@
                     <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> API access</li>
                     <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Dedicated account manager</li>
                 </ul>
-                <button class="btn-current">Current Plan</button>
+                <button class="btn-current" id="premiumPlanBtn">Current Plan</button>
             </div>
         </div>
     </main>
 
     <script>
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -234,43 +243,289 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Subscription display elements
+        const planName = document.getElementById('planName');
+        const planPrice = document.getElementById('planPrice');
+        const nextBilling = document.getElementById('nextBilling');
+        const daysLeft = document.getElementById('daysLeft');
+        const studentUsage = document.getElementById('studentUsage');
+        const staffUsage = document.getElementById('staffUsage');
+        const storageUsage = document.getElementById('storageUsage');
+        const studentProgress = document.getElementById('studentProgress');
+        const staffProgress = document.getElementById('staffProgress');
+        const storageProgress = document.getElementById('storageProgress');
+        
+        // Plan buttons
+        const basicPlanBtn = document.getElementById('basicPlanBtn');
+        const standardPlanBtn = document.getElementById('standardPlanBtn');
+        const premiumPlanBtn = document.getElementById('premiumPlanBtn');
+        const viewInvoicesBtn = document.getElementById('viewInvoicesBtn');
+        const updatePaymentBtn = document.getElementById('updatePaymentBtn');
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;           // from 'admins' collection
+        let schoolData = null;           // from 'schools' collection (if linked)
+
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
-            if (!user) window.location.href = 'school-login.html';
-            else {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    if (data.role !== 'school_admin' && data.role !== 'admin') {
-                        await auth.signOut();
-                        window.location.href = 'school-login.html';
-                    } else {
-                        document.getElementById('schoolName').textContent = data.schoolName || 'School Admin';
-                        
-                        // Load subscription data
-                        if (data.schoolId) {
-                            const schoolDoc = await db.collection('schools').doc(data.schoolId).get();
-                            if (schoolDoc.exists) {
-                                const schoolData = schoolDoc.data();
-                                document.getElementById('planName').textContent = schoolData.plan || 'Premium';
-                                document.getElementById('planPrice').textContent = schoolData.plan === 'Premium' ? 'KES 25,000' : schoolData.plan === 'Standard' ? 'KES 12,000' : 'KES 5,000';
-                                document.getElementById('planPrice').innerHTML += ' <span>/month</span>';
-                                
-                                if (schoolData.subscriptionExpiry) {
-                                    const expiry = schoolData.subscriptionExpiry.toDate();
-                                    document.getElementById('nextBilling').textContent = expiry.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-                                    const daysLeft = Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
-                                    document.getElementById('daysLeft').innerHTML = `<i class="fas fa-clock"></i> ${daysLeft} days left`;
-                                }
-                            }
-                        }
-                    }
+            if (user) {
+                currentUser = user;
+                await loadAdminData(user);
+                if (!adminData) {
+                    console.error('No admin record found for this user');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
                 }
+                // Verify admin is active
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                updateUI();
+                await loadSchoolData();
+                await loadUsageStats();
+            } else {
+                window.location.href = 'school-login.html';
             }
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // ========== LOAD ADMIN DATA FROM 'admins' COLLECTION ==========
+        async function loadAdminData(user) {
+            try {
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                    console.log('Admin data loaded:', adminData);
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // ========== UPDATE UI WITH ADMIN DATA ==========
+        function updateUI() {
+            if (!adminData) return;
+            
+            const fullName = adminData.name || 'School Administrator';
+            adminName.textContent = fullName.split(' ')[0] || 'Admin';
+            
+            const schoolName = adminData.school || 'Your School';
+            schoolNameHeader.textContent = schoolName;
+            schoolNameSub.textContent = schoolName;
+        }
+
+        // ========== LOAD SCHOOL DATA (if schoolId exists) ==========
+        async function loadSchoolData() {
+            if (!adminData) return;
+            
+            // If admin has schoolId, fetch school document for subscription details
+            if (adminData.schoolId) {
+                try {
+                    const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
+                    if (schoolDoc.exists) {
+                        schoolData = schoolDoc.data();
+                        updateSubscriptionUI();
+                    } else {
+                        // Fallback to mock data
+                        useMockSubscription();
+                    }
+                } catch (error) {
+                    console.warn('Could not load school data, using mock', error);
+                    useMockSubscription();
+                }
+            } else {
+                // No schoolId, use mock data based on admin's school name
+                useMockSubscription();
+            }
+        }
+
+        // ========== UPDATE SUBSCRIPTION UI ==========
+        function updateSubscriptionUI() {
+            if (!schoolData) return;
+            
+            // Plan name and price
+            const currentPlan = schoolData.plan || 'Premium';
+            planName.textContent = currentPlan;
+            
+            let price = 'KES 25,000';
+            if (currentPlan === 'Basic') price = 'KES 5,000';
+            else if (currentPlan === 'Standard') price = 'KES 12,000';
+            else if (currentPlan === 'Premium') price = 'KES 25,000';
+            
+            planPrice.innerHTML = `${price} <span>/month</span>`;
+            
+            // Expiry date
+            if (schoolData.subscriptionExpiry) {
+                const expiry = schoolData.subscriptionExpiry.toDate();
+                nextBilling.textContent = expiry.toLocaleDateString('en-US', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                });
+                
+                const daysRemaining = Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
+                const daysText = daysRemaining > 0 ? `${daysRemaining} days left` : 'Expired';
+                daysLeft.innerHTML = `<i class="fas fa-clock"></i> ${daysText}`;
+                
+                if (daysRemaining < 0) {
+                    daysLeft.style.background = 'rgba(231,76,60,0.1)';
+                    daysLeft.style.color = 'var(--red)';
+                }
+            }
+            
+            // Update plan buttons based on current plan
+            highlightCurrentPlan(currentPlan);
+        }
+
+        // ========== HIGHLIGHT CURRENT PLAN ==========
+        function highlightCurrentPlan(currentPlan) {
+            // Reset all buttons
+            basicPlanBtn.className = 'btn-upgrade';
+            basicPlanBtn.textContent = 'Downgrade';
+            standardPlanBtn.className = 'btn-upgrade';
+            standardPlanBtn.textContent = 'Upgrade';
+            premiumPlanBtn.className = 'btn-upgrade';
+            premiumPlanBtn.textContent = 'Upgrade';
+            
+            // Set current plan button
+            if (currentPlan === 'Basic') {
+                basicPlanBtn.className = 'btn-current';
+                basicPlanBtn.textContent = 'Current Plan';
+            } else if (currentPlan === 'Standard') {
+                standardPlanBtn.className = 'btn-current';
+                standardPlanBtn.textContent = 'Current Plan';
+            } else if (currentPlan === 'Premium') {
+                premiumPlanBtn.className = 'btn-current';
+                premiumPlanBtn.textContent = 'Current Plan';
+            }
+        }
+
+        // ========== LOAD USAGE STATISTICS ==========
+        async function loadUsageStats() {
+            if (!adminData) return;
+            
+            try {
+                // Get student count
+                let studentsQuery;
+                if (adminData.schoolId) {
+                    studentsQuery = db.collection('students').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    studentsQuery = db.collection('students').where('school', '==', adminData.school);
+                }
+                const studentsSnap = await studentsQuery.get();
+                const studentCount = studentsSnap.size;
+                
+                // Get staff count
+                let staffQuery;
+                if (adminData.schoolId) {
+                    staffQuery = db.collection('staff').where('schoolId', '==', adminData.schoolId);
+                } else {
+                    staffQuery = db.collection('staff').where('school', '==', adminData.school);
+                }
+                const staffSnap = await staffQuery.get();
+                const staffCount = staffSnap.size;
+                
+                // Limits based on plan
+                const plan = schoolData?.plan || 'Premium';
+                let studentLimit = 2000;
+                let staffLimit = 100;
+                
+                if (plan === 'Basic') {
+                    studentLimit = 300;
+                    staffLimit = 5;
+                } else if (plan === 'Standard') {
+                    studentLimit = 1000;
+                    staffLimit = 15;
+                } else if (plan === 'Premium') {
+                    studentLimit = 2000;
+                    staffLimit = 100;
+                }
+                
+                // Update UI
+                studentUsage.textContent = `${studentCount} / ${studentLimit}`;
+                staffUsage.textContent = `${staffCount} / ${staffLimit}`;
+                
+                const studentPercent = Math.min(100, Math.round((studentCount / studentLimit) * 100));
+                const staffPercent = Math.min(100, Math.round((staffCount / staffLimit) * 100));
+                
+                studentProgress.style.width = `${studentPercent}%`;
+                staffProgress.style.width = `${staffPercent}%`;
+                
+                // Storage (mock for now)
+                storageUsage.textContent = '45.2 GB / 100 GB';
+                storageProgress.style.width = '45%';
+                
+            } catch (error) {
+                console.warn('Could not load usage stats, using mock', error);
+                useMockUsage();
+            }
+        }
+
+        // ========== MOCK DATA ==========
+        function useMockSubscription() {
+            planName.textContent = 'Premium';
+            planPrice.innerHTML = 'KES 25,000 <span>/month</span>';
+            
+            const expiry = new Date();
+            expiry.setMonth(expiry.getMonth() + 1);
+            nextBilling.textContent = expiry.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            
+            const daysRemaining = 30;
+            daysLeft.innerHTML = `<i class="fas fa-clock"></i> ${daysRemaining} days left`;
+            
+            highlightCurrentPlan('Premium');
+        }
+
+        function useMockUsage() {
+            studentUsage.textContent = '1,248 / 2,000';
+            staffUsage.textContent = '42 / 100';
+            storageUsage.textContent = '45.2 GB / 100 GB';
+            
+            studentProgress.style.width = '62%';
+            staffProgress.style.width = '42%';
+            storageProgress.style.width = '45%';
+        }
+
+        // ========== EVENT LISTENERS ==========
+        logoutBtn.addEventListener('click', async () => {
             await auth.signOut();
-            window.location.href = 'school-login.html';
+            window.location.href = 'school-admin-login.html';
+        });
+
+        // Plan change buttons (demo functionality)
+        basicPlanBtn.addEventListener('click', () => {
+            alert('Plan change requested to Basic. This would update the school document.');
+        });
+
+        standardPlanBtn.addEventListener('click', () => {
+            alert('Plan change requested to Standard. This would update the school document.');
+        });
+
+        premiumPlanBtn.addEventListener('click', () => {
+            alert('Plan change requested to Premium. This would update the school document.');
+        });
+
+        viewInvoicesBtn.addEventListener('click', () => {
+            alert('View invoices page (would navigate to billing history)');
+        });
+
+        updatePaymentBtn.addEventListener('click', () => {
+            alert('Update payment method (would open payment modal)');
         });
     </script>
 </body>
