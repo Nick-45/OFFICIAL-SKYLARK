@@ -224,6 +224,11 @@
             background-size: 16px;
         }
 
+        .loading-option {
+            color: var(--gray);
+            font-style: italic;
+        }
+
         .action-buttons {
             display: flex;
             justify-content: flex-end;
@@ -361,16 +366,7 @@
                     <div class="form-group">
                         <label class="form-label"><i class="fas fa-graduation-cap"></i> Class *</label>
                         <select class="form-control" id="class" required>
-                            <option value="">Select Class</option>
-                            <option value="Form 1A">Form 1A</option>
-                            <option value="Form 1B">Form 1B</option>
-                            <option value="Form 2A">Form 2A</option>
-                            <option value="Form 2B">Form 2B</option>
-                            <option value="Form 3A">Form 3A</option>
-                            <option value="Form 3B">Form 3B</option>
-                            <option value="Form 3C">Form 3C</option>
-                            <option value="Form 4A">Form 4A</option>
-                            <option value="Form 4B">Form 4B</option>
+                            <option value="">Loading classes...</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -437,6 +433,7 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const submitBtn = document.getElementById('submitBtn');
         const addStudentForm = document.getElementById('addStudentForm');
+        const classSelect = document.getElementById('class');
 
         // ========== STATE ==========
         let currentUser = null;
@@ -462,6 +459,8 @@
                 }
                 // Update UI with admin info
                 updateUI();
+                // Load classes from Firestore
+                await loadClasses();
             } else {
                 window.location.href = 'school-login.html';
             }
@@ -488,6 +487,84 @@
             }
         }
 
+        // ========== LOAD CLASSES FROM FIRESTORE ==========
+        async function loadClasses() {
+            try {
+                // Get school identifier
+                const schoolId = adminData.schoolId || adminData.school;
+                
+                // Query classes that belong to this school and are active
+                let classesQuery;
+                if (adminData.schoolId) {
+                    classesQuery = db.collection('classes')
+                        .where('schoolId', '==', adminData.schoolId)
+                        .where('status', '==', 'Active')
+                        .orderBy('name');
+                } else {
+                    classesQuery = db.collection('classes')
+                        .where('school', '==', adminData.school)
+                        .where('status', '==', 'Active')
+                        .orderBy('name');
+                }
+                
+                const querySnapshot = await classesQuery.get();
+                
+                // Clear existing options
+                classSelect.innerHTML = '<option value="">Select Class</option>';
+                
+                if (querySnapshot.empty) {
+                    // No classes found
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.disabled = true;
+                    option.textContent = 'No active classes available';
+                    classSelect.appendChild(option);
+                    return;
+                }
+                
+                // Add classes to select
+                querySnapshot.forEach(doc => {
+                    const classData = doc.data();
+                    const option = document.createElement('option');
+                    option.value = classData.name; // Use class name as value
+                    option.textContent = classData.name;
+                    
+                    // Add grade if available
+                    if (classData.grade) {
+                        option.textContent += ` (${classData.grade})`;
+                    }
+                    
+                    classSelect.appendChild(option);
+                });
+                
+                console.log(`Loaded ${querySnapshot.size} classes`);
+                
+            } catch (error) {
+                console.error('Error loading classes:', error);
+                classSelect.innerHTML = '<option value="">Error loading classes</option>';
+                
+                // Show error but don't block form submission
+                console.warn('Using fallback class options');
+                addFallbackClasses();
+            }
+        }
+
+        // ========== FALLBACK CLASSES (if Firestore fails) ==========
+        function addFallbackClasses() {
+            classSelect.innerHTML = '<option value="">Select Class</option>';
+            const fallbackClasses = [
+                'Form 1A', 'Form 1B', 'Form 2A', 'Form 2B', 
+                'Form 3A', 'Form 3B', 'Form 3C', 'Form 4A', 'Form 4B'
+            ];
+            
+            fallbackClasses.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classSelect.appendChild(option);
+            });
+        }
+
         // ========== UPDATE UI WITH ADMIN DATA ==========
         function updateUI() {
             if (!adminData) return;
@@ -512,6 +589,13 @@
         addStudentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Validate class selection
+            if (!classSelect.value) {
+                alert('Please select a class');
+                classSelect.focus();
+                return;
+            }
+            
             // Disable submit button
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
@@ -529,14 +613,15 @@
                     admissionNumber: document.getElementById('admissionNo').value.trim(), // duplicate for compatibility
                     dob: document.getElementById('dob').value,
                     gender: document.getElementById('gender').value,
-                    class: document.getElementById('class').value,
-                    phone: document.getElementById('phone').value.trim(),
-                    email: document.getElementById('email').value.trim(),
-                    address: document.getElementById('address').value.trim(),
-                    parentName: document.getElementById('parentName').value.trim(),
-                    parentPhone: document.getElementById('parentPhone').value.trim(),
-                    nationality: document.getElementById('nationality').value.trim(),
-                    idNumber: document.getElementById('idNumber').value.trim(),
+                    class: classSelect.value, // Use selected class name
+                    className: classSelect.value, // Additional field for clarity
+                    phone: document.getElementById('phone').value.trim() || null,
+                    email: document.getElementById('email').value.trim() || null,
+                    address: document.getElementById('address').value.trim() || null,
+                    parentName: document.getElementById('parentName').value.trim() || null,
+                    parentPhone: document.getElementById('parentPhone').value.trim() || null,
+                    nationality: document.getElementById('nationality').value.trim() || 'Kenyan',
+                    idNumber: document.getElementById('idNumber').value.trim() || null,
                     status: 'Active',
                     enrollmentDate: firebase.firestore.FieldValue.serverTimestamp(),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -549,13 +634,11 @@
                     studentData.school = adminData.school; // fallback to school name string
                 }
 
-                // Optional: add attendance rate placeholder
-                studentData.attendanceRate = '94%'; // default
-
                 // Validate required fields
-                if (!studentData.fullName || !studentData.admissionNo || !studentData.dob || !studentData.gender || !studentData.class) {
-                    throw new Error('Please fill all required fields');
-                }
+                if (!studentData.fullName) throw new Error('Full name is required');
+                if (!studentData.admissionNo) throw new Error('Admission number is required');
+                if (!studentData.dob) throw new Error('Date of birth is required');
+                if (!studentData.gender) throw new Error('Gender is required');
 
                 // Add to Firestore
                 await db.collection('students').add(studentData);
@@ -571,14 +654,13 @@
             }
         });
 
-        // Optional: set minimum date for DOB (not older than 5 years from today)
+        // ========== INITIAL SETUP ==========
         window.addEventListener('load', function() {
-            const today = new Date();
-            const minDate = new Date(today.setFullYear(today.getFullYear() - 5)).toISOString().split('T')[0];
-            const maxDate = new Date().toISOString().split('T')[0];
+            // Set max date for DOB (today)
+            const today = new Date().toISOString().split('T')[0];
             const dobInput = document.getElementById('dob');
             if (dobInput) {
-                dobInput.setAttribute('max', maxDate);
+                dobInput.setAttribute('max', today);
             }
         });
     </script>
