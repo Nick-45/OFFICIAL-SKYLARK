@@ -445,20 +445,33 @@
             });
         }
 
-        // ========== EVENT LISTENERS ==========
-        gradeFilter.addEventListener('change', applyFilters);
-        teacherFilter.addEventListener('change', applyFilters);
-        searchBtn.addEventListener('click', applyFilters);
-        searchInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') applyFilters(); });
+     // ========== EVENT LISTENERS ==========
 
-        logoutBtn.addEventListener('click', async () => {
-            await auth.signOut();
-            window.location.href = 'school-admin-login.html';
-        });
+// Filters
+gradeFilter.addEventListener('change', applyFilters);
+teacherFilter.addEventListener('change', applyFilters);
+searchBtn.addEventListener('click', applyFilters);
 
-        addClassBtn.addEventListener('click', () => {
-            alert('Navigate to add class form. (Would open /school-create-class.html)');
-        });
+searchInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') applyFilters();
+});
+
+// Logout
+logoutBtn.addEventListener('click', async () => {
+    try {
+        await auth.signOut();
+        window.location.href = 'school-admin-login.html';
+    } catch (error) {
+        console.error('Logout error:', error);
+        alert('Failed to log out. Please try again.');
+    }
+});
+
+// Add Class → Open create class page
+addClassBtn.addEventListener('click', () => {
+    window.location.href = 'school-create-class.html';
+});
+
 
         // Fallback mock if no data after 4 seconds
         setTimeout(() => {
