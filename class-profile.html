@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Class Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --red: #e74c3c;
+            --blue: #3498db;
+            --purple: #9b59b6;
+            --orange: #e67e22;
+            --teal: #1abc9c;
+            --gray-light: #f8f9fa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%); }
+        .background-animation { position: fixed; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bubble { position: absolute; border-radius: 50%; background: rgba(39,174,96,0.1); animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        .header { background: linear-gradient(135deg, #2c3e50, #1a2530); color: white; padding: 20px 30px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .church-info h1 { font-size: 24px; }
+        .church-info p { color: var(--school-green); }
+        .school-badge { background: linear-gradient(135deg, var(--school-green), var(--school-green-dark)); color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; margin-left: 10px; }
+        .dashboard-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
+        
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .page-header h2 { font-size: 28px; display: flex; align-items: center; gap: 15px; }
+        .page-header h2 i { color: var(--teal); }
+        
+        /* Class Header Card */
+        .class-header-card {
+            background: linear-gradient(135deg, var(--teal), #16a085);
+            border-radius: 30px; padding: 40px; color: white; margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(26,188,156,0.3);
+            position: relative; overflow: hidden;
+        }
+        .class-header-card::before {
+            content: ''; position: absolute; top: 0; right: 0; width: 300px; height: 300px;
+            background: rgba(255,255,255,0.1); border-radius: 50%; transform: translate(100px,-100px);
+        }
+        .class-title {
+            font-size: 42px; font-weight: 800; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .class-meta {
+            display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px;
+        }
+        .meta-item {
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+            padding: 15px 25px; border-radius: 20px; display: flex; align-items: center; gap: 15px;
+        }
+        .meta-icon { font-size: 24px; }
+        .meta-text { font-size: 16px; }
+        .meta-text strong { font-size: 20px; display: block; }
+        
+        /* Grid layout */
+        .profile-grid {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;
+        }
+        
+        /* Cards */
+        .info-card {
+            background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--teal); margin-bottom: 30px;
+        }
+        .card-title {
+            font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+            color: var(--dark-blue);
+        }
+        .card-title i { color: var(--teal); }
+        
+        /* Schedule table */
+        .schedule-table {
+            width: 100%; border-collapse: collapse;
+        }
+        .schedule-table th {
+            text-align: left; padding: 12px 0; color: #7f8c8d; font-weight: 600; font-size: 14px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .schedule-table td {
+            padding: 15px 0; border-bottom: 1px solid #ecf0f1;
+        }
+        .day-badge {
+            background: rgba(26,188,156,0.1); color: var(--teal); padding: 6px 12px;
+            border-radius: 30px; font-weight: 600; font-size: 13px; display: inline-block;
+        }
+        
+        /* Teacher info */
+        .teacher-info {
+            display: flex; align-items: center; gap: 20px; padding: 20px; background: #f8f9fa;
+            border-radius: 16px; margin-bottom: 20px;
+        }
+        .teacher-avatar {
+            width: 60px; height: 60px; border-radius: 50%; background: var(--teal);
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;
+        }
+        .teacher-details h3 { font-size: 18px; color: var(--dark-blue); margin-bottom: 5px; }
+        .teacher-details p { color: #7f8c8d; font-size: 14px; }
+        
+        /* Students list */
+        .student-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .student-avatar-sm {
+            width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), var(--school-green-dark));
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;
+        }
+        .student-info-sm { flex: 1; }
+        .student-name-sm { font-weight: 600; color: var(--dark-blue); }
+        .student-meta-sm { font-size: 13px; color: #7f8c8d; display: flex; gap: 15px; }
+        
+        .btn {
+            padding: 12px 25px; border-radius: 30px; font-weight: 600; cursor: pointer;
+            border: none; font-size: 14px; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--teal), #16a085); color: white;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(26,188,156,0.4); }
+        .btn-outline {
+            background: transparent; border: 2px solid var(--teal); color: var(--teal);
+        }
+        .btn-outline:hover { background: var(--teal); color: white; }
+        
+        .logout-btn {
+            background: rgba(231,76,60,0.2); color: white; border: 2px solid var(--red);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .logout-btn:hover { background: var(--red); }
+        
+        .empty-state {
+            text-align: center; padding: 40px; background: #f8f9fa; border-radius: 16px;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-grid { grid-template-columns: 1fr; }
+            .class-title { font-size: 32px; }
+            .class-meta { flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="logo.png" alt="EDUSKYLARK" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'"></div>
+                <div class="church-info">
+                    <h1>EDUSKYLARK · CLASS PROFILE <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">SCHOOL ADMIN</span></span></h1>
+                    <p><span id="schoolNameSub">Loading...</span> · Class Details</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Class Header Card (dynamic) -->
+        <div class="class-header-card" id="classHeaderCard">
+            <div class="class-title" id="classNameDisplay">Form 3C</div>
+            <p id="classDesc">Science & Mathematics stream</p>
+            <div class="class-meta" id="classMeta">
+                <!-- populated by JS -->
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display: flex; gap: 15px; margin-bottom: 30px;">
+            <button class="btn btn-primary" id="editClassBtn"><i class="fas fa-edit"></i> Edit Class</button>
+            <button class="btn btn-outline" id="attendanceBtn"><i class="fas fa-calendar-check"></i> Take Attendance</button>
+            <button class="btn btn-outline" id="backBtn" onclick="window.location.href='school-classes.html'"><i class="fas fa-arrow-left"></i> Back to Classes</button>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="profile-grid">
+            <!-- Left Column -->
+            <div>
+                <!-- Schedule Card -->
+                <div class="info-card">
+                    <div class="card-title"><i class="fas fa-clock"></i> Class Schedule</div>
+                    <table class="schedule-table" id="scheduleTable">
+                        <thead>
+                            <tr><th>Day</th><th>Subject</th><th>Time</th></tr>
+                        </thead>
+                        <tbody id="scheduleBody">
+                            <!-- dynamic -->
+                        </tbody>
+                    </table>
+                    <div id="noScheduleMsg" class="empty-state" style="display: none; margin-top: 20px;">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>No schedule added yet</p>
+                    </div>
+                </div>
+
+                <!-- Students in this class -->
+                <div class="info-card">
+                    <div class="card-title" style="justify-content: space-between;">
+                        <span><i class="fas fa-users"></i> Students enrolled</span>
+                        <span class="badge" id="studentCountBadge" style="background: var(--teal); color: white; padding: 5px 15px; border-radius: 30px;">0</span>
+                    </div>
+                    <div id="studentsList">
+                        <!-- dynamic student items -->
+                        <div class="empty-state">
+                            <i class="fas fa-user-graduate"></i>
+                            <p>No students enrolled yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- Class Teacher Card -->
+                <div class="info-card">
+                    <div class="card-title"><i class="fas fa-chalkboard-teacher"></i> Class Teacher</div>
+                    <div id="teacherContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-user-tie"></i>
+                            <p>No teacher assigned</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Details Card -->
+                <div class="info-card">
+                    <div class="card-title"><i class="fas fa-info-circle"></i> Class Details</div>
+                    <table style="width: 100%;">
+                        <tr><td style="padding: 12px 0; color: #7f8c8d;">Room</td><td style="font-weight: 600;" id="roomDisplay">—</td></tr>
+                        <tr><td style="padding: 12px 0; color: #7f8c8d;">Capacity</td><td style="font-weight: 600;" id="capacityDisplay">—</td></tr>
+                        <tr><td style="padding: 12px 0; color: #7f8c8d;">Academic Year</td><td style="font-weight: 600;" id="yearDisplay">—</td></tr>
+                        <tr><td style="padding: 12px 0; color: #7f8c8d;">Grade Level</td><td style="font-weight: 600;" id="gradeDisplay">—</td></tr>
+                        <tr><td style="padding: 12px 0; color: #7f8c8d;">Status</td><td><span class="badge" id="statusDisplay" style="background: rgba(39,174,96,0.1); color: var(--school-green); padding: 5px 15px; border-radius: 30px;">Active</span></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ========== FIREBASE CONFIG ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Class display elements
+        const classNameDisplay = document.getElementById('classNameDisplay');
+        const classDesc = document.getElementById('classDesc');
+        const classMeta = document.getElementById('classMeta');
+        const scheduleBody = document.getElementById('scheduleBody');
+        const noScheduleMsg = document.getElementById('noScheduleMsg');
+        const studentsList = document.getElementById('studentsList');
+        const studentCountBadge = document.getElementById('studentCountBadge');
+        const teacherContainer = document.getElementById('teacherContainer');
+        const roomDisplay = document.getElementById('roomDisplay');
+        const capacityDisplay = document.getElementById('capacityDisplay');
+        const yearDisplay = document.getElementById('yearDisplay');
+        const gradeDisplay = document.getElementById('gradeDisplay');
+        const statusDisplay = document.getElementById('statusDisplay');
+        
+        // Buttons
+        const editClassBtn = document.getElementById('editClassBtn');
+        const attendanceBtn = document.getElementById('attendanceBtn');
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;
+        let classId = null;
+        let classData = null;
+
+        // ========== AUTH STATE LISTENER ==========
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadAdminData(user);
+                if (!adminData) {
+                    console.error('No admin record found');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                // Verify admin is active
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    window.location.href = 'school-login.html';
+                    return;
+                }
+                updateUI();
+                
+                // Get class ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                classId = urlParams.get('id') || sessionStorage.getItem('viewClassId');
+                
+                if (!classId) {
+                    alert('No class selected');
+                    window.location.href = 'school-classes.html';
+                    return;
+                }
+                
+                await loadClassData();
+            } else {
+                window.location.href = 'school-login.html';
+            }
+        });
+
+        // ========== LOAD ADMIN DATA ==========
+        async function loadAdminData(user) {
+            try {
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // ========== UPDATE UI ==========
+        function updateUI() {
+            if (!adminData) return;
+            const fullName = adminData.name || 'School Administrator';
+            adminName.textContent = fullName.split(' ')[0] || 'Admin';
+            const schoolName = adminData.school || 'Your School';
+            schoolNameHeader.textContent = schoolName;
+            schoolNameSub.textContent = schoolName;
+        }
+
+        // ========== LOAD CLASS DATA ==========
+        async function loadClassData() {
+            try {
+                const classDoc = await db.collection('classes').doc(classId).get();
+                
+                if (!classDoc.exists) {
+                    alert('Class not found');
+                    window.location.href = 'school-classes.html';
+                    return;
+                }
+                
+                classData = { id: classDoc.id, ...classDoc.data() };
+                
+                // Verify this class belongs to admin's school
+                const classSchool = classData.schoolId || classData.school;
+                const adminSchool = adminData.schoolId || adminData.school;
+                
+                if (classSchool !== adminSchool) {
+                    alert('You do not have permission to view this class');
+                    window.location.href = 'school-classes.html';
+                    return;
+                }
+                
+                renderClassProfile();
+                loadStudentsInClass();
+                
+            } catch (error) {
+                console.error('Error loading class:', error);
+                // Load mock data for demo
+                loadMockClassData();
+            }
+        }
+
+        // ========== RENDER CLASS PROFILE ==========
+        function renderClassProfile() {
+            if (!classData) return;
+            
+            // Header
+            classNameDisplay.textContent = classData.name || 'Unnamed Class';
+            classDesc.textContent = `${classData.grade || classData.gradeLevel || ''} · ${classData.studentCount || 0} students`;
+            
+            // Meta items
+            const studentCount = classData.studentCount || 0;
+            const capacity = classData.capacity || '—';
+            const teacherName = classData.teacherName || 'Not assigned';
+            
+            classMeta.innerHTML = `
+                <div class="meta-item"><i class="fas fa-users meta-icon"></i><div class="meta-text"><strong>${studentCount}</strong> Students</div></div>
+                <div class="meta-item"><i class="fas fa-door-open meta-icon"></i><div class="meta-text"><strong>${capacity}</strong> Capacity</div></div>
+                <div class="meta-item"><i class="fas fa-chalkboard-teacher meta-icon"></i><div class="meta-text"><strong>${teacherName}</strong> Teacher</div></div>
+            `;
+            
+            // Schedule
+            if (classData.schedule && classData.schedule.length > 0) {
+                let scheduleHtml = '';
+                classData.schedule.forEach(item => {
+                    scheduleHtml += `
+                        <tr>
+                            <td><span class="day-badge">${item.day || '—'}</span></td>
+                            <td>${item.subject || '—'}</td>
+                            <td>${item.startTime || '—'} - ${item.endTime || '—'}</td>
+                        </tr>
+                    `;
+                });
+                scheduleBody.innerHTML = scheduleHtml;
+                noScheduleMsg.style.display = 'none';
+            } else {
+                scheduleBody.innerHTML = '';
+                noScheduleMsg.style.display = 'block';
+            }
+            
+            // Teacher info
+            if (classData.teacherName) {
+                teacherContainer.innerHTML = `
+                    <div class="teacher-info">
+                        <div class="teacher-avatar"><i class="fas fa-user-tie"></i></div>
+                        <div class="teacher-details">
+                            <h3>${classData.teacherName}</h3>
+                            <p>Class Teacher · Since ${new Date().getFullYear()}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                teacherContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-tie"></i>
+                        <p>No teacher assigned</p>
+                    </div>
+                `;
+            }
+            
+            // Details
+            roomDisplay.textContent = classData.room || '—';
+            capacityDisplay.textContent = classData.capacity || '—';
+            yearDisplay.textContent = classData.academicYear || new Date().getFullYear();
+            gradeDisplay.textContent = classData.grade || classData.gradeLevel || '—';
+            statusDisplay.textContent = classData.status || 'Active';
+            statusDisplay.style.background = classData.status === 'Active' ? 'rgba(39,174,96,0.1)' : 'rgba(231,76,60,0.1)';
+            statusDisplay.style.color = classData.status === 'Active' ? 'var(--school-green)' : 'var(--red)';
+        }
+
+        // ========== LOAD STUDENTS IN THIS CLASS ==========
+        async function loadStudentsInClass() {
+            if (!classData || !classData.name) return;
+            
+            try {
+                // Query students where class matches this class name
+                const studentsQuery = await db.collection('students')
+                    .where('class', '==', classData.name)
+                    .limit(10)
+                    .get();
+                
+                if (!studentsQuery.empty) {
+                    let html = '';
+                    studentsQuery.forEach(doc => {
+                        const s = doc.data();
+                        const initials = s.fullName ? s.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2) : 'ST';
+                        html += `
+                            <div class="student-item">
+                                <div class="student-avatar-sm">${initials}</div>
+                                <div class="student-info-sm">
+                                    <div class="student-name-sm">${s.fullName || 'Student'}</div>
+                                    <div class="student-meta-sm">
+                                        <span><i class="fas fa-hashtag"></i> ${s.admissionNo || 'N/A'}</span>
+                                        <span><i class="fas fa-phone"></i> ${s.phone || '—'}</span>
+                                    </div>
+                                </div>
+                                <button class="btn" style="padding: 5px 15px;" onclick="viewStudent('${doc.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                    studentsList.innerHTML = html;
+                    studentCountBadge.textContent = studentsQuery.size;
+                } else {
+                    studentsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-graduate"></i>
+                            <p>No students enrolled yet</p>
+                        </div>
+                    `;
+                    studentCountBadge.textContent = '0';
+                }
+            } catch (error) {
+                console.warn('Could not load students, using mock');
+                loadMockStudents();
+            }
+        }
+
+        // ========== MOCK DATA FOR DEMO ==========
+        function loadMockClassData() {
+            classData = {
+                id: 'mock1',
+                name: 'Form 3C',
+                grade: 'Form 3',
+                teacherName: 'Mr. John Mwangi',
+                studentCount: 42,
+                capacity: 45,
+                room: 'Room 204',
+                academicYear: '2025',
+                status: 'Active',
+                schedule: [
+                    { day: 'Monday', subject: 'Mathematics', startTime: '08:00', endTime: '09:30' },
+                    { day: 'Tuesday', subject: 'Physics', startTime: '10:00', endTime: '11:30' },
+                    { day: 'Wednesday', subject: 'Chemistry', startTime: '08:00', endTime: '09:30' },
+                    { day: 'Thursday', subject: 'Biology', startTime: '13:00', endTime: '14:30' },
+                    { day: 'Friday', subject: 'English', startTime: '09:00', endTime: '10:30' }
+                ]
+            };
+            renderClassProfile();
+            loadMockStudents();
+        }
+
+        function loadMockStudents() {
+            const mockStudents = [
+                { fullName: 'John Mwangi', admissionNo: '2025-001', phone: '+254722111222' },
+                { fullName: 'Mary Atieno', admissionNo: '2025-042', phone: '+254733333444' },
+                { fullName: 'Peter Kamau', admissionNo: '2024-128', phone: '+254711555666' },
+                { fullName: 'Alice Odhiambo', admissionNo: '2023-215', phone: '+254722777888' },
+                { fullName: 'Brian Muthama', admissionNo: '2023-218', phone: '+254733999000' }
+            ];
+            
+            let html = '';
+            mockStudents.forEach(s => {
+                const initials = s.fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                html += `
+                    <div class="student-item">
+                        <div class="student-avatar-sm">${initials}</div>
+                        <div class="student-info-sm">
+                            <div class="student-name-sm">${s.fullName}</div>
+                            <div class="student-meta-sm">
+                                <span><i class="fas fa-hashtag"></i> ${s.admissionNo}</span>
+                                <span><i class="fas fa-phone"></i> ${s.phone}</span>
+                            </div>
+                        </div>
+                        <button class="btn" style="padding: 5px 15px;" onclick="viewStudent('mock')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            studentsList.innerHTML = html;
+            studentCountBadge.textContent = mockStudents.length;
+        }
+
+        // ========== NAVIGATION ==========
+        window.viewStudent = function(studentId) {
+            sessionStorage.setItem('viewStudentId', studentId);
+            window.location.href = `school-student-details.html?id=${studentId}`;
+        };
+
+        // ========== EVENT LISTENERS ==========
+        logoutBtn.addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
+        });
+
+        editClassBtn.addEventListener('click', () => {
+            alert('Navigate to edit class page (would open school-edit-class.html)');
+        });
+
+        attendanceBtn.addEventListener('click', () => {
+            alert('Take attendance for this class (would open attendance page filtered by this class)');
+        });
+    </script>
+</body>
+</html>
