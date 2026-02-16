@@ -164,6 +164,13 @@
         .empty-state {
             text-align: center; padding: 40px; color: #7f8c8d;
         }
+        .loading {
+            text-align: center; padding: 40px; color: #7f8c8d;
+        }
+        .error-message {
+            background: rgba(231,76,60,0.1); color: var(--red); padding: 20px; border-radius: 16px;
+            text-align: center; margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -199,68 +206,77 @@
             </a>
         </div>
 
-        <!-- Current Plan Summary Card -->
-        <div class="summary-card" id="summaryCard">
-            <div>
-                <div class="summary-plan" id="currentPlan">Premium Plan</div>
-                <div class="summary-price" id="currentPrice">KES 25,000/month</div>
-                <div style="margin-top: 10px; opacity: 0.9;" id="billingCycle">Billed monthly</div>
-            </div>
-            <div class="summary-next">
-                <div style="font-size: 14px; opacity: 0.8;">Next invoice</div>
-                <div style="font-size: 20px; font-weight: 700;" id="nextInvoiceDate">15 May 2025</div>
-                <div style="font-size: 14px; margin-top: 5px;" id="nextInvoiceAmount">KES 25,000</div>
-            </div>
+        <div id="loadingIndicator" class="loading">
+            <i class="fas fa-spinner fa-spin" style="font-size: 30px;"></i>
+            <p style="margin-top: 15px;">Loading invoice history...</p>
         </div>
 
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-group">
-                <label>Year:</label>
-                <select class="filter-select" id="yearFilter">
-                    <option value="all">All Years</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Status:</label>
-                <select class="filter-select" id="statusFilter">
-                    <option value="all">All Status</option>
-                    <option value="paid">Paid</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                </select>
-            </div>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search by invoice number...">
-                <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
-            </div>
+        <div id="errorContainer" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p id="errorText">Error loading data. Please refresh.</p>
         </div>
 
-        <!-- Invoices Table -->
-        <div class="table-container">
-            <table id="invoicesTable">
-                <thead>
-                    <tr>
-                        <th>Invoice #</th>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Payment Method</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="invoicesBody">
-                    <!-- Dynamic content -->
-                </tbody>
-            </table>
-            <div id="emptyState" class="empty-state" style="display: none;">
-                <i class="fas fa-file-invoice" style="font-size: 48px; margin-bottom: 15px; color: #ccc;"></i>
-                <h3>No invoices found</h3>
-                <p>Your subscription invoices will appear here.</p>
+        <div id="contentContainer" style="display: none;">
+            <!-- Current Plan Summary Card -->
+            <div class="summary-card" id="summaryCard">
+                <div>
+                    <div class="summary-plan" id="currentPlan">—</div>
+                    <div class="summary-price" id="currentPrice">—</div>
+                    <div style="margin-top: 10px; opacity: 0.9;" id="billingCycle">—</div>
+                </div>
+                <div class="summary-next">
+                    <div style="font-size: 14px; opacity: 0.8;">Next invoice</div>
+                    <div style="font-size: 20px; font-weight: 700;" id="nextInvoiceDate">—</div>
+                    <div style="font-size: 14px; margin-top: 5px;" id="nextInvoiceAmount">—</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Year:</label>
+                    <select class="filter-select" id="yearFilter">
+                        <option value="all">All Years</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="paid">Paid</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search by invoice number...">
+                    <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
+                </div>
+            </div>
+
+            <!-- Invoices Table -->
+            <div class="table-container">
+                <table id="invoicesTable">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesBody">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-file-invoice" style="font-size: 48px; margin-bottom: 15px; color: #ccc;"></i>
+                    <h3>No invoices found</h3>
+                    <p>Your subscription invoices will appear here.</p>
+                </div>
             </div>
         </div>
     </main>
@@ -302,10 +318,15 @@
         const schoolNameSub = document.getElementById('schoolNameSub');
         const adminName = document.getElementById('adminName');
         const logoutBtn = document.getElementById('logoutBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorText = document.getElementById('errorText');
+        const contentContainer = document.getElementById('contentContainer');
         
         // Summary elements
         const currentPlan = document.getElementById('currentPlan');
         const currentPrice = document.getElementById('currentPrice');
+        const billingCycle = document.getElementById('billingCycle');
         const nextInvoiceDate = document.getElementById('nextInvoiceDate');
         const nextInvoiceAmount = document.getElementById('nextInvoiceAmount');
         
@@ -328,6 +349,7 @@
         let currentUser = null;
         let adminData = null;
         let schoolData = null;
+        let schoolIdentifier = null;
         let allInvoices = [];
         let filteredInvoices = [];
 
@@ -337,20 +359,31 @@
                 currentUser = user;
                 await loadAdminData(user);
                 if (!adminData) {
-                    console.error('No admin record found');
-                    await auth.signOut();
-                    window.location.href = 'school-login.html';
+                    showError('No admin record found. Please contact super admin.');
                     return;
                 }
                 if (adminData.status !== 'Active') {
-                    alert('Your account is not active. Please contact super admin.');
+                    showError('Your account is not active. Please contact super admin.');
                     await auth.signOut();
-                    window.location.href = 'school-login.html';
                     return;
                 }
                 updateUI();
+                
+                // Determine school identifier
+                if (adminData.schoolId) {
+                    schoolIdentifier = { type: 'schoolId', value: adminData.schoolId };
+                } else if (adminData.school) {
+                    schoolIdentifier = { type: 'school', value: adminData.school };
+                } else {
+                    showError('No school information found in your admin profile.');
+                    return;
+                }
+                
                 await loadSchoolData();
                 await loadInvoices();
+                
+                loadingIndicator.style.display = 'none';
+                contentContainer.style.display = 'block';
                 setupEventListeners();
             } else {
                 window.location.href = 'school-login.html';
@@ -368,9 +401,11 @@
                 if (!adminsQuery.empty) {
                     adminData = adminsQuery.docs[0].data();
                     adminData.id = adminsQuery.docs[0].id;
+                    console.log('Admin data loaded:', adminData);
                 }
             } catch (error) {
                 console.error('Error loading admin data:', error);
+                showError('Failed to load admin data: ' + error.message);
             }
         }
 
@@ -386,26 +421,44 @@
 
         // ========== LOAD SCHOOL DATA ==========
         async function loadSchoolData() {
-            if (!adminData) return;
+            if (!adminData || !schoolIdentifier) return;
             
-            if (adminData.schoolId) {
-                try {
-                    const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
+            try {
+                if (schoolIdentifier.type === 'schoolId') {
+                    const schoolDoc = await db.collection('schools').doc(schoolIdentifier.value).get();
                     if (schoolDoc.exists) {
                         schoolData = schoolDoc.data();
-                        updateSummaryFromSchool();
+                        schoolData.id = schoolDoc.id;
                     }
-                } catch (error) {
-                    console.warn('Could not load school data', error);
+                } else {
+                    const schoolQuery = await db.collection('schools')
+                        .where('name', '==', schoolIdentifier.value)
+                        .limit(1)
+                        .get();
+                    
+                    if (!schoolQuery.empty) {
+                        schoolData = schoolQuery.docs[0].data();
+                        schoolData.id = schoolQuery.docs[0].id;
+                    }
                 }
+                
+                updateSummary();
+            } catch (error) {
+                console.error('Error loading school data:', error);
+                // Use defaults if school data can't be loaded
+                updateSummary();
             }
-            
-            // Always set fallback summary
-            updateSummary();
         }
 
-        function updateSummaryFromSchool() {
-            if (!schoolData) return;
+        function updateSummary() {
+            if (!schoolData) {
+                currentPlan.textContent = '—';
+                currentPrice.textContent = '—';
+                billingCycle.textContent = '—';
+                nextInvoiceDate.textContent = '—';
+                nextInvoiceAmount.textContent = '—';
+                return;
+            }
             
             const plan = schoolData.plan || 'Premium';
             currentPlan.textContent = `${plan} Plan`;
@@ -415,8 +468,13 @@
             else if (plan === 'Standard') price = 'KES 12,000/month';
             currentPrice.textContent = price;
             
+            billingCycle.textContent = schoolData.billingCycle || 'Billed monthly';
+            
             if (schoolData.subscriptionExpiry) {
-                const expiry = schoolData.subscriptionExpiry.toDate();
+                const expiry = schoolData.subscriptionExpiry.toDate ? 
+                    schoolData.subscriptionExpiry.toDate() : 
+                    new Date(schoolData.subscriptionExpiry);
+                
                 nextInvoiceDate.textContent = expiry.toLocaleDateString('en-US', { 
                     day: 'numeric', month: 'short', year: 'numeric' 
                 });
@@ -425,138 +483,85 @@
                 if (plan === 'Basic') amount = '5,000';
                 else if (plan === 'Standard') amount = '12,000';
                 nextInvoiceAmount.textContent = `KES ${amount}`;
+            } else {
+                const nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                nextInvoiceDate.textContent = nextMonth.toLocaleDateString('en-US', { 
+                    day: 'numeric', month: 'short', year: 'numeric' 
+                });
+                nextInvoiceAmount.textContent = 'KES —';
             }
-        }
-
-        function updateSummary() {
-            // Fallback summary if no school data
-            currentPlan.textContent = 'Premium Plan';
-            currentPrice.textContent = 'KES 25,000/month';
-            
-            const nextDate = new Date();
-            nextDate.setMonth(nextDate.getMonth() + 1);
-            nextInvoiceDate.textContent = nextDate.toLocaleDateString('en-US', { 
-                day: 'numeric', month: 'short', year: 'numeric' 
-            });
-            nextInvoiceAmount.textContent = 'KES 25,000';
         }
 
         // ========== LOAD INVOICES ==========
         async function loadInvoices() {
-            if (!adminData) return;
+            if (!schoolIdentifier) return;
             
             try {
                 let invoicesQuery;
-                if (adminData.schoolId) {
+                
+                if (schoolIdentifier.type === 'schoolId') {
                     invoicesQuery = db.collection('subscriptionInvoices')
-                        .where('schoolId', '==', adminData.schoolId)
+                        .where('schoolId', '==', schoolIdentifier.value)
                         .orderBy('date', 'desc');
                 } else {
                     invoicesQuery = db.collection('subscriptionInvoices')
-                        .where('school', '==', adminData.school)
+                        .where('school', '==', schoolIdentifier.value)
                         .orderBy('date', 'desc');
                 }
                 
                 const snapshot = await invoicesQuery.get();
-                allInvoices = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                allInvoices = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        // Convert Firestore timestamp to Date if needed
+                        date: data.date?.toDate ? data.date.toDate() : new Date(data.date)
+                    };
+                });
                 
-                if (allInvoices.length === 0) {
-                    useMockInvoices();
-                } else {
-                    applyFilters();
-                }
+                // Populate year filter options
+                populateYearFilter();
+                
+                // Apply filters and render
+                applyFilters();
+                
             } catch (error) {
-                console.warn('Could not load invoices, using mock', error);
-                useMockInvoices();
+                console.error('Error loading invoices:', error);
+                showError('Failed to load invoice data: ' + error.message);
             }
         }
 
-        // ========== MOCK INVOICES ==========
-        function useMockInvoices() {
-            allInvoices = [
-                { 
-                    id: 'inv1', 
-                    invoiceNo: 'INV-2025-001', 
-                    date: '2025-04-15', 
-                    description: 'Premium Plan - April 2025', 
-                    amount: 25000, 
-                    method: 'M-Pesa', 
-                    status: 'paid',
-                    transactionId: 'MPE123456789',
-                    billingPeriod: '1 Apr 2025 - 30 Apr 2025'
-                },
-                { 
-                    id: 'inv2', 
-                    invoiceNo: 'INV-2025-002', 
-                    date: '2025-03-15', 
-                    description: 'Premium Plan - March 2025', 
-                    amount: 25000, 
-                    method: 'Bank Transfer', 
-                    status: 'paid',
-                    transactionId: 'BT987654321',
-                    billingPeriod: '1 Mar 2025 - 31 Mar 2025'
-                },
-                { 
-                    id: 'inv3', 
-                    invoiceNo: 'INV-2025-003', 
-                    date: '2025-02-15', 
-                    description: 'Premium Plan - February 2025', 
-                    amount: 25000, 
-                    method: 'Card', 
-                    status: 'paid',
-                    transactionId: 'CARD-4567-8901',
-                    billingPeriod: '1 Feb 2025 - 28 Feb 2025'
-                },
-                { 
-                    id: 'inv4', 
-                    invoiceNo: 'INV-2025-004', 
-                    date: '2025-05-15', 
-                    description: 'Premium Plan - May 2025', 
-                    amount: 25000, 
-                    method: '—', 
-                    status: 'pending',
-                    transactionId: '',
-                    billingPeriod: '1 May 2025 - 31 May 2025'
-                },
-                { 
-                    id: 'inv5', 
-                    invoiceNo: 'INV-2024-012', 
-                    date: '2024-12-15', 
-                    description: 'Premium Plan - December 2024', 
-                    amount: 25000, 
-                    method: 'M-Pesa', 
-                    status: 'paid',
-                    transactionId: 'MPE987654321',
-                    billingPeriod: '1 Dec 2024 - 31 Dec 2024'
-                },
-                { 
-                    id: 'inv6', 
-                    invoiceNo: 'INV-2024-011', 
-                    date: '2024-11-15', 
-                    description: 'Premium Plan - November 2024', 
-                    amount: 25000, 
-                    method: 'Cheque', 
-                    status: 'failed',
-                    transactionId: '',
-                    billingPeriod: '1 Nov 2024 - 30 Nov 2024'
+        function populateYearFilter() {
+            const years = new Set();
+            allInvoices.forEach(inv => {
+                if (inv.date) {
+                    const year = new Date(inv.date).getFullYear();
+                    years.add(year);
                 }
-            ];
-            applyFilters();
+            });
+            
+            let options = '<option value="all">All Years</option>';
+            Array.from(years).sort().reverse().forEach(year => {
+                options += `<option value="${year}">${year}</option>`;
+            });
+            yearFilter.innerHTML = options;
         }
 
         // ========== FILTER & RENDER ==========
         function applyFilters() {
             const yearVal = yearFilter.value;
             const statusVal = statusFilter.value;
-            const searchVal = searchInput.value.toLowerCase();
+            const searchVal = searchInput.value.toLowerCase().trim();
 
             filteredInvoices = allInvoices.filter(inv => {
                 if (yearVal !== 'all') {
-                    const invYear = inv.date.split('-')[0];
+                    const invYear = new Date(inv.date).getFullYear().toString();
                     if (invYear !== yearVal) return false;
                 }
                 if (statusVal !== 'all' && inv.status !== statusVal) return false;
-                if (searchVal && !inv.invoiceNo.toLowerCase().includes(searchVal)) return false;
+                if (searchVal && !inv.invoiceNo?.toLowerCase().includes(searchVal)) return false;
                 return true;
             });
 
@@ -576,13 +581,17 @@
             filteredInvoices.forEach(inv => {
                 const statusClass = inv.status === 'paid' ? 'status-paid' : 
                                    inv.status === 'pending' ? 'status-pending' : 'status-failed';
-                const statusText = inv.status.charAt(0).toUpperCase() + inv.status.slice(1);
+                const statusText = inv.status ? inv.status.charAt(0).toUpperCase() + inv.status.slice(1) : 'Unknown';
+                
+                const dateStr = inv.date ? new Date(inv.date).toLocaleDateString('en-US', { 
+                    day: 'numeric', month: 'short', year: 'numeric' 
+                }) : '—';
                 
                 html += `
                     <tr>
-                        <td><strong>${inv.invoiceNo}</strong></td>
-                        <td>${new Date(inv.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                        <td>${inv.description}</td>
+                        <td><strong>${inv.invoiceNo || '—'}</strong></td>
+                        <td>${dateStr}</td>
+                        <td>${inv.description || '—'}</td>
                         <td><strong>KES ${inv.amount?.toLocaleString() || 0}</strong></td>
                         <td>${inv.method || '—'}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -602,18 +611,22 @@
             const invoice = allInvoices.find(i => i.id === id);
             if (!invoice) return;
             
+            const dateStr = invoice.date ? new Date(invoice.date).toLocaleDateString('en-US', { 
+                day: 'numeric', month: 'long', year: 'numeric' 
+            }) : '—';
+            
             invoiceDetail.innerHTML = `
                 <div class="detail-row">
                     <span class="detail-label">Invoice Number:</span>
-                    <span class="detail-value">${invoice.invoiceNo}</span>
+                    <span class="detail-value">${invoice.invoiceNo || '—'}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Date:</span>
-                    <span class="detail-value">${new Date(invoice.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span class="detail-value">${dateStr}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Description:</span>
-                    <span class="detail-value">${invoice.description}</span>
+                    <span class="detail-value">${invoice.description || '—'}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Billing Period:</span>
@@ -633,7 +646,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Status:</span>
-                    <span class="detail-value"><span class="status-badge status-${invoice.status}">${invoice.status.toUpperCase()}</span></span>
+                    <span class="detail-value"><span class="status-badge status-${invoice.status}">${invoice.status?.toUpperCase() || '—'}</span></span>
                 </div>
             `;
             
@@ -641,7 +654,7 @@
         };
 
         window.downloadInvoice = function(id) {
-            alert(`Download PDF for invoice ID: ${id}\n(In production, this would generate a PDF receipt.)`);
+            alert(`Download PDF for invoice ID: ${id}\n(In production, this would generate a PDF receipt from Firestore data.)`);
         };
 
         closeModal.addEventListener('click', () => {
@@ -653,7 +666,6 @@
         });
 
         downloadInvoiceBtn.addEventListener('click', () => {
-            // This would download the current invoice being viewed
             alert('Downloading invoice PDF...');
         });
 
@@ -662,6 +674,13 @@
                 invoiceModal.style.display = 'none';
             }
         });
+
+        // ========== ERROR HANDLING ==========
+        function showError(message) {
+            loadingIndicator.style.display = 'none';
+            errorContainer.style.display = 'block';
+            errorText.textContent = message;
+        }
 
         // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
