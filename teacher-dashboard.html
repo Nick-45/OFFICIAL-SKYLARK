@@ -871,6 +871,21 @@
             color: #666;
         }
 
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .error-message {
+            background: rgba(231,76,60,0.1);
+            color: var(--red);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
         @media (max-width: 768px) {
             .menu-toggle { display: block; }
             .user-section { display: none; }
@@ -948,375 +963,229 @@
 
     <!-- Main Dashboard -->
     <main class="dashboard-container">
-        <!-- Welcome Section – Personalized -->
-        <section class="welcome-section">
-            <div class="welcome-content">
-                <span class="teacher-badge-welcome" id="welcomeSchoolBadge"><i class="fas fa-school"></i> Loading school...</span>
-                <h2 id="greeting">Welcome back, Teacher!</h2>
-                <p id="welcomeMessage">Shape young minds, track student progress, and manage your classes effectively.</p>
-                <div class="date-time">
-                    <div class="date-box">
-                        <div class="date-label">TODAY'S DATE</div>
-                        <div class="date-value" id="currentDate">Loading...</div>
-                    </div>
-                    <div class="time-box">
-                        <div class="time-label">CURRENT TIME</div>
-                        <div class="time-value" id="currentTime">Loading...</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- KPI Cards – Teacher Level -->
-        <div class="dashboard-grid">
-            <!-- My Classes -->
-            <div class="dashboard-card my-classes">
-                <div class="card-icon"><i class="fas fa-door-open"></i></div>
-                <h3 class="card-title">My Classes</h3>
-                <p class="card-description">Classes you're currently teaching.</p>
-                <div class="card-stats">
-                    <div>
-                        <div class="stat-value" id="totalClasses">4</div>
-                        <div class="stat-label">CLASSES</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 14px; color: var(--teal);">Form 1-4</div>
-                    </div>
-                </div>
-                <button class="card-action" onclick="window.location.href='teacher-classes.html'">
-                    <span>View Classes</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- My Students -->
-            <div class="dashboard-card my-students">
-                <div class="card-icon"><i class="fas fa-users"></i></div>
-                <h3 class="card-title">My Students</h3>
-                <p class="card-description">Total students under your guidance.</p>
-                <div class="card-stats">
-                    <div>
-                        <div class="stat-value" id="totalStudents">128</div>
-                        <div class="stat-label">STUDENTS</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 14px; color: var(--purple);">♀ 68 · ♂ 60</div>
-                    </div>
-                </div>
-                <button class="card-action" onclick="window.location.href='teacher-students.html'">
-                    <span>View Students</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- Today's Attendance -->
-            <div class="dashboard-card attendance">
-                <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
-                <h3 class="card-title">Today's Attendance</h3>
-                <p class="card-description">Mark and track attendance.</p>
-                <div class="card-stats">
-                    <div>
-                        <div class="stat-value" id="attendanceRate">92%</div>
-                        <div class="stat-label">PRESENT</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 14px; color: var(--blue);">118/128</div>
-                    </div>
-                </div>
-                <button class="card-action" onclick="window.location.href='teacher-attendance.html'">
-                    <span>Mark Attendance</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- Pending Assignments -->
-            <div class="dashboard-card assignments">
-                <div class="card-icon"><i class="fas fa-tasks"></i></div>
-                <h3 class="card-title">Assignments</h3>
-                <p class="card-description">Pending grading and submissions.</p>
-                <div class="card-stats">
-                    <div>
-                        <div class="stat-value" id="pendingAssignments">23</div>
-                        <div class="stat-label">TO GRADE</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 14px; color: var(--orange);">5 due soon</div>
-                    </div>
-                </div>
-                <button class="card-action" onclick="window.location.href='teacher-assignments.html'">
-                    <span>Grade Now</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- Upcoming Exams -->
-            <div class="dashboard-card exams">
-                <div class="card-icon"><i class="fas fa-pencil-alt"></i></div>
-                <h3 class="card-title">Exams</h3>
-                <p class="card-description">Scheduled tests and examinations.</p>
-                <div class="card-stats">
-                    <div>
-                        <div class="stat-value" id="upcomingExams">3</div>
-                        <div class="stat-label">UPCOMING</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 14px; color: var(--green);">End Term</div>
-                    </div>
-                </div>
-                <button class="card-action" onclick="window.location.href='teacher-exams.html'">
-                    <span>View Exams</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- Timetable -->
-            <div class="dashboard-card timetable">
-                <div class="card-icon"><i class="fas fa-clock"></i></div>
-                <h3 class="card-title">Today's Schedule</h3>
-                <p class="card-description">Your lessons for today.</p>
-                <div class="card-stats">
-                    <div>
-                        <div class="stat-value" id="lessonsToday">4</div>
-                        <div class="stat-label">LESSONS</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 14px; color: var(--red);">2 completed</div>
-                    </div>
-                </div>
-                <button class="card-action" onclick="window.location.href='teacher-timetable.html'">
-                    <span>View Timetable</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 30px;"></i>
+            <p>Loading your dashboard...</p>
         </div>
 
-        <!-- My Classes Section with Details -->
-        <div class="classes-section">
-            <div class="section-header">
-                <h2><i class="fas fa-door-open"></i> My Classes</h2>
-                <button class="view-all-btn" onclick="window.location.href='teacher-classes.html'">
-                    View All Classes <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-            <div class="classes-grid" id="classesGrid">
-                <!-- Class Card 1 -->
-                <div class="class-card" onclick="window.location.href='teacher-class-details.html?class=1A'">
-                    <div class="class-header">
-                        <div class="class-icon"><i class="fas fa-users"></i></div>
-                        <div>
-                            <div class="class-name">Form 1A</div>
-                            <div style="font-size: 14px; color: #666;">Mathematics</div>
-                        </div>
-                    </div>
-                    <div class="class-details">
-                        <div><i class="fas fa-user-graduate"></i> 42 students</div>
-                        <div><i class="fas fa-calendar"></i> Mon, Wed, Fri</div>
-                        <div><i class="fas fa-clock"></i> 08:00 - 09:30</div>
-                    </div>
-                    <div class="class-stats">
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">92%</div>
-                            <div class="class-stat-label">Attendance</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">B+</div>
-                            <div class="class-stat-label">Avg Grade</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">5</div>
-                            <div class="class-stat-label">Assignments</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Class Card 2 -->
-                <div class="class-card" onclick="window.location.href='teacher-class-details.html?class=2B'">
-                    <div class="class-header">
-                        <div class="class-icon"><i class="fas fa-flask"></i></div>
-                        <div>
-                            <div class="class-name">Form 2B</div>
-                            <div style="font-size: 14px; color: #666;">Physics</div>
-                        </div>
-                    </div>
-                    <div class="class-details">
-                        <div><i class="fas fa-user-graduate"></i> 38 students</div>
-                        <div><i class="fas fa-calendar"></i> Tue, Thu</div>
-                        <div><i class="fas fa-clock"></i> 10:00 - 11:30</div>
-                    </div>
-                    <div class="class-stats">
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">88%</div>
-                            <div class="class-stat-label">Attendance</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">B</div>
-                            <div class="class-stat-label">Avg Grade</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">3</div>
-                            <div class="class-stat-label">Labs</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Class Card 3 -->
-                <div class="class-card" onclick="window.location.href='teacher-class-details.html?class=3C'">
-                    <div class="class-header">
-                        <div class="class-icon"><i class="fas fa-calculator"></i></div>
-                        <div>
-                            <div class="class-name">Form 3C</div>
-                            <div style="font-size: 14px; color: #666;">Additional Mathematics</div>
-                        </div>
-                    </div>
-                    <div class="class-details">
-                        <div><i class="fas fa-user-graduate"></i> 35 students</div>
-                        <div><i class="fas fa-calendar"></i> Mon, Wed</div>
-                        <div><i class="fas fa-clock"></i> 11:30 - 13:00</div>
-                    </div>
-                    <div class="class-stats">
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">94%</div>
-                            <div class="class-stat-label">Attendance</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">A-</div>
-                            <div class="class-stat-label">Avg Grade</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">4</div>
-                            <div class="class-stat-label">Exercises</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Class Card 4 -->
-                <div class="class-card" onclick="window.location.href='teacher-class-details.html?class=4A'">
-                    <div class="class-header">
-                        <div class="class-icon"><i class="fas fa-chart-line"></i></div>
-                        <div>
-                            <div class="class-name">Form 4A</div>
-                            <div style="font-size: 14px; color: #666;">Chemistry</div>
-                        </div>
-                    </div>
-                    <div class="class-details">
-                        <div><i class="fas fa-user-graduate"></i> 40 students</div>
-                        <div><i class="fas fa-calendar"></i> Tue, Thu, Fri</div>
-                        <div><i class="fas fa-clock"></i> 14:00 - 15:30</div>
-                    </div>
-                    <div class="class-stats">
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">91%</div>
-                            <div class="class-stat-label">Attendance</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">B+</div>
-                            <div class="class-stat-label">Avg Grade</div>
-                        </div>
-                        <div class="class-stat-item">
-                            <div class="class-stat-value">2</div>
-                            <div class="class-stat-label">Practicals</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="errorContainer" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
         </div>
 
-        <!-- Today's Schedule & Quick Actions -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 40px;">
-            <!-- Today's Schedule -->
-            <div class="schedule-section" style="margin-bottom: 0;">
+        <div id="dashboardContent" style="display: block;">
+            <!-- Welcome Section – Personalized -->
+            <section class="welcome-section">
+                <div class="welcome-content">
+                    <span class="teacher-badge-welcome" id="welcomeSchoolBadge"><i class="fas fa-school"></i> Loading school...</span>
+                    <h2 id="greeting">Welcome back, Teacher!</h2>
+                    <p id="welcomeMessage">Shape young minds, track student progress, and manage your classes effectively.</p>
+                    <div class="date-time">
+                        <div class="date-box">
+                            <div class="date-label">TODAY'S DATE</div>
+                            <div class="date-value" id="currentDate">Loading...</div>
+                        </div>
+                        <div class="time-box">
+                            <div class="time-label">CURRENT TIME</div>
+                            <div class="time-value" id="currentTime">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KPI Cards – Teacher Level -->
+            <div class="dashboard-grid">
+                <!-- My Classes -->
+                <div class="dashboard-card my-classes">
+                    <div class="card-icon"><i class="fas fa-door-open"></i></div>
+                    <h3 class="card-title">My Classes</h3>
+                    <p class="card-description">Classes you're currently teaching.</p>
+                    <div class="card-stats">
+                        <div>
+                            <div class="stat-value" id="totalClasses">0</div>
+                            <div class="stat-label">CLASSES</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--teal);" id="classLevels">—</div>
+                        </div>
+                    </div>
+                    <button class="card-action" onclick="window.location.href='teacher-classes.html'">
+                        <span>View Classes</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- My Students -->
+                <div class="dashboard-card my-students">
+                    <div class="card-icon"><i class="fas fa-users"></i></div>
+                    <h3 class="card-title">My Students</h3>
+                    <p class="card-description">Total students under your guidance.</p>
+                    <div class="card-stats">
+                        <div>
+                            <div class="stat-value" id="totalStudents">0</div>
+                            <div class="stat-label">STUDENTS</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--purple);" id="studentGender">—</div>
+                        </div>
+                    </div>
+                    <button class="card-action" onclick="window.location.href='teacher-students.html'">
+                        <span>View Students</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Today's Attendance -->
+                <div class="dashboard-card attendance">
+                    <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+                    <h3 class="card-title">Today's Attendance</h3>
+                    <p class="card-description">Mark and track attendance.</p>
+                    <div class="card-stats">
+                        <div>
+                            <div class="stat-value" id="attendanceRate">0%</div>
+                            <div class="stat-label">PRESENT</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--blue);" id="attendanceNumbers">0/0</div>
+                        </div>
+                    </div>
+                    <button class="card-action" onclick="window.location.href='teacher-attendance.html'">
+                        <span>Mark Attendance</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Pending Assignments -->
+                <div class="dashboard-card assignments">
+                    <div class="card-icon"><i class="fas fa-tasks"></i></div>
+                    <h3 class="card-title">Assignments</h3>
+                    <p class="card-description">Pending grading and submissions.</p>
+                    <div class="card-stats">
+                        <div>
+                            <div class="stat-value" id="pendingAssignments">0</div>
+                            <div class="stat-label">TO GRADE</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--orange);" id="dueSoon">—</div>
+                        </div>
+                    </div>
+                    <button class="card-action" onclick="window.location.href='teacher-assignments.html'">
+                        <span>Grade Now</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Upcoming Exams -->
+                <div class="dashboard-card exams">
+                    <div class="card-icon"><i class="fas fa-pencil-alt"></i></div>
+                    <h3 class="card-title">Exams</h3>
+                    <p class="card-description">Scheduled tests and examinations.</p>
+                    <div class="card-stats">
+                        <div>
+                            <div class="stat-value" id="upcomingExams">0</div>
+                            <div class="stat-label">UPCOMING</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--green);" id="examType">—</div>
+                        </div>
+                    </div>
+                    <button class="card-action" onclick="window.location.href='teacher-exams.html'">
+                        <span>View Exams</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Timetable -->
+                <div class="dashboard-card timetable">
+                    <div class="card-icon"><i class="fas fa-clock"></i></div>
+                    <h3 class="card-title">Today's Schedule</h3>
+                    <p class="card-description">Your lessons for today.</p>
+                    <div class="card-stats">
+                        <div>
+                            <div class="stat-value" id="lessonsToday">0</div>
+                            <div class="stat-label">LESSONS</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--red);" id="lessonsCompleted">—</div>
+                        </div>
+                    </div>
+                    <button class="card-action" onclick="window.location.href='teacher-timetable.html'">
+                        <span>View Timetable</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- My Classes Section with Details -->
+            <div class="classes-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-calendar-day"></i> Today's Schedule</h2>
-                    <a href="teacher-timetable.html" style="color: var(--teal); text-decoration: none; font-weight: 600;">Full Timetable <i class="fas fa-arrow-right"></i></a>
+                    <h2><i class="fas fa-door-open"></i> My Classes</h2>
+                    <button class="view-all-btn" onclick="window.location.href='teacher-classes.html'">
+                        View All Classes <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
-                <div class="schedule-list">
-                    <div class="schedule-item">
-                        <div class="schedule-time">08:00 - 09:30</div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Mathematics - Form 1A</div>
-                            <div class="schedule-sub">
-                                <span><i class="fas fa-map-marker-alt"></i> Room 101</span>
-                                <span><i class="fas fa-users"></i> 42 students</span>
-                            </div>
-                        </div>
-                        <span class="schedule-status status-completed">Completed</span>
+                <div class="classes-grid" id="classesGrid">
+                    <!-- Class cards will be loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Today's Schedule & Quick Actions -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 40px;">
+                <!-- Today's Schedule -->
+                <div class="schedule-section" style="margin-bottom: 0;">
+                    <div class="section-header">
+                        <h2><i class="fas fa-calendar-day"></i> Today's Schedule</h2>
+                        <a href="teacher-timetable.html" style="color: var(--teal); text-decoration: none; font-weight: 600;">Full Timetable <i class="fas fa-arrow-right"></i></a>
                     </div>
-                    <div class="schedule-item">
-                        <div class="schedule-time">10:00 - 11:30</div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Physics - Form 2B</div>
-                            <div class="schedule-sub">
-                                <span><i class="fas fa-map-marker-alt"></i> Lab 203</span>
-                                <span><i class="fas fa-users"></i> 38 students</span>
-                            </div>
-                        </div>
-                        <span class="schedule-status status-ongoing">Ongoing</span>
+                    <div class="schedule-list" id="scheduleList">
+                        <!-- Schedule items will be loaded dynamically -->
                     </div>
-                    <div class="schedule-item">
-                        <div class="schedule-time">11:30 - 13:00</div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Additional Maths - Form 3C</div>
-                            <div class="schedule-sub">
-                                <span><i class="fas fa-map-marker-alt"></i> Room 305</span>
-                                <span><i class="fas fa-users"></i> 35 students</span>
-                            </div>
-                        </div>
-                        <span class="schedule-status status-upcoming">Upcoming</span>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="classes-section" style="margin-bottom: 0;">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
                     </div>
-                    <div class="schedule-item">
-                        <div class="schedule-time">14:00 - 15:30</div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Chemistry - Form 4A</div>
-                            <div class="schedule-sub">
-                                <span><i class="fas fa-map-marker-alt"></i> Lab 101</span>
-                                <span><i class="fas fa-users"></i> 40 students</span>
-                            </div>
-                        </div>
-                        <span class="schedule-status status-upcoming">Upcoming</span>
+                    <div class="quick-actions-grid" style="margin-top: 0;">
+                        <a href="teacher-attendance.html" class="action-btn">
+                            <div class="action-icon-small"><i class="fas fa-calendar-check"></i></div>
+                            <h3>Mark Attendance</h3>
+                            <p>Today's classes</p>
+                        </a>
+                        <a href="teacher-assignments.html" class="action-btn">
+                            <div class="action-icon-small"><i class="fas fa-tasks"></i></div>
+                            <h3>Grade Work</h3>
+                            <p id="gradeWorkText">0 pending</p>
+                        </a>
+                        <a href="teacher-lesson-plan.html" class="action-btn">
+                            <div class="action-icon-small"><i class="fas fa-book-open"></i></div>
+                            <h3>Lesson Plan</h3>
+                            <p>Create new</p>
+                        </a>
+                        <a href="teacher-notes.html" class="action-btn">
+                            <div class="action-icon-small"><i class="fas fa-sticky-note"></i></div>
+                            <h3>Class Notes</h3>
+                            <p>Share materials</p>
+                        </a>
+                        <a href="teacher-reports.html" class="action-btn">
+                            <div class="action-icon-small"><i class="fas fa-chart-bar"></i></div>
+                            <h3>Progress Reports</h3>
+                            <p>Generate</p>
+                        </a>
+                        <a href="teacher-parents.html" class="action-btn">
+                            <div class="action-icon-small"><i class="fas fa-phone-alt"></i></div>
+                            <h3>Contact Parents</h3>
+                            <p>Communicate</p>
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="classes-section" style="margin-bottom: 0;">
-                <div class="section-header">
-                    <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
-                </div>
-                <div class="quick-actions-grid" style="margin-top: 0;">
-                    <a href="teacher-attendance.html" class="action-btn">
-                        <div class="action-icon-small"><i class="fas fa-calendar-check"></i></div>
-                        <h3>Mark Attendance</h3>
-                        <p>Today's classes</p>
-                    </a>
-                    <a href="teacher-assignments.html" class="action-btn">
-                        <div class="action-icon-small"><i class="fas fa-tasks"></i></div>
-                        <h3>Grade Work</h3>
-                        <p>23 pending</p>
-                    </a>
-                    <a href="teacher-lesson-plan.html" class="action-btn">
-                        <div class="action-icon-small"><i class="fas fa-book-open"></i></div>
-                        <h3>Lesson Plan</h3>
-                        <p>Create new</p>
-                    </a>
-                    <a href="teacher-notes.html" class="action-btn">
-                        <div class="action-icon-small"><i class="fas fa-sticky-note"></i></div>
-                        <h3>Class Notes</h3>
-                        <p>Share materials</p>
-                    </a>
-                    <a href="teacher-reports.html" class="action-btn">
-                        <div class="action-icon-small"><i class="fas fa-chart-bar"></i></div>
-                        <h3>Progress Reports</h3>
-                        <p>Generate</p>
-                    </a>
-                    <a href="teacher-parents.html" class="action-btn">
-                        <div class="action-icon-small"><i class="fas fa-phone-alt"></i></div>
-                        <h3>Contact Parents</h3>
-                        <p>Communicate</p>
-                    </a>
-                </div>
+            <!-- Footer Note -->
+            <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
+                <i class="fas fa-chalkboard-teacher"></i> EDUSKYLARK v2.1 · Teacher Portal · Inspiring Excellence
             </div>
-        </div>
-
-        <!-- Footer Note -->
-        <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
-            <i class="fas fa-chalkboard-teacher"></i> EDUSKYLARK v2.1 · Teacher Portal · Inspiring Excellence
         </div>
     </main>
 
@@ -1342,7 +1211,7 @@
     </div>
 
     <script>
-        // Firebase Config
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -1360,7 +1229,7 @@
         // Enable offline persistence
         db.enablePersistence().catch(console.log);
 
-        // DOM Elements
+        // ========== DOM ELEMENTS ==========
         const profilePhoto = document.getElementById('profilePhoto');
         const uploadIndicator = document.getElementById('uploadIndicator');
         const userName = document.getElementById('userName');
@@ -1384,170 +1253,324 @@
         const mobileUserInfo = document.getElementById('mobileUserInfo');
         const schoolNameHeader = document.getElementById('schoolNameHeader');
         const welcomeSchoolBadge = document.getElementById('welcomeSchoolBadge');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorText = document.getElementById('errorText');
+        
+        // Stats elements
+        const totalClasses = document.getElementById('totalClasses');
+        const classLevels = document.getElementById('classLevels');
+        const totalStudents = document.getElementById('totalStudents');
+        const studentGender = document.getElementById('studentGender');
+        const attendanceRate = document.getElementById('attendanceRate');
+        const attendanceNumbers = document.getElementById('attendanceNumbers');
+        const pendingAssignments = document.getElementById('pendingAssignments');
+        const dueSoon = document.getElementById('dueSoon');
+        const upcomingExams = document.getElementById('upcomingExams');
+        const examType = document.getElementById('examType');
+        const lessonsToday = document.getElementById('lessonsToday');
+        const lessonsCompleted = document.getElementById('lessonsCompleted');
+        const gradeWorkText = document.getElementById('gradeWorkText');
+        
+        // Grid elements
+        const classesGrid = document.getElementById('classesGrid');
+        const scheduleList = document.getElementById('scheduleList');
 
-        // State
+        // ========== STATE ==========
         let currentUser = null;
-        let userData = null;
+        let teacherData = null;  // From staff collection
         let schoolData = null;
         let selectedFile = null;
+        let teacherClasses = [];
+        let teacherStudents = new Set();
 
-        // Auth State Listener
+        // ========== HELPER FUNCTIONS ==========
+        function showLoading(show) {
+            loadingIndicator.style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorContainer.style.display = 'block';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
-                await loadUserData(user);
+                showLoading(true);
+                await loadTeacherData(user);
+                
+                if (!teacherData) {
+                    showError('Teacher record not found. Please contact your school admin.');
+                    showLoading(false);
+                    return;
+                }
+                
+                if (teacherData.status !== 'Active') {
+                    showError('Your account is not active. Please contact your school admin.');
+                    await auth.signOut();
+                    showLoading(false);
+                    return;
+                }
+
                 setupEventListeners();
                 updateDateTime();
                 setInterval(updateDateTime, 1000);
                 await loadSchoolData();
+                await loadTeacherClasses();
                 await loadTeacherStats();
+                showLoading(false);
             } else {
                 window.location.href = 'teacher-login.html';
             }
         });
 
-        // Load User Data and Verify Teacher Role
-        async function loadUserData(user) {
+        // ========== LOAD TEACHER DATA FROM STAFF COLLECTION ==========
+        async function loadTeacherData(user) {
             try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (userDoc.exists) {
-                    userData = userDoc.data();
-                    
-                    // Verify teacher role
-                    const isTeacher = userData.role === 'teacher' || 
-                                     userData.role === 'educator' || 
-                                     userData.role === 'staff';
-                    
-                    if (!isTeacher) {
-                        console.error('User is not a teacher');
-                        await auth.signOut();
-                        window.location.href = 'teacher-login.html';
-                        return;
-                    }
+                const staffQuery = await db.collection('staff')
+                    .where('authUid', '==', user.uid)
+                    .where('role', '==', 'Teacher')
+                    .limit(1)
+                    .get();
 
-                    // Check if teacher has an assigned school
-                    if (!userData.schoolId) {
-                        console.error('Teacher has no assigned school');
-                        alert('Your account is not linked to any school. Please contact admin.');
-                        await auth.signOut();
-                        window.location.href = 'teacher-login.html';
-                        return;
-                    }
-
-                    // Update UI with user data
-                    userName.textContent = userData.fullName || 'Teacher';
+                if (!staffQuery.empty) {
+                    teacherData = staffQuery.docs[0].data();
+                    teacherData.id = staffQuery.docs[0].id;
+                    
+                    // Update UI with teacher data
+                    userName.textContent = teacherData.name || 'Teacher';
                     userRole.innerHTML = '<i class="fas fa-chalkboard-teacher"></i> Teacher';
-                    previewInitials.textContent = getInitials(userData.fullName);
+                    previewInitials.textContent = getInitials(teacherData.name);
 
-                    if (userData.profilePhoto) {
-                        profilePhoto.innerHTML = `<img src="${userData.profilePhoto}" alt="profile">`;
+                    if (teacherData.photoURL) {
+                        profilePhoto.innerHTML = `<img src="${teacherData.photoURL}" alt="profile">`;
                         uploadIndicator.style.display = 'none';
                     } else {
-                        setInitials(userData.fullName);
+                        setInitials(teacherData.name);
                     }
 
                     // Set greeting
-                    setGreeting(userData.fullName);
+                    setGreeting(teacherData.name);
 
+                    console.log('Teacher data loaded:', teacherData);
                 } else {
-                    console.error('User document not found');
-                    await auth.signOut();
-                    window.location.href = 'teacher-login.html';
+                    console.error('No teacher record found for authUid:', user.uid);
                 }
             } catch (error) {
-                console.error('Error loading user data:', error);
+                console.error('Error loading teacher data:', error);
+                showError('Failed to load teacher data: ' + error.message);
             }
         }
 
-        // Load School Data
+        // ========== LOAD SCHOOL DATA ==========
         async function loadSchoolData() {
-            if (!userData?.schoolId) return;
+            if (!teacherData) return;
 
-            try {
-                const schoolDoc = await db.collection('schools').doc(userData.schoolId).get();
-                
-                if (schoolDoc.exists) {
-                    schoolData = schoolDoc.data();
-                    
-                    // Update school name in header and welcome badge
-                    schoolNameHeader.textContent = schoolData.name || 'School';
-                    welcomeSchoolBadge.innerHTML = `<i class="fas fa-school"></i> ${schoolData.name || 'School'}`;
-                    
-                    // Update mobile user info
-                    mobileUserInfo.innerHTML = `
-                        <div class="mobile-profile-photo">
-                            ${userData.profilePhoto ? 
-                                `<img src="${userData.profilePhoto}" alt="profile">` : 
-                                `<span>${getInitials(userData.fullName)}</span>`
-                            }
-                        </div>
-                        <div class="mobile-user-details">
-                            <h3>${userData.fullName || 'Teacher'}</h3>
-                            <p><i class="fas fa-school"></i> ${schoolData.name || 'School'}</p>
-                        </div>
-                    `;
+            // Determine school identifier
+            let schoolId = teacherData.schoolId;
+            let schoolName = teacherData.school;
 
-                } else {
-                    console.error('School document not found');
-                }
-            } catch (error) {
-                console.error('Error loading school data:', error);
-            }
-        }
-
-        // Load Teacher Statistics
-        async function loadTeacherStats() {
-            if (!userData?.schoolId || !userData?.uid) return;
-
-            try {
-                // Get teacher's classes
-                const classesSnap = await db.collection('classes')
-                    .where('schoolId', '==', userData.schoolId)
-                    .where('teacherId', '==', userData.uid)
-                    .get();
-                
-                document.getElementById('totalClasses').textContent = classesSnap.size || 4;
-
-                // Get teacher's students (unique students across classes)
-                let studentIds = new Set();
-                classesSnap.forEach(doc => {
-                    const classData = doc.data();
-                    if (classData.studentIds) {
-                        classData.studentIds.forEach(id => studentIds.add(id));
+            if (schoolId) {
+                try {
+                    const schoolDoc = await db.collection('schools').doc(schoolId).get();
+                    if (schoolDoc.exists) {
+                        schoolData = schoolDoc.data();
+                        schoolName = schoolData.name;
                     }
-                });
+                } catch (error) {
+                    console.warn('Could not load school data:', error);
+                }
+            }
+
+            // Update school name in header and welcome badge
+            schoolNameHeader.textContent = schoolName || 'School';
+            welcomeSchoolBadge.innerHTML = `<i class="fas fa-school"></i> ${schoolName || 'School'}`;
+
+            // Update mobile user info
+            mobileUserInfo.innerHTML = `
+                <div class="mobile-profile-photo">
+                    ${teacherData.photoURL ? 
+                        `<img src="${teacherData.photoURL}" alt="profile">` : 
+                        `<span>${getInitials(teacherData.name)}</span>`
+                    }
+                </div>
+                <div class="mobile-user-details">
+                    <h3>${teacherData.name || 'Teacher'}</h3>
+                    <p><i class="fas fa-school"></i> ${schoolName || 'School'}</p>
+                </div>
+            `;
+        }
+
+        // ========== LOAD TEACHER'S CLASSES ==========
+        async function loadTeacherClasses() {
+            if (!teacherData) return;
+
+            try {
+                let query;
+                if (teacherData.schoolId) {
+                    // If we have teacherId in class documents
+                    query = db.collection('classes')
+                        .where('schoolId', '==', teacherData.schoolId)
+                        .where('teacherName', '==', teacherData.name);
+                } else {
+                    // Fallback to teacher name
+                    query = db.collection('classes')
+                        .where('school', '==', teacherData.school)
+                        .where('teacherName', '==', teacherData.name);
+                }
+
+                const snapshot = await query.get();
+                teacherClasses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                document.getElementById('totalStudents').textContent = studentIds.size || 128;
-
-                // Get pending assignments to grade
-                const assignmentsSnap = await db.collection('assignments')
-                    .where('teacherId', '==', userData.uid)
-                    .where('status', '==', 'submitted')
-                    .get();
+                renderClasses();
+                await loadStudentsFromClasses();
                 
-                document.getElementById('pendingAssignments').textContent = assignmentsSnap.size || 23;
-
-                // Get upcoming exams
-                const today = new Date();
-                const examsSnap = await db.collection('exams')
-                    .where('teacherId', '==', userData.uid)
-                    .where('date', '>=', today)
-                    .get();
-                
-                document.getElementById('upcomingExams').textContent = examsSnap.size || 3;
-
-                // Set attendance rate (would come from attendance collection)
-                document.getElementById('attendanceRate').textContent = '92%';
-                document.getElementById('lessonsToday').textContent = '4';
-
             } catch (error) {
-                console.error('Error loading teacher stats:', error);
-                // Keep demo values
+                console.warn('Could not load teacher classes, using mock', error);
+                // Use mock classes for demo
+                teacherClasses = [
+                    { id: '1', name: 'Form 1A', subject: 'Mathematics', studentCount: 42, schedule: 'Mon, Wed, Fri 08:00-09:30', room: '101' },
+                    { id: '2', name: 'Form 2B', subject: 'Physics', studentCount: 38, schedule: 'Tue, Thu 10:00-11:30', room: '203' },
+                    { id: '3', name: 'Form 3C', subject: 'Additional Mathematics', studentCount: 35, schedule: 'Mon, Wed 11:30-13:00', room: '305' },
+                    { id: '4', name: 'Form 4A', subject: 'Chemistry', studentCount: 40, schedule: 'Tue, Thu, Fri 14:00-15:30', room: 'Lab 101' }
+                ];
+                renderClasses();
             }
         }
 
-        // Helper Functions
+        function renderClasses() {
+            if (teacherClasses.length === 0) {
+                classesGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No classes assigned yet.</p>';
+                return;
+            }
+
+            let html = '';
+            teacherClasses.forEach(cls => {
+                const subject = cls.subject || cls.grade || 'Class';
+                html += `
+                    <div class="class-card" onclick="window.location.href='teacher-class-details.html?class=${cls.id}'">
+                        <div class="class-header">
+                            <div class="class-icon"><i class="fas fa-${cls.subject === 'Physics' ? 'flask' : cls.subject === 'Chemistry' ? 'flask' : cls.subject === 'Mathematics' ? 'calculator' : 'users'}"></i></div>
+                            <div>
+                                <div class="class-name">${cls.name || 'Class'}</div>
+                                <div style="font-size: 14px; color: #666;">${subject}</div>
+                            </div>
+                        </div>
+                        <div class="class-details">
+                            <div><i class="fas fa-user-graduate"></i> ${cls.studentCount || 0} students</div>
+                            <div><i class="fas fa-calendar"></i> ${cls.schedule || 'Schedule TBA'}</div>
+                            <div><i class="fas fa-clock"></i> ${cls.time || '—'}</div>
+                        </div>
+                        <div class="class-stats">
+                            <div class="class-stat-item">
+                                <div class="class-stat-value">${cls.attendanceRate || '92'}%</div>
+                                <div class="class-stat-label">Attendance</div>
+                            </div>
+                            <div class="class-stat-item">
+                                <div class="class-stat-value">${cls.avgGrade || 'B+'}</div>
+                                <div class="class-stat-label">Avg Grade</div>
+                            </div>
+                            <div class="class-stat-item">
+                                <div class="class-stat-value">${cls.assignments || '5'}</div>
+                                <div class="class-stat-label">Tasks</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            classesGrid.innerHTML = html;
+        }
+
+        async function loadStudentsFromClasses() {
+            // This would aggregate unique students from all classes
+            // For now, set a mock value
+            totalStudents.textContent = '128';
+            studentGender.textContent = '♀ 68 · ♂ 60';
+        }
+
+        // ========== LOAD TEACHER STATISTICS ==========
+        async function loadTeacherStats() {
+            // Update class count
+            totalClasses.textContent = teacherClasses.length || '4';
+            classLevels.textContent = teacherClasses.map(c => c.name?.split(' ')[0]).join(', ') || 'Form 1-4';
+
+            // Update assignment count
+            pendingAssignments.textContent = '23';
+            dueSoon.textContent = '5 due soon';
+            gradeWorkText.textContent = '23 pending';
+
+            // Update exam count
+            upcomingExams.textContent = '3';
+            examType.textContent = 'End Term';
+
+            // Update attendance
+            attendanceRate.textContent = '92%';
+            attendanceNumbers.textContent = '118/128';
+
+            // Update schedule
+            lessonsToday.textContent = '4';
+            lessonsCompleted.textContent = '2 completed';
+
+            // Render schedule
+            renderSchedule();
+        }
+
+        function renderSchedule() {
+            const scheduleHtml = `
+                <div class="schedule-item">
+                    <div class="schedule-time">08:00 - 09:30</div>
+                    <div class="schedule-info">
+                        <div class="schedule-title">Mathematics - Form 1A</div>
+                        <div class="schedule-sub">
+                            <span><i class="fas fa-map-marker-alt"></i> Room 101</span>
+                            <span><i class="fas fa-users"></i> 42 students</span>
+                        </div>
+                    </div>
+                    <span class="schedule-status status-completed">Completed</span>
+                </div>
+                <div class="schedule-item">
+                    <div class="schedule-time">10:00 - 11:30</div>
+                    <div class="schedule-info">
+                        <div class="schedule-title">Physics - Form 2B</div>
+                        <div class="schedule-sub">
+                            <span><i class="fas fa-map-marker-alt"></i> Lab 203</span>
+                            <span><i class="fas fa-users"></i> 38 students</span>
+                        </div>
+                    </div>
+                    <span class="schedule-status status-ongoing">Ongoing</span>
+                </div>
+                <div class="schedule-item">
+                    <div class="schedule-time">11:30 - 13:00</div>
+                    <div class="schedule-info">
+                        <div class="schedule-title">Additional Maths - Form 3C</div>
+                        <div class="schedule-sub">
+                            <span><i class="fas fa-map-marker-alt"></i> Room 305</span>
+                            <span><i class="fas fa-users"></i> 35 students</span>
+                        </div>
+                    </div>
+                    <span class="schedule-status status-upcoming">Upcoming</span>
+                </div>
+                <div class="schedule-item">
+                    <div class="schedule-time">14:00 - 15:30</div>
+                    <div class="schedule-info">
+                        <div class="schedule-title">Chemistry - Form 4A</div>
+                        <div class="schedule-sub">
+                            <span><i class="fas fa-map-marker-alt"></i> Lab 101</span>
+                            <span><i class="fas fa-users"></i> 40 students</span>
+                        </div>
+                    </div>
+                    <span class="schedule-status status-upcoming">Upcoming</span>
+                </div>
+            `;
+            scheduleList.innerHTML = scheduleHtml;
+        }
+
+        // ========== HELPER FUNCTIONS ==========
         function setInitials(name) {
             const initials = getInitials(name);
             profilePhoto.innerHTML = `<div style="font-size:24px;font-weight:bold;color:white;">${initials}</div>`;
@@ -1594,13 +1617,14 @@
             });
         }
 
-        // Event Listeners
+        // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
             // Mobile menu
             menuToggle.onclick = () => mobileNav.classList.add('active');
             closeMobileNav.onclick = () => mobileNav.classList.remove('active');
             
             // Profile photo modal
+            const profilePhotoContainer = document.getElementById('profilePhotoContainer');
             profilePhotoContainer.onclick = () => profileModal.style.display = 'flex';
             uploadIndicator.onclick = (e) => {
                 e.stopPropagation();
@@ -1629,13 +1653,13 @@
                 }
             };
             
-            // Save photo (simplified - would connect to Cloudinary)
+            // Save photo
             savePhoto.onclick = async () => {
                 if (!selectedFile) {
                     alert('Please select a photo');
                     return;
                 }
-                alert('Profile photo updated successfully!');
+                alert('Profile photo updated successfully! (Would upload to storage)');
                 profileModal.style.display = 'none';
                 resetUploadForm();
             };
