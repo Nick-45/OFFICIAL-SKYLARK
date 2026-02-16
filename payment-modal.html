@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSKYLARK · Update Payment Method</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --school-green: #27ae60;
+            --school-green-dark: #229954;
+            --dark-blue: #2c3e50;
+            --white: #ffffff;
+            --light-blue: #ecf0f1;
+            --red: #e74c3c;
+            --blue: #3498db;
+            --orange: #e67e22;
+            --purple: #9b59b6;
+            --gold: #f1c40f;
+            --gray-light: #f8f9fa;
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #ecf0f1 0%, #d6dbdf 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .background-animation { 
+            position: fixed; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+            overflow: hidden; 
+        }
+        .bubble { 
+            position: absolute; 
+            border-radius: 50%; 
+            background: rgba(39,174,96,0.1); 
+            animation: float 15s infinite ease-in-out; 
+        }
+        .bubble:nth-child(1) { width: 200px; height: 200px; top: 10%; left: 5%; animation-duration: 18s; }
+        .bubble:nth-child(2) { width: 300px; height: 300px; bottom: 10%; right: 5%; animation-duration: 22s; background: rgba(52,152,219,0.08); }
+        .bubble:nth-child(3) { width: 150px; height: 150px; top: 40%; right: 20%; animation-duration: 14s; }
+        .bubble:nth-child(4) { width: 250px; height: 250px; bottom: 20%; left: 15%; animation-duration: 20s; background: rgba(155,89,182,0.08); }
+        @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        
+        .modal-card {
+            background: white;
+            border-radius: 30px;
+            max-width: 550px;
+            width: 100%;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            animation: modalSlide 0.4s ease-out;
+            border-top: 6px solid var(--school-green);
+        }
+        @keyframes modalSlide {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .modal-header h2 {
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark-blue);
+        }
+        .modal-header h2 i {
+            color: var(--school-green);
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: 0.2s;
+        }
+        .close-btn:hover {
+            color: var(--red);
+        }
+        
+        .school-info {
+            background: linear-gradient(135deg, var(--dark-blue), #1a2530);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .school-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .school-details h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .school-details p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-label i {
+            color: var(--school-green);
+            width: 20px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+        .form-control:focus {
+            border-color: var(--school-green);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(39,174,96,0.1);
+            outline: none;
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            background-size: 16px;
+        }
+        
+        .card-row {
+            display: flex;
+            gap: 15px;
+        }
+        .card-row .form-group {
+            flex: 1;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .payment-method {
+            flex: 1;
+            min-width: 100px;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .payment-method:hover {
+            border-color: var(--school-green);
+            background: rgba(39,174,96,0.02);
+        }
+        .payment-method.selected {
+            border-color: var(--school-green);
+            background: rgba(39,174,96,0.05);
+            box-shadow: 0 5px 15px rgba(39,174,96,0.1);
+        }
+        .payment-method i {
+            font-size: 24px;
+            color: var(--dark-blue);
+            margin-bottom: 8px;
+        }
+        .payment-method span {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 14px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--school-green), var(--school-green-dark));
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(39,174,96,0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: var(--dark-blue);
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .secure-note {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(39,174,96,0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .secure-note i {
+            color: var(--school-green);
+            font-size: 18px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        .error-message {
+            background: rgba(231,76,60,0.1);
+            color: var(--red);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2><i class="fas fa-credit-card"></i> Update Payment Method</h2>
+            <button class="close-btn" id="closeBtn" onclick="window.location.href='school-subscription.html'">&times;</button>
+        </div>
+
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 30px;"></i>
+            <p style="margin-top: 15px;">Loading...</p>
+        </div>
+
+        <div id="errorContainer" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p id="errorText">Error loading data. Please refresh.</p>
+        </div>
+
+        <div id="contentContainer">
+            <!-- School Info (populated dynamically) -->
+            <div class="school-info" id="schoolInfo">
+                <div class="school-icon">
+                    <i class="fas fa-school"></i>
+                </div>
+                <div class="school-details">
+                    <h3 id="schoolName">Loading...</h3>
+                    <p id="adminRole">School Administrator · <span id="adminEmail">loading...</span></p>
+                </div>
+            </div>
+
+            <!-- Current Payment Method (if any) -->
+            <div style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-radius: 16px;" id="currentMethodContainer">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 14px; color: #7f8c8d;">Current payment method</div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--dark-blue);" id="currentMethod">
+                            <i class="fas fa-credit-card" style="margin-right: 8px;"></i> •••• •••• •••• 4242
+                        </div>
+                    </div>
+                    <span class="status-badge" style="background: rgba(39,174,96,0.1); color: var(--school-green); padding: 5px 15px; border-radius: 30px;">Active</span>
+                </div>
+            </div>
+
+            <form id="paymentForm">
+                <!-- Payment Method Selection -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-credit-card"></i> Payment Method</label>
+                    <div class="payment-methods" id="paymentMethods">
+                        <div class="payment-method selected" data-method="card" onclick="selectMethod('card')">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Card</span>
+                        </div>
+                        <div class="payment-method" data-method="mpesa" onclick="selectMethod('mpesa')">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>M-Pesa</span>
+                        </div>
+                        <div class="payment-method" data-method="bank" onclick="selectMethod('bank')">
+                            <i class="fas fa-university"></i>
+                            <span>Bank</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Details (shown by default) -->
+                <div id="cardDetails">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-credit-card"></i> Card Number</label>
+                        <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" value="4242 4242 4242 4242">
+                    </div>
+                    <div class="card-row">
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-calendar"></i> Expiry</label>
+                            <input type="text" class="form-control" id="expiry" placeholder="MM/YY" value="12/25">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-lock"></i> CVC</label>
+                            <input type="text" class="form-control" id="cvc" placeholder="123" value="123">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user"></i> Cardholder Name</label>
+                        <input type="text" class="form-control" id="cardholderName" placeholder="John Doe" value="John Mwangi">
+                    </div>
+                </div>
+
+                <!-- M-Pesa Details (hidden initially) -->
+                <div id="mpesaDetails" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-mobile-alt"></i> M-Pesa Phone Number</label>
+                        <input type="tel" class="form-control" id="mpesaPhone" placeholder="+254 712 345 678" value="+254712345678">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user"></i> Account Name</label>
+                        <input type="text" class="form-control" id="mpesaName" placeholder="Full name">
+                    </div>
+                </div>
+
+                <!-- Bank Details (hidden initially) -->
+                <div id="bankDetails" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-university"></i> Bank Name</label>
+                        <input type="text" class="form-control" id="bankName" placeholder="e.g., KCB, Equity">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-hashtag"></i> Account Number</label>
+                        <input type="text" class="form-control" id="accountNumber" placeholder="Account number">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user"></i> Account Holder</label>
+                        <input type="text" class="form-control" id="accountHolder" placeholder="Account holder name">
+                    </div>
+                </div>
+
+                <!-- Billing Address -->
+                <h3 style="margin: 25px 0 15px; font-size: 18px; color: var(--dark-blue);">
+                    <i class="fas fa-map-marker-alt" style="color: var(--school-green);"></i> Billing Address
+                </h3>
+                <div class="form-group">
+                    <label class="form-label">Address Line 1</label>
+                    <input type="text" class="form-control" id="address1" placeholder="Street address" value="123 Kenyatta Avenue">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address Line 2 (Optional)</label>
+                    <input type="text" class="form-control" id="address2" placeholder="Apartment, suite, etc.">
+                </div>
+                <div class="card-row">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" id="city" placeholder="City" value="Nairobi">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Postal Code</label>
+                        <input type="text" class="form-control" id="postalCode" placeholder="Postal code" value="00100">
+                    </div>
+                </div>
+
+                <div class="secure-note">
+                    <i class="fas fa-lock"></i>
+                    <span>Your payment information is encrypted and secure. We never store full card details.</span>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='school-subscription.html'">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i> Update Payment Method
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ========== FIREBASE CONFIG ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ========== DOM ELEMENTS ==========
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorText = document.getElementById('errorText');
+        const contentContainer = document.getElementById('contentContainer');
+        const schoolName = document.getElementById('schoolName');
+        const adminEmail = document.getElementById('adminEmail');
+        const currentMethod = document.getElementById('currentMethod');
+        const submitBtn = document.getElementById('submitBtn');
+        const paymentForm = document.getElementById('paymentForm');
+
+        // Payment method sections
+        const cardDetails = document.getElementById('cardDetails');
+        const mpesaDetails = document.getElementById('mpesaDetails');
+        const bankDetails = document.getElementById('bankDetails');
+        const paymentMethods = document.querySelectorAll('.payment-method');
+
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;
+        let schoolData = null;
+        let selectedPaymentMethod = 'card';
+
+        // ========== AUTH STATE LISTENER ==========
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                showLoading(true);
+                await loadAdminData(user);
+                if (!adminData) {
+                    showError('No admin record found. Please contact super admin.');
+                    return;
+                }
+                if (adminData.status !== 'Active') {
+                    showError('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    return;
+                }
+                updateUI();
+                await loadSchoolData();
+                showLoading(false);
+            } else {
+                window.location.href = 'school-login.html';
+            }
+        });
+
+        // ========== LOAD ADMIN DATA ==========
+        async function loadAdminData(user) {
+            try {
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                    console.log('Admin data loaded:', adminData);
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                showError('Failed to load admin data: ' + error.message);
+            }
+        }
+
+        // ========== UPDATE UI ==========
+        function updateUI() {
+            if (!adminData) return;
+            
+            schoolName.textContent = adminData.school || 'Your School';
+            adminEmail.textContent = currentUser?.email || 'admin@school.edu';
+            
+            // Show current payment method if available
+            if (adminData.paymentMethod) {
+                const method = adminData.paymentMethod;
+                if (method.type === 'card') {
+                    currentMethod.innerHTML = `<i class="fas fa-credit-card"></i> •••• •••• •••• ${method.last4 || '4242'}`;
+                } else if (method.type === 'mpesa') {
+                    currentMethod.innerHTML = `<i class="fas fa-mobile-alt"></i> M-Pesa (${method.phone || '+254712345678'})`;
+                } else if (method.type === 'bank') {
+                    currentMethod.innerHTML = `<i class="fas fa-university"></i> ${method.bankName || 'Bank Account'}`;
+                }
+            } else {
+                currentMethod.innerHTML = '<i class="fas fa-credit-card"></i> No payment method on file';
+            }
+        }
+
+        // ========== LOAD SCHOOL DATA ==========
+        async function loadSchoolData() {
+            if (!adminData) return;
+            
+            if (adminData.schoolId) {
+                try {
+                    const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
+                    if (schoolDoc.exists) {
+                        schoolData = schoolDoc.data();
+                        // Update with school's payment info if available
+                        if (schoolData.paymentMethod) {
+                            adminData.paymentMethod = schoolData.paymentMethod;
+                            updateUI();
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not load school data', error);
+                }
+            }
+        }
+
+        // ========== PAYMENT METHOD SELECTION ==========
+        window.selectMethod = function(method) {
+            selectedPaymentMethod = method;
+            
+            // Update UI for selected method
+            paymentMethods.forEach(el => {
+                if (el.dataset.method === method) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+            
+            // Show/hide relevant details
+            cardDetails.style.display = method === 'card' ? 'block' : 'none';
+            mpesaDetails.style.display = method === 'mpesa' ? 'block' : 'none';
+            bankDetails.style.display = method === 'bank' ? 'block' : 'none';
+        };
+
+        // ========== FORM SUBMISSION ==========
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+            try {
+                // Validate based on payment method
+                let paymentData = {
+                    type: selectedPaymentMethod,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (selectedPaymentMethod === 'card') {
+                    const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                    if (cardNumber.length < 16) throw new Error('Please enter a valid card number');
+                    
+                    paymentData = {
+                        ...paymentData,
+                        last4: cardNumber.slice(-4),
+                        expiry: document.getElementById('expiry').value,
+                        cardholderName: document.getElementById('cardholderName').value
+                    };
+                } else if (selectedPaymentMethod === 'mpesa') {
+                    const phone = document.getElementById('mpesaPhone').value;
+                    if (!phone) throw new Error('Please enter a phone number');
+                    
+                    paymentData = {
+                        ...paymentData,
+                        phone: phone,
+                        accountName: document.getElementById('mpesaName').value
+                    };
+                } else if (selectedPaymentMethod === 'bank') {
+                    paymentData = {
+                        ...paymentData,
+                        bankName: document.getElementById('bankName').value,
+                        accountNumber: document.getElementById('accountNumber').value,
+                        accountHolder: document.getElementById('accountHolder').value
+                    };
+                }
+
+                // Add billing address
+                paymentData.billingAddress = {
+                    line1: document.getElementById('address1').value,
+                    line2: document.getElementById('address2').value,
+                    city: document.getElementById('city').value,
+                    postalCode: document.getElementById('postalCode').value
+                };
+
+                // Update in Firestore
+                if (adminData.schoolId) {
+                    // Update school document
+                    await db.collection('schools').doc(adminData.schoolId).update({
+                        paymentMethod: paymentData,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                // Also update admin document
+                await db.collection('admins').doc(adminData.id).update({
+                    paymentMethod: paymentData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('✅ Payment method updated successfully!');
+                window.location.href = 'school-subscription.html';
+                
+            } catch (error) {
+                console.error('Error updating payment method:', error);
+                alert('❌ Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Payment Method';
+            }
+        });
+
+        // ========== HELPER FUNCTIONS ==========
+        function showLoading(show) {
+            loadingIndicator.style.display = show ? 'block' : 'none';
+            contentContainer.style.display = show ? 'none' : 'block';
+        }
+
+        function showError(message) {
+            loadingIndicator.style.display = 'none';
+            errorContainer.style.display = 'block';
+            errorText.textContent = message;
+        }
+
+        // ========== CLOSE BUTTON ==========
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            window.location.href = 'school-subscription.html';
+        });
+
+        // Format card number as user types
+        document.getElementById('cardNumber')?.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = value;
+        });
+
+        // Format expiry as user types
+        document.getElementById('expiry')?.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>
