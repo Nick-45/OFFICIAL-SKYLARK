@@ -121,16 +121,21 @@
         }
         .logout-btn:hover { background: var(--red); }
 
-        /* Modal styles */
+        /* Modal styles - improved with scrolling */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1000;
             align-items: center; justify-content: center;
+            overflow-y: auto; /* Enable vertical scrolling on modal backdrop */
+            padding: 20px;
         }
         .modal.active { display: flex; }
         .modal-content {
-            background: white; border-radius: 30px; max-width: 550px; width: 90%; padding: 30px;
+            background: white; border-radius: 30px; max-width: 550px; width: 100%; 
+            padding: 30px; margin: auto;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: modalSlide 0.3s ease-out;
+            max-height: 90vh; /* Limit height to 90% of viewport */
+            overflow-y: auto; /* Enable scrolling inside modal */
         }
         @keyframes modalSlide {
             from { transform: translateY(-50px); opacity: 0; }
@@ -138,6 +143,7 @@
         }
         .modal-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 10px;
         }
         .modal-header h3 { font-size: 24px; display: flex; align-items: center; gap: 10px; }
         .modal-close {
@@ -154,7 +160,7 @@
             font-size: 15px; transition: 0.3s;
         }
         .form-control:focus {
-            border-color: var(--school-green); outline: none; box-shadow: 0 0 0 4px rgba(39,174,96,0.1);
+            border-color: var(--orange); outline: none; box-shadow: 0 0 0 4px rgba(230,126,34,0.1);
         }
         select.form-control {
             appearance: none;
@@ -163,6 +169,7 @@
         }
         .modal-footer {
             display: flex; justify-content: flex-end; gap: 15px; margin-top: 25px;
+            position: sticky; bottom: 0; background: white; padding-top: 15px;
         }
         .btn {
             padding: 14px 30px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none;
@@ -189,6 +196,7 @@
             background: rgba(231,76,60,0.1); color: var(--red); padding: 15px; border-radius: 12px;
             text-align: center; margin-bottom: 20px;
         }
+        .small-note { color: #666; font-size: 12px; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -257,7 +265,7 @@
         <div class="footer-note">EDUSKYLARK · staff management · realtime firestore</div>
     </main>
 
-    <!-- Add Staff Modal -->
+    <!-- Add Staff Modal - Scrollable -->
     <div class="modal" id="staffModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -276,11 +284,11 @@
                 <div class="form-group">
                     <label class="form-label">Temporary Password *</label>
                     <input type="password" class="form-control" id="staffPassword" value="Staff123!" required>
-                    <small style="color: #666;">Min 6 characters. User can change after first login.</small>
+                    <div class="small-note"><i class="fas fa-info-circle"></i> Min 6 characters. User can change after first login.</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Phone *</label>
-                    <input type="tel" class="form-control" id="staffPhone" required>
+                    <input type="tel" class="form-control" id="staffPhone" placeholder="+254 712 345 678" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Role *</label>
@@ -567,8 +575,11 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const firebaseUser = userCredential.user;
 
-                // 2. Send password reset email (so they can set their own password)
-                await firebaseUser.sendPasswordResetEmail();
+                // 2. Send verification email instead of password reset
+                await firebaseUser.sendEmailVerification({
+                    url: window.location.origin + '/staff-login.html',
+                    handleCodeInApp: true
+                });
 
                 // 3. Prepare staff data
                 const staffData = {
@@ -596,11 +607,22 @@
                 // 5. Close modal and reset
                 staffModal.classList.remove('active');
                 staffForm.reset();
-                alert('✅ Staff added successfully! Password reset email sent.');
+                alert('✅ Staff added successfully! Verification email sent.');
 
             } catch (error) {
                 console.error('Error adding staff:', error);
-                alert('❌ Error: ' + error.message);
+                
+                // Handle specific Firebase Auth errors
+                let errorMessage = error.message;
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'This email is already in use. Please use a different email.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Please enter a valid email address.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password should be at least 6 characters.';
+                }
+                
+                alert('❌ Error: ' + errorMessage);
             } finally {
                 saveStaffBtn.disabled = false;
                 saveStaffBtn.innerHTML = 'Add Staff';
@@ -628,6 +650,15 @@
                 totalSupportSpan.textContent = '0';
             }
         }, 5000);
+
+        // Helper function for error display
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            document.querySelector('.dashboard-container').prepend(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
     </script>
 </body>
 </html>
