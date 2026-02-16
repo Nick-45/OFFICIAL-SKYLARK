@@ -99,6 +99,13 @@
             display: flex; align-items: center; gap: 8px; transition: 0.3s;
         }
         .logout-btn:hover { background: var(--red); }
+        .error-message {
+            background: rgba(231,76,60,0.1); color: var(--red); padding: 20px; border-radius: 16px;
+            text-align: center; margin: 20px 0;
+        }
+        .loading {
+            text-align: center; padding: 40px; color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
@@ -125,105 +132,112 @@
     </header>
 
     <main class="dashboard-container">
-        <div class="subscription-card">
-            <div class="current-plan">
-                <div>
-                    <span class="plan-badge"><i class="fas fa-crown"></i> CURRENT PLAN</span>
-                    <div class="plan-name" id="planName">Premium</div>
-                    <div class="plan-price" id="planPrice">KES 25,000 <span>/month</span></div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="color: #666;">Next billing date</div>
-                    <div style="font-size: 24px; font-weight: 700; color: var(--dark-blue);" id="nextBilling">15 May 2025</div>
-                    <div style="margin-top: 10px; background: rgba(39,174,96,0.1); padding: 8px 20px; border-radius: 30px; color: var(--school-green);" id="daysLeft">
-                        <i class="fas fa-clock"></i> 30 days left
-                    </div>
-                </div>
-            </div>
-
-            <div class="features-grid" id="featuresGrid">
-                <div class="feature-item"><i class="fas fa-check-circle"></i> Unlimited students</div>
-                <div class="feature-item"><i class="fas fa-check-circle"></i> Advanced analytics</div>
-                <div class="feature-item"><i class="fas fa-check-circle"></i> 24/7 priority support</div>
-                <div class="feature-item"><i class="fas fa-check-circle"></i> API access</div>
-                <div class="feature-item"><i class="fas fa-check-circle"></i> Custom branding</div>
-                <div class="feature-item"><i class="fas fa-check-circle"></i> Dedicated account manager</div>
-            </div>
-
-            <div class="usage-stats">
-                <h3 style="margin-bottom: 20px; font-size: 20px;">Usage Statistics</h3>
-                <div class="stat-row">
-                    <span><i class="fas fa-users"></i> Students</span>
-                    <span style="font-weight: 700;" id="studentUsage">1,248 / 2,000</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="studentProgress" style="width: 62%;"></div>
-                </div>
-                <div class="stat-row" style="margin-top: 20px;">
-                    <span><i class="fas fa-chalkboard-teacher"></i> Staff</span>
-                    <span style="font-weight: 700;" id="staffUsage">42 / 100</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="staffProgress" style="width: 42%;"></div>
-                </div>
-                <div class="stat-row" style="margin-top: 20px;">
-                    <span><i class="fas fa-database"></i> Storage</span>
-                    <span style="font-weight: 700;" id="storageUsage">45.2 GB / 100 GB</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="storageProgress" style="width: 45%;"></div>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 20px;">
-                <button id="viewInvoicesBtn" style="background: none; border: 2px solid var(--dark-blue); padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
-                    <i class="fas fa-file-invoice"></i> View Invoices
-                </button>
-                <button id="updatePaymentBtn" style="background: var(--red); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
-                    <i class="fas fa-credit-card"></i> Update Payment Method
-                </button>
-            </div>
+        <div id="loadingIndicator" class="loading">
+            <i class="fas fa-spinner fa-spin" style="font-size: 30px;"></i>
+            <p style="margin-top: 15px;">Loading subscription data...</p>
         </div>
 
-        <h3 style="font-size: 24px; margin-bottom: 20px;">Available Plans</h3>
-        <div class="plan-cards">
-            <div class="plan-card" id="basicPlanCard">
-                <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Basic</h4>
-                <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 5,000<span style="font-size: 14px; color: #666;">/mo</span></div>
-                <ul style="list-style: none; margin-top: 20px;">
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Up to 300 students</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> 5 staff accounts</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Basic analytics</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Email support</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-times" style="color: var(--red);"></i> API access</li>
-                </ul>
-                <button class="btn-upgrade" id="basicPlanBtn">Downgrade</button>
+        <div id="errorContainer" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p id="errorText">Error loading data. Please refresh.</p>
+        </div>
+
+        <div id="subscriptionContent" style="display: none;">
+            <div class="subscription-card">
+                <div class="current-plan">
+                    <div>
+                        <span class="plan-badge"><i class="fas fa-crown"></i> CURRENT PLAN</span>
+                        <div class="plan-name" id="planName">—</div>
+                        <div class="plan-price" id="planPrice">— <span>/month</span></div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="color: #666;">Next billing date</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--dark-blue);" id="nextBilling">—</div>
+                        <div style="margin-top: 10px; background: rgba(39,174,96,0.1); padding: 8px 20px; border-radius: 30px; color: var(--school-green);" id="daysLeft">
+                            <i class="fas fa-clock"></i> —
+                        </div>
+                    </div>
+                </div>
+
+                <div class="features-grid" id="featuresGrid">
+                    <!-- Features will be populated based on plan -->
+                </div>
+
+                <div class="usage-stats">
+                    <h3 style="margin-bottom: 20px; font-size: 20px;">Usage Statistics</h3>
+                    <div class="stat-row">
+                        <span><i class="fas fa-users"></i> Students</span>
+                        <span style="font-weight: 700;" id="studentUsage">0 / 0</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="studentProgress" style="width: 0%;"></div>
+                    </div>
+                    <div class="stat-row" style="margin-top: 20px;">
+                        <span><i class="fas fa-chalkboard-teacher"></i> Staff</span>
+                        <span style="font-weight: 700;" id="staffUsage">0 / 0</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="staffProgress" style="width: 0%;"></div>
+                    </div>
+                    <div class="stat-row" style="margin-top: 20px;">
+                        <span><i class="fas fa-database"></i> Storage</span>
+                        <span style="font-weight: 700;" id="storageUsage">0 GB / 0 GB</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="storageProgress" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 20px;">
+                    <button id="viewInvoicesBtn" style="background: none; border: 2px solid var(--dark-blue); padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-file-invoice"></i> View Invoices
+                    </button>
+                    <button id="updatePaymentBtn" style="background: var(--red); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-credit-card"></i> Update Payment Method
+                    </button>
+                </div>
             </div>
-            <div class="plan-card recommended" id="standardPlanCard">
-                <span class="recommended-badge">RECOMMENDED</span>
-                <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Standard</h4>
-                <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 12,000<span style="font-size: 14px; color: #666;">/mo</span></div>
-                <ul style="list-style: none; margin-top: 20px;">
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Up to 1,000 students</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> 15 staff accounts</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Advanced analytics</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Priority support</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Custom branding</li>
-                </ul>
-                <button class="btn-upgrade" id="standardPlanBtn">Upgrade</button>
-            </div>
-            <div class="plan-card" id="premiumPlanCard">
-                <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Premium</h4>
-                <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 25,000<span style="font-size: 14px; color: #666;">/mo</span></div>
-                <ul style="list-style: none; margin-top: 20px;">
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Unlimited students</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Unlimited staff</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Real-time analytics</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> 24/7 priority support</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> API access</li>
-                    <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Dedicated account manager</li>
-                </ul>
-                <button class="btn-current" id="premiumPlanBtn">Current Plan</button>
+
+            <h3 style="font-size: 24px; margin-bottom: 20px;">Available Plans</h3>
+            <div class="plan-cards">
+                <div class="plan-card" id="basicPlanCard">
+                    <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Basic</h4>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 5,000<span style="font-size: 14px; color: #666;">/mo</span></div>
+                    <ul style="list-style: none; margin-top: 20px;">
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Up to 300 students</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> 5 staff accounts</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Basic analytics</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Email support</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-times" style="color: var(--red);"></i> API access</li>
+                    </ul>
+                    <button class="btn-upgrade" id="basicPlanBtn">Downgrade</button>
+                </div>
+                <div class="plan-card recommended" id="standardPlanCard">
+                    <span class="recommended-badge">RECOMMENDED</span>
+                    <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Standard</h4>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 12,000<span style="font-size: 14px; color: #666;">/mo</span></div>
+                    <ul style="list-style: none; margin-top: 20px;">
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Up to 1,000 students</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> 15 staff accounts</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Advanced analytics</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Priority support</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Custom branding</li>
+                    </ul>
+                    <button class="btn-upgrade" id="standardPlanBtn">Upgrade</button>
+                </div>
+                <div class="plan-card" id="premiumPlanCard">
+                    <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Premium</h4>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--dark-blue);">KES 25,000<span style="font-size: 14px; color: #666;">/mo</span></div>
+                    <ul style="list-style: none; margin-top: 20px;">
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Unlimited students</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Unlimited staff</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Real-time analytics</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> 24/7 priority support</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> API access</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Dedicated account manager</li>
+                    </ul>
+                    <button class="btn-current" id="premiumPlanBtn">Current Plan</button>
+                </div>
             </div>
         </div>
     </main>
@@ -248,12 +262,17 @@
         const schoolNameSub = document.getElementById('schoolNameSub');
         const adminName = document.getElementById('adminName');
         const logoutBtn = document.getElementById('logoutBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorText = document.getElementById('errorText');
+        const subscriptionContent = document.getElementById('subscriptionContent');
         
         // Subscription display elements
         const planName = document.getElementById('planName');
         const planPrice = document.getElementById('planPrice');
         const nextBilling = document.getElementById('nextBilling');
         const daysLeft = document.getElementById('daysLeft');
+        const featuresGrid = document.getElementById('featuresGrid');
         const studentUsage = document.getElementById('studentUsage');
         const staffUsage = document.getElementById('staffUsage');
         const storageUsage = document.getElementById('storageUsage');
@@ -270,8 +289,8 @@
 
         // ========== STATE ==========
         let currentUser = null;
-        let adminData = null;           // from 'admins' collection
-        let schoolData = null;           // from 'schools' collection (if linked)
+        let adminData = null;
+        let schoolData = null;
 
         // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
@@ -279,23 +298,21 @@
                 currentUser = user;
                 await loadAdminData(user);
                 if (!adminData) {
-                    console.error('No admin record found for this user');
-                    await auth.signOut();
-                    window.location.href = 'school-login.html';
+                    showError('No admin record found. Please contact super admin.');
                     return;
                 }
-                // Verify admin is active
                 if (adminData.status !== 'Active') {
-                    alert('Your account is not active. Please contact super admin.');
+                    showError('Your account is not active. Please contact super admin.');
                     await auth.signOut();
-                    window.location.href = 'school-login.html';
                     return;
                 }
                 updateUI();
                 await loadSchoolData();
                 await loadUsageStats();
+                loadingIndicator.style.display = 'none';
+                subscriptionContent.style.display = 'block';
             } else {
-                window.location.href = 'school-login.html';
+                window.location.href = 'school-admin-login.html';
             }
         });
 
@@ -311,9 +328,12 @@
                     adminData = adminsQuery.docs[0].data();
                     adminData.id = adminsQuery.docs[0].id;
                     console.log('Admin data loaded:', adminData);
+                } else {
+                    showError('No admin document found. Please contact support.');
                 }
             } catch (error) {
                 console.error('Error loading admin data:', error);
+                showError('Failed to load admin data: ' + error.message);
             }
         }
 
@@ -329,28 +349,24 @@
             schoolNameSub.textContent = schoolName;
         }
 
-        // ========== LOAD SCHOOL DATA (if schoolId exists) ==========
+        // ========== LOAD SCHOOL DATA ==========
         async function loadSchoolData() {
-            if (!adminData) return;
+            if (!adminData || !adminData.schoolId) {
+                showError('No school ID associated with this admin account.');
+                return;
+            }
             
-            // If admin has schoolId, fetch school document for subscription details
-            if (adminData.schoolId) {
-                try {
-                    const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
-                    if (schoolDoc.exists) {
-                        schoolData = schoolDoc.data();
-                        updateSubscriptionUI();
-                    } else {
-                        // Fallback to mock data
-                        useMockSubscription();
-                    }
-                } catch (error) {
-                    console.warn('Could not load school data, using mock', error);
-                    useMockSubscription();
+            try {
+                const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
+                if (schoolDoc.exists) {
+                    schoolData = schoolDoc.data();
+                    updateSubscriptionUI();
+                } else {
+                    showError('School document not found in Firestore.');
                 }
-            } else {
-                // No schoolId, use mock data based on admin's school name
-                useMockSubscription();
+            } catch (error) {
+                console.error('Error loading school data:', error);
+                showError('Failed to load school data: ' + error.message);
             }
         }
 
@@ -365,9 +381,11 @@
             let price = 'KES 25,000';
             if (currentPlan === 'Basic') price = 'KES 5,000';
             else if (currentPlan === 'Standard') price = 'KES 12,000';
-            else if (currentPlan === 'Premium') price = 'KES 25,000';
             
             planPrice.innerHTML = `${price} <span>/month</span>`;
+            
+            // Update features based on plan
+            updateFeatures(currentPlan);
             
             // Expiry date
             if (schoolData.subscriptionExpiry) {
@@ -390,6 +408,39 @@
             
             // Update plan buttons based on current plan
             highlightCurrentPlan(currentPlan);
+        }
+
+        function updateFeatures(plan) {
+            let features = [];
+            
+            if (plan === 'Basic') {
+                features = [
+                    '<i class="fas fa-check-circle"></i> Up to 300 students',
+                    '<i class="fas fa-check-circle"></i> 5 staff accounts',
+                    '<i class="fas fa-check-circle"></i> Basic analytics',
+                    '<i class="fas fa-check-circle"></i> Email support',
+                    '<i class="fas fa-times-circle" style="color: var(--red);"></i> API access'
+                ];
+            } else if (plan === 'Standard') {
+                features = [
+                    '<i class="fas fa-check-circle"></i> Up to 1,000 students',
+                    '<i class="fas fa-check-circle"></i> 15 staff accounts',
+                    '<i class="fas fa-check-circle"></i> Advanced analytics',
+                    '<i class="fas fa-check-circle"></i> Priority support',
+                    '<i class="fas fa-check-circle"></i> Custom branding'
+                ];
+            } else {
+                features = [
+                    '<i class="fas fa-check-circle"></i> Unlimited students',
+                    '<i class="fas fa-check-circle"></i> Unlimited staff',
+                    '<i class="fas fa-check-circle"></i> Real-time analytics',
+                    '<i class="fas fa-check-circle"></i> 24/7 priority support',
+                    '<i class="fas fa-check-circle"></i> API access',
+                    '<i class="fas fa-check-circle"></i> Dedicated account manager'
+                ];
+            }
+            
+            featuresGrid.innerHTML = features.map(f => `<div class="feature-item">${f}</div>`).join('');
         }
 
         // ========== HIGHLIGHT CURRENT PLAN ==========
@@ -417,7 +468,7 @@
 
         // ========== LOAD USAGE STATISTICS ==========
         async function loadUsageStats() {
-            if (!adminData) return;
+            if (!adminData || !schoolData) return;
             
             try {
                 // Get student count
@@ -441,7 +492,7 @@
                 const staffCount = staffSnap.size;
                 
                 // Limits based on plan
-                const plan = schoolData?.plan || 'Premium';
+                const plan = schoolData.plan || 'Premium';
                 let studentLimit = 2000;
                 let staffLimit = 100;
                 
@@ -451,54 +502,36 @@
                 } else if (plan === 'Standard') {
                     studentLimit = 1000;
                     staffLimit = 15;
-                } else if (plan === 'Premium') {
-                    studentLimit = 2000;
-                    staffLimit = 100;
                 }
                 
                 // Update UI
                 studentUsage.textContent = `${studentCount} / ${studentLimit}`;
                 staffUsage.textContent = `${staffCount} / ${staffLimit}`;
                 
-                const studentPercent = Math.min(100, Math.round((studentCount / studentLimit) * 100));
-                const staffPercent = Math.min(100, Math.round((staffCount / staffLimit) * 100));
+                const studentPercent = studentLimit > 0 ? Math.min(100, Math.round((studentCount / studentLimit) * 100)) : 0;
+                const staffPercent = staffLimit > 0 ? Math.min(100, Math.round((staffCount / staffLimit) * 100)) : 0;
                 
                 studentProgress.style.width = `${studentPercent}%`;
                 staffProgress.style.width = `${staffPercent}%`;
                 
-                // Storage (mock for now)
-                storageUsage.textContent = '45.2 GB / 100 GB';
-                storageProgress.style.width = '45%';
+                // Storage - from school data or default
+                const storageUsed = schoolData.storageUsed || 45.2;
+                const storageLimit = schoolData.storageLimit || 100;
+                storageUsage.textContent = `${storageUsed} GB / ${storageLimit} GB`;
+                const storagePercent = Math.min(100, Math.round((storageUsed / storageLimit) * 100));
+                storageProgress.style.width = `${storagePercent}%`;
                 
             } catch (error) {
-                console.warn('Could not load usage stats, using mock', error);
-                useMockUsage();
+                console.error('Error loading usage stats:', error);
+                showError('Failed to load usage statistics: ' + error.message);
             }
         }
 
-        // ========== MOCK DATA ==========
-        function useMockSubscription() {
-            planName.textContent = 'Premium';
-            planPrice.innerHTML = 'KES 25,000 <span>/month</span>';
-            
-            const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 1);
-            nextBilling.textContent = expiry.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-            
-            const daysRemaining = 30;
-            daysLeft.innerHTML = `<i class="fas fa-clock"></i> ${daysRemaining} days left`;
-            
-            highlightCurrentPlan('Premium');
-        }
-
-        function useMockUsage() {
-            studentUsage.textContent = '1,248 / 2,000';
-            staffUsage.textContent = '42 / 100';
-            storageUsage.textContent = '45.2 GB / 100 GB';
-            
-            studentProgress.style.width = '62%';
-            staffProgress.style.width = '42%';
-            storageProgress.style.width = '45%';
+        // ========== ERROR HANDLING ==========
+        function showError(message) {
+            loadingIndicator.style.display = 'none';
+            errorContainer.style.display = 'block';
+            errorText.textContent = message;
         }
 
         // ========== EVENT LISTENERS ==========
@@ -507,27 +540,26 @@
             window.location.href = 'school-admin-login.html';
         });
 
-        // Plan change buttons (demo functionality)
+        // Plan change buttons - would call a Cloud Function in production
         basicPlanBtn.addEventListener('click', () => {
-            alert('Plan change requested to Basic. This would update the school document.');
+            alert('Plan change requested to Basic. This would call a Cloud Function to update the school document.');
         });
 
         standardPlanBtn.addEventListener('click', () => {
-            alert('Plan change requested to Standard. This would update the school document.');
+            alert('Plan change requested to Standard. This would call a Cloud Function to update the school document.');
         });
 
         premiumPlanBtn.addEventListener('click', () => {
-            alert('Plan change requested to Premium. This would update the school document.');
+            alert('Plan change requested to Premium. This would call a Cloud Function to update the school document.');
         });
 
         viewInvoicesBtn.addEventListener('click', () => {
-    window.location.href = "billing-history.html";
-});
+            window.location.href = "billing-history.html";
+        });
 
-updatePaymentBtn.addEventListener('click', () => {
-    window.location.href = "payment-modal.html";
-});
-
+        updatePaymentBtn.addEventListener('click', () => {
+            window.location.href = "payment-modal.html";
+        });
     </script>
 </body>
 </html>
