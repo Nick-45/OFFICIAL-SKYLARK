@@ -201,6 +201,23 @@
             background: rgba(39,174,96,0.1); color: var(--school-green); padding: 15px; border-radius: 12px;
             text-align: center; margin-bottom: 20px;
         }
+
+        /* Profile details styling */
+        .profile-detail {
+            background: #f9f9f9; border-radius: 16px; padding: 20px; margin-bottom: 20px;
+        }
+        .detail-row {
+            display: flex; justify-content: space-between; padding: 12px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: #7f8c8d; font-weight: 500; }
+        .detail-value { font-weight: 700; color: var(--dark-blue); }
+        .profile-avatar-large {
+            width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), #d35400);
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 42px; font-weight: 700;
+            margin: 0 auto 20px; text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -284,7 +301,7 @@
         <div class="footer-note">EDUSKYLARK · staff management · realtime firestore</div>
     </main>
 
-    <!-- Add Staff Modal - Scrollable -->
+    <!-- Add Staff Modal -->
     <div class="modal" id="staffModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -339,6 +356,25 @@
         </div>
     </div>
 
+    <!-- Staff Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle" style="color: var(--orange);"></i> Staff Profile</h3>
+                <span class="modal-close" id="closeProfileModal">&times;</span>
+            </div>
+            <div id="profileContent">
+                <!-- Dynamic content will be loaded here -->
+                <div class="profile-avatar-large" id="profileAvatar">JD</div>
+                <div class="profile-detail" id="profileDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeProfileBtn">Close</button>
+                <button class="btn btn-primary" id="editProfileBtn">Edit Profile</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
@@ -380,12 +416,20 @@
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         
-        // Modal elements
+        // Modal elements - Add Staff
         const staffModal = document.getElementById('staffModal');
         const closeModal = document.getElementById('closeModal');
         const cancelModal = document.getElementById('cancelModal');
         const staffForm = document.getElementById('staffForm');
         const saveStaffBtn = document.getElementById('saveStaffBtn');
+
+        // Modal elements - Profile
+        const profileModal = document.getElementById('profileModal');
+        const closeProfileModal = document.getElementById('closeProfileModal');
+        const closeProfileBtn = document.getElementById('closeProfileBtn');
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileDetails = document.getElementById('profileDetails');
 
         // ========== STATE ==========
         let currentUser = null;
@@ -393,6 +437,7 @@
         let schoolIdentifier = null;
         let allStaff = [];
         let filteredStaff = [];
+        let currentProfileStaff = null;
 
         // ========== HELPER FUNCTIONS ==========
         function showLoading(show) {
@@ -451,7 +496,7 @@
                 // Set up real-time listener for staff
                 setupStaffListener();
             } else {
-                window.location.href = 'school-admin-login.html';
+                window.location.href = 'school-login.html';
             }
         });
 
@@ -573,13 +618,68 @@
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
-                    alert(`View profile for staff ID: ${id} (detail page would open)`);
+                    showStaffProfile(id);
                 });
             });
         }
 
         function renderEmpty() {
             staffGrid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><h3>No staff found</h3><p>Add your first staff member using the button above.</p></div>`;
+        }
+
+        // ========== STAFF PROFILE MODAL ==========
+        function showStaffProfile(staffId) {
+            const staff = allStaff.find(s => s.id === staffId);
+            if (!staff) return;
+            
+            currentProfileStaff = staff;
+            
+            // Set avatar
+            const initials = staff.name ? staff.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'ST';
+            profileAvatar.textContent = initials;
+            
+            // Format dates
+            const createdDate = staff.createdAt ? new Date(staff.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            }) : '—';
+            
+            // Build profile details
+            profileDetails.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Full Name:</span>
+                    <span class="detail-value">${staff.name || '—'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${staff.email || '—'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${staff.phone || '—'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Role:</span>
+                    <span class="detail-value">${staff.role || '—'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Department:</span>
+                    <span class="detail-value">${staff.department || '—'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value"><span class="badge ${staff.status === 'Active' ? 'badge-teacher' : 'badge-department'}">${staff.status || 'Active'}</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email Verified:</span>
+                    <span class="detail-value">${staff.emailVerified ? '✅ Yes' : '❌ No'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Joined:</span>
+                    <span class="detail-value">${createdDate}</span>
+                </div>
+            `;
+            
+            profileModal.classList.add('active');
         }
 
         // ========== MODAL HANDLING ==========
@@ -601,6 +701,24 @@
             if (e.target === staffModal) {
                 staffModal.classList.remove('active');
                 staffForm.reset();
+            }
+            if (e.target === profileModal) {
+                profileModal.classList.remove('active');
+            }
+        });
+
+        // Profile modal close handlers
+        closeProfileModal.addEventListener('click', () => {
+            profileModal.classList.remove('active');
+        });
+
+        closeProfileBtn.addEventListener('click', () => {
+            profileModal.classList.remove('active');
+        });
+
+        editProfileBtn.addEventListener('click', () => {
+            if (currentProfileStaff) {
+                alert(`Edit profile for ${currentProfileStaff.name} (would open edit form)`);
             }
         });
 
@@ -696,11 +814,10 @@
 
         logoutBtn.addEventListener('click', async () => {
             await auth.signOut();
-            window.location.href = 'school-login.html';
+            window.location.href = 'school-admin-login.html';
         });
 
         // ========== INITIAL LOAD ==========
-        // Show loading state
         showLoading(true);
     </script>
 </body>
