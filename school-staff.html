@@ -126,7 +126,7 @@
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1000;
             align-items: center; justify-content: center;
-            overflow-y: auto; /* Enable vertical scrolling on modal backdrop */
+            overflow-y: auto;
             padding: 20px;
         }
         .modal.active { display: flex; }
@@ -134,8 +134,8 @@
             background: white; border-radius: 30px; max-width: 550px; width: 100%; 
             padding: 30px; margin: auto;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: modalSlide 0.3s ease-out;
-            max-height: 90vh; /* Limit height to 90% of viewport */
-            overflow-y: auto; /* Enable scrolling inside modal */
+            max-height: 90vh;
+            overflow-y: auto;
         }
         @keyframes modalSlide {
             from { transform: translateY(-50px); opacity: 0; }
@@ -197,6 +197,10 @@
             text-align: center; margin-bottom: 20px;
         }
         .small-note { color: #666; font-size: 12px; margin-top: 4px; }
+        .success-message {
+            background: rgba(39,174,96,0.1); color: var(--school-green); padding: 15px; border-radius: 12px;
+            text-align: center; margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -223,6 +227,21 @@
     </header>
 
     <main class="dashboard-container">
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 30px;"></i>
+            <p>Loading staff data...</p>
+        </div>
+
+        <div id="errorContainer" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <div id="successContainer" class="success-message" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            <span id="successText"></span>
+        </div>
+
         <div class="page-header">
             <h2><i class="fas fa-chalkboard-teacher"></i> Staff directory</h2>
             <button class="add-btn" id="addStaffBtn"><i class="fas fa-plus-circle"></i> Add staff</button>
@@ -343,6 +362,11 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const addStaffBtn = document.getElementById('addStaffBtn');
         const staffGrid = document.getElementById('staffGrid');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorText = document.getElementById('errorText');
+        const successContainer = document.getElementById('successContainer');
+        const successText = document.getElementById('successText');
         
         // Stats elements
         const totalStaffSpan = document.getElementById('totalStaff');
@@ -370,20 +394,47 @@
         let allStaff = [];
         let filteredStaff = [];
 
+        // ========== HELPER FUNCTIONS ==========
+        function showLoading(show) {
+            loadingIndicator.style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorContainer.style.display = 'block';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            successText.textContent = message;
+            successContainer.style.display = 'block';
+            setTimeout(() => {
+                successContainer.style.display = 'none';
+            }, 5000);
+        }
+
         // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
+                showLoading(true);
                 await loadAdminData(user);
+                
                 if (!adminData) {
                     showError('No admin record found. Please contact super admin.');
+                    showLoading(false);
                     return;
                 }
+                
                 if (adminData.status !== 'Active') {
-                    alert('Your account is not active. Please contact super admin.');
+                    showError('Your account is not active. Please contact super admin.');
                     await auth.signOut();
+                    showLoading(false);
                     return;
                 }
+                
                 updateUI();
                 
                 // Determine school identifier
@@ -393,13 +444,14 @@
                     schoolIdentifier = { type: 'school', value: adminData.school };
                 } else {
                     showError('No school information found in your admin profile.');
+                    showLoading(false);
                     return;
                 }
                 
                 // Set up real-time listener for staff
                 setupStaffListener();
             } else {
-                window.location.href = 'school-admin-login.html';
+                window.location.href = 'school-login.html';
             }
         });
 
@@ -414,9 +466,11 @@
                 if (!adminsQuery.empty) {
                     adminData = adminsQuery.docs[0].data();
                     adminData.id = adminsQuery.docs[0].id;
+                    console.log('Admin data loaded:', adminData);
                 }
             } catch (error) {
                 console.error('Error loading admin data:', error);
+                showError('Failed to load admin data: ' + error.message);
             }
         }
 
@@ -443,10 +497,12 @@
 
             query.onSnapshot(snapshot => {
                 allStaff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                showLoading(false);
                 applyFilters();
             }, error => {
                 console.error('Firestore error:', error);
-                // Show empty state
+                showLoading(false);
+                showError('Failed to load staff data. Please refresh.');
                 renderEmpty();
             });
         }
@@ -575,7 +631,7 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const firebaseUser = userCredential.user;
 
-                // 2. Send verification email instead of password reset
+                // 2. Send email verification
                 await firebaseUser.sendEmailVerification({
                     url: window.location.origin + '/staff-login.html',
                     handleCodeInApp: true
@@ -604,10 +660,13 @@
                 // 4. Save to Firestore
                 await db.collection('staff').add(staffData);
 
-                // 5. Close modal and reset
+                // 5. Update display name
+                await firebaseUser.updateProfile({ displayName: name });
+
+                // 6. Close modal and show success
                 staffModal.classList.remove('active');
                 staffForm.reset();
-                alert('✅ Staff added successfully! Verification email sent.');
+                showSuccess('✅ Staff added successfully! Verification email sent.');
 
             } catch (error) {
                 console.error('Error adding staff:', error);
@@ -622,7 +681,7 @@
                     errorMessage = 'Password should be at least 6 characters.';
                 }
                 
-                alert('❌ Error: ' + errorMessage);
+                showError('❌ ' + errorMessage);
             } finally {
                 saveStaffBtn.disabled = false;
                 saveStaffBtn.innerHTML = 'Add Staff';
@@ -640,25 +699,9 @@
             window.location.href = 'school-login.html';
         });
 
-        // Fallback timeout for empty data
-        setTimeout(() => {
-            if (allStaff.length === 0) {
-                renderEmpty();
-                totalStaffSpan.textContent = '0';
-                totalTeachersSpan.textContent = '0';
-                totalAdminSpan.textContent = '0';
-                totalSupportSpan.textContent = '0';
-            }
-        }, 5000);
-
-        // Helper function for error display
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
-            document.querySelector('.dashboard-container').prepend(errorDiv);
-            setTimeout(() => errorDiv.remove(), 5000);
-        }
+        // ========== INITIAL LOAD ==========
+        // Show loading state
+        showLoading(true);
     </script>
 </body>
 </html>
