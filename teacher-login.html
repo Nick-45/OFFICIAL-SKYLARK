@@ -598,7 +598,7 @@
                     <span><strong>Password:</strong> teacher123</span>
                 </div>
                 <div style="font-size: 11px; color: #999; margin-top: 10px; text-align: center;">
-                    <i class="fas fa-info-circle"></i> Role must be 'teacher' and linked to a school
+                    <i class="fas fa-info-circle"></i> Role must be 'Teacher' in staff collection
                 </div>
             </div>
 
@@ -668,25 +668,36 @@
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Check if already logged in
+        // Check if already logged in - using staff collection
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    const isTeacher = userData.role === 'teacher' || userData.role === 'educator';
-                    if (isTeacher && userData.schoolId) {
-                        window.location.href = 'teacher-dashboard.html';
+                try {
+                    // Query the staff collection using authUid
+                    const staffQuery = await db.collection('staff')
+                        .where('authUid', '==', user.uid)
+                        .where('role', '==', 'Teacher')
+                        .limit(1)
+                        .get();
+
+                    if (!staffQuery.empty) {
+                        const staffData = staffQuery.docs[0].data();
+                        // Check if staff has school identifier
+                        if (staffData.schoolId || staffData.school) {
+                            window.location.href = 'teacher-dashboard.html';
+                        } else {
+                            await auth.signOut();
+                        }
                     } else {
                         await auth.signOut();
                     }
-                } else {
+                } catch (error) {
+                    console.error('Auth state check error:', error);
                     await auth.signOut();
                 }
             }
         });
 
-        // Login Submission
+        // Login Submission - using staff collection
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -702,24 +713,38 @@
             loginBtn.disabled = true;
 
             try {
+                // 1. Authenticate with Firebase Auth
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                const userDoc = await db.collection('users').doc(user.uid).get();
-
-                if (!userDoc.exists) {
+                // 2. Check email verification
+                if (!user.emailVerified) {
                     await auth.signOut();
                     loadingOverlay.style.display = 'none';
                     loginBtn.disabled = false;
-                    showError('User profile not found. Contact your school admin.');
+                    showError('Please verify your email before logging in. Check your inbox for the verification link.');
                     return;
                 }
 
-                const userData = userDoc.data();
-                const isTeacher = userData.role === 'teacher' || userData.role === 'educator' || userData.role === 'staff';
-                const hasSchool = !!userData.schoolId;
+                // 3. Query staff collection using authUid
+                const staffQuery = await db.collection('staff')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
 
-                if (!isTeacher) {
+                if (staffQuery.empty) {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Teacher profile not found. Please contact your school admin.');
+                    return;
+                }
+
+                const staffDoc = staffQuery.docs[0];
+                const staffData = staffDoc.data();
+
+                // 4. Verify role is Teacher
+                if (staffData.role !== 'Teacher') {
                     await auth.signOut();
                     loadingOverlay.style.display = 'none';
                     loginBtn.disabled = false;
@@ -727,6 +752,17 @@
                     return;
                 }
 
+                // 5. Check if account is active
+                if (staffData.status !== 'Active') {
+                    await auth.signOut();
+                    loadingOverlay.style.display = 'none';
+                    loginBtn.disabled = false;
+                    showError('Your account is not active. Please contact your school admin.');
+                    return;
+                }
+
+                // 6. Check if teacher has school assignment
+                const hasSchool = !!(staffData.schoolId || staffData.school);
                 if (!hasSchool) {
                     await auth.signOut();
                     loadingOverlay.style.display = 'none';
@@ -735,11 +771,19 @@
                     return;
                 }
 
-                await db.collection('users').doc(user.uid).update({
+                // 7. Update last login
+                await db.collection('staff').doc(staffDoc.id).update({
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                     lastLoginIP: 'web-client',
                 }).catch(err => console.warn('Could not update lastLogin', err));
 
+                // 8. Store teacher info in session for dashboard
+                sessionStorage.setItem('teacherId', staffDoc.id);
+                sessionStorage.setItem('teacherName', staffData.name);
+                sessionStorage.setItem('teacherSchool', staffData.schoolId || staffData.school);
+                sessionStorage.setItem('teacherDepartment', staffData.department || '');
+
+                // 9. Redirect to teacher dashboard
                 window.location.href = 'teacher-dashboard.html';
 
             } catch (error) {
@@ -748,12 +792,23 @@
 
                 let friendlyMessage = 'Authentication failed.';
                 switch (error.code) {
-                    case 'auth/user-not-found': friendlyMessage = 'No account found with this email.'; break;
-                    case 'auth/wrong-password': friendlyMessage = 'Incorrect password.'; break;
-                    case 'auth/invalid-email': friendlyMessage = 'Please enter a valid email address.'; break;
-                    case 'auth/user-disabled': friendlyMessage = 'This account has been disabled.'; break;
-                    case 'auth/too-many-requests': friendlyMessage = 'Too many attempts. Try again later.'; break;
-                    default: friendlyMessage = error.message;
+                    case 'auth/user-not-found': 
+                        friendlyMessage = 'No account found with this email.'; 
+                        break;
+                    case 'auth/wrong-password': 
+                        friendlyMessage = 'Incorrect password.'; 
+                        break;
+                    case 'auth/invalid-email': 
+                        friendlyMessage = 'Please enter a valid email address.'; 
+                        break;
+                    case 'auth/user-disabled': 
+                        friendlyMessage = 'This account has been disabled.'; 
+                        break;
+                    case 'auth/too-many-requests': 
+                        friendlyMessage = 'Too many attempts. Try again later.'; 
+                        break;
+                    default: 
+                        friendlyMessage = error.message;
                 }
                 showError(friendlyMessage);
             }
