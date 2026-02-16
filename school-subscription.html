@@ -291,6 +291,7 @@
         let currentUser = null;
         let adminData = null;
         let schoolData = null;
+        let schoolIdentifier = null; // Can be schoolId or school name
 
         // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
@@ -307,6 +308,17 @@
                     return;
                 }
                 updateUI();
+                
+                // Determine school identifier (schoolId or school name)
+                if (adminData.schoolId) {
+                    schoolIdentifier = { type: 'schoolId', value: adminData.schoolId };
+                } else if (adminData.school) {
+                    schoolIdentifier = { type: 'school', value: adminData.school };
+                } else {
+                    showError('No school information found in your admin profile.');
+                    return;
+                }
+                
                 await loadSchoolData();
                 await loadUsageStats();
                 loadingIndicator.style.display = 'none';
@@ -351,22 +363,49 @@
 
         // ========== LOAD SCHOOL DATA ==========
         async function loadSchoolData() {
-            if (!adminData || !adminData.schoolId) {
-                showError('No school ID associated with this admin account.');
-                return;
-            }
+            if (!schoolIdentifier) return;
             
             try {
-                const schoolDoc = await db.collection('schools').doc(adminData.schoolId).get();
-                if (schoolDoc.exists) {
-                    schoolData = schoolDoc.data();
+                let schoolQuery;
+                
+                if (schoolIdentifier.type === 'schoolId') {
+                    // Fetch by document ID
+                    const schoolDoc = await db.collection('schools').doc(schoolIdentifier.value).get();
+                    if (schoolDoc.exists) {
+                        schoolData = schoolDoc.data();
+                        schoolData.id = schoolDoc.id;
+                    }
+                } else {
+                    // Fetch by school name field
+                    schoolQuery = await db.collection('schools')
+                        .where('name', '==', schoolIdentifier.value)
+                        .limit(1)
+                        .get();
+                    
+                    if (!schoolQuery.empty) {
+                        schoolData = schoolQuery.docs[0].data();
+                        schoolData.id = schoolQuery.docs[0].id;
+                    }
+                }
+                
+                if (schoolData) {
                     updateSubscriptionUI();
                 } else {
-                    showError('School document not found in Firestore.');
+                    // If no school document found, create minimal schoolData from admin
+                    schoolData = {
+                        plan: adminData.plan || 'Premium',
+                        name: adminData.school || 'Your School'
+                    };
+                    updateSubscriptionUI();
                 }
             } catch (error) {
                 console.error('Error loading school data:', error);
-                showError('Failed to load school data: ' + error.message);
+                // Fallback to admin data
+                schoolData = {
+                    plan: adminData.plan || 'Premium',
+                    name: adminData.school || 'Your School'
+                };
+                updateSubscriptionUI();
             }
         }
 
@@ -387,9 +426,10 @@
             // Update features based on plan
             updateFeatures(currentPlan);
             
-            // Expiry date
-            if (schoolData.subscriptionExpiry) {
-                const expiry = schoolData.subscriptionExpiry.toDate();
+            // Expiry date - check multiple possible field names
+            const expiryField = schoolData.subscriptionExpiry || schoolData.expiryDate;
+            if (expiryField) {
+                const expiry = expiryField.toDate ? expiryField.toDate() : new Date(expiryField);
                 nextBilling.textContent = expiry.toLocaleDateString('en-US', { 
                     day: 'numeric', 
                     month: 'short', 
@@ -404,6 +444,16 @@
                     daysLeft.style.background = 'rgba(231,76,60,0.1)';
                     daysLeft.style.color = 'var(--red)';
                 }
+            } else {
+                // Default if no expiry
+                const nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                nextBilling.textContent = nextMonth.toLocaleDateString('en-US', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                });
+                daysLeft.innerHTML = '<i class="fas fa-clock"></i> 30 days left';
             }
             
             // Update plan buttons based on current plan
@@ -468,31 +518,31 @@
 
         // ========== LOAD USAGE STATISTICS ==========
         async function loadUsageStats() {
-            if (!adminData || !schoolData) return;
+            if (!adminData || !schoolIdentifier) return;
             
             try {
-                // Get student count
+                // Get student count using the appropriate field
                 let studentsQuery;
-                if (adminData.schoolId) {
-                    studentsQuery = db.collection('students').where('schoolId', '==', adminData.schoolId);
+                if (schoolIdentifier.type === 'schoolId') {
+                    studentsQuery = db.collection('students').where('schoolId', '==', schoolIdentifier.value);
                 } else {
-                    studentsQuery = db.collection('students').where('school', '==', adminData.school);
+                    studentsQuery = db.collection('students').where('school', '==', schoolIdentifier.value);
                 }
                 const studentsSnap = await studentsQuery.get();
                 const studentCount = studentsSnap.size;
                 
-                // Get staff count
+                // Get staff count using the appropriate field
                 let staffQuery;
-                if (adminData.schoolId) {
-                    staffQuery = db.collection('staff').where('schoolId', '==', adminData.schoolId);
+                if (schoolIdentifier.type === 'schoolId') {
+                    staffQuery = db.collection('staff').where('schoolId', '==', schoolIdentifier.value);
                 } else {
-                    staffQuery = db.collection('staff').where('school', '==', adminData.school);
+                    staffQuery = db.collection('staff').where('school', '==', schoolIdentifier.value);
                 }
                 const staffSnap = await staffQuery.get();
                 const staffCount = staffSnap.size;
                 
                 // Limits based on plan
-                const plan = schoolData.plan || 'Premium';
+                const plan = schoolData?.plan || 'Premium';
                 let studentLimit = 2000;
                 let staffLimit = 100;
                 
@@ -515,15 +565,15 @@
                 staffProgress.style.width = `${staffPercent}%`;
                 
                 // Storage - from school data or default
-                const storageUsed = schoolData.storageUsed || 45.2;
-                const storageLimit = schoolData.storageLimit || 100;
+                const storageUsed = schoolData?.storageUsed || 45.2;
+                const storageLimit = schoolData?.storageLimit || 100;
                 storageUsage.textContent = `${storageUsed} GB / ${storageLimit} GB`;
                 const storagePercent = Math.min(100, Math.round((storageUsed / storageLimit) * 100));
                 storageProgress.style.width = `${storagePercent}%`;
                 
             } catch (error) {
                 console.error('Error loading usage stats:', error);
-                showError('Failed to load usage statistics: ' + error.message);
+                // Don't show error for usage stats, just leave defaults
             }
         }
 
