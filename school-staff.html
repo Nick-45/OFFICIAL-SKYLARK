@@ -117,15 +117,78 @@
         .logout-btn {
             background: rgba(231,76,60,0.15); color: white; border: 2px solid var(--red); 
             padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600;
-            transition: 0.2s;
+            transition: 0.2s; display: flex; align-items: center; gap: 8px;
         }
         .logout-btn:hover { background: var(--red); }
 
-        /* modal / empty state */
+        /* Modal styles */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white; border-radius: 30px; max-width: 550px; width: 90%; padding: 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: modalSlide 0.3s ease-out;
+        }
+        @keyframes modalSlide {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+        .modal-header h3 { font-size: 24px; display: flex; align-items: center; gap: 10px; }
+        .modal-close {
+            font-size: 28px; cursor: pointer; color: #999; transition: 0.2s;
+        }
+        .modal-close:hover { color: var(--red); }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block; font-weight: 600; margin-bottom: 8px; color: var(--dark-blue);
+        }
+        .form-control {
+            width: 100%; padding: 14px 18px; border: 2px solid #e9ecef; border-radius: 12px;
+            font-size: 15px; transition: 0.3s;
+        }
+        .form-control:focus {
+            border-color: var(--school-green); outline: none; box-shadow: 0 0 0 4px rgba(39,174,96,0.1);
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 18px center; background-size: 16px;
+        }
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 15px; margin-top: 25px;
+        }
+        .btn {
+            padding: 14px 30px; border-radius: 30px; font-weight: 600; cursor: pointer; border: none;
+            font-size: 16px; transition: 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--orange), #d35400);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(230,126,34,0.3); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: #f0f0f0; color: var(--dark-blue);
+        }
+        .btn-secondary:hover { background: #e0e0e0; }
+
         .empty-state { text-align: center; padding: 60px; background: white; border-radius: 30px; grid-column: 1 / -1; color: #95a5a6; }
         .empty-state i { font-size: 60px; margin-bottom: 20px; color: #d5dbdb; }
         
         .footer-note { margin-top: 40px; text-align: center; color: #7f8c8d; font-size: 14px; border-top: 1px solid rgba(0,0,0,0.05); padding: 20px; }
+
+        .loading { text-align: center; padding: 40px; color: #7f8c8d; }
+        .error-message {
+            background: rgba(231,76,60,0.1); color: var(--red); padding: 15px; border-radius: 12px;
+            text-align: center; margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -138,12 +201,14 @@
             <div class="logo-section">
                 <div class="logo"><img src="https://cdn-icons-png.flaticon.com/512/217/217853.png" alt="EDUSKYLARK"></div>
                 <div class="church-info">
-                    <h1>EDUSKYLARK · STAFF <span class="school-badge"><i class="fas fa-school"></i> SCHOOL ADMIN</span></h1>
-                    <p>Manage Staff Records</p>
+                    <h1>EDUSKYLARK · STAFF <span class="school-badge"><i class="fas fa-school"></i> <span id="schoolNameHeader">SCHOOL ADMIN</span></span></h1>
+                    <p>Manage Staff Records · <span id="schoolNameSub">Loading...</span></p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 20px;">
-                <span style="color: white;" id="schoolName">Loading...</span>
+                <span style="color: white; background: rgba(39,174,96,0.2); padding: 5px 15px; border-radius: 30px;">
+                    <i class="fas fa-user-shield"></i> <span id="adminName">Admin</span>
+                </span>
                 <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
@@ -192,96 +257,193 @@
         <div class="footer-note">EDUSKYLARK · staff management · realtime firestore</div>
     </main>
 
+    <!-- Add Staff Modal -->
+    <div class="modal" id="staffModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus" style="color: var(--orange);"></i> Add New Staff</h3>
+                <span class="modal-close" id="closeModal">&times;</span>
+            </div>
+            <form id="staffForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-control" id="staffName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email * (will receive login credentials)</label>
+                    <input type="email" class="form-control" id="staffEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Temporary Password *</label>
+                    <input type="password" class="form-control" id="staffPassword" value="Staff123!" required>
+                    <small style="color: #666;">Min 6 characters. User can change after first login.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone *</label>
+                    <input type="tel" class="form-control" id="staffPhone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role *</label>
+                    <select class="form-control" id="staffRole" required>
+                        <option value="">Select Role</option>
+                        <option value="Teacher">Teacher</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Support">Support staff</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department *</label>
+                    <select class="form-control" id="staffDept" required>
+                        <option value="">Select Department</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="Languages">Languages</option>
+                        <option value="Humanities">Humanities</option>
+                        <option value="Administration">Administration</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="IT">IT</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveStaffBtn">Add Staff</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Firebase config (ensure you replace with your actual project config)
-           const firebaseConfig = {
-  apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
-  authDomain: "toplink-edu.firebaseapp.com",
-  projectId: "toplink-edu",
-  storageBucket: "toplink-edu.firebasestorage.app",
-  messagingSenderId: "35786900143",
-  appId: "1:35786900143:web:9e612336393d29324c0a5a",
-  measurementId: "G-3VSBS7R11D"
+        // ========== FIREBASE CONFIG ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
+            authDomain: "toplink-edu.firebaseapp.com",
+            projectId: "toplink-edu",
+            storageBucket: "toplink-edu.firebasestorage.app",
+            messagingSenderId: "35786900143",
+            appId: "1:35786900143:web:9e612336393d29324c0a5a",
+            measurementId: "G-3VSBS7R11D"
         };
 
-        // Initialize Firebase (if not already)
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // DOM elements
-        const schoolNameSpan = document.getElementById('schoolName');
+        // ========== DOM ELEMENTS ==========
+        const schoolNameHeader = document.getElementById('schoolNameHeader');
+        const schoolNameSub = document.getElementById('schoolNameSub');
+        const adminName = document.getElementById('adminName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const addStaffBtn = document.getElementById('addStaffBtn');
         const staffGrid = document.getElementById('staffGrid');
+        
+        // Stats elements
         const totalStaffSpan = document.getElementById('totalStaff');
         const totalTeachersSpan = document.getElementById('totalTeachers');
         const totalAdminSpan = document.getElementById('totalAdmin');
         const totalSupportSpan = document.getElementById('totalSupport');
+        
+        // Filter elements
         const roleFilter = document.getElementById('roleFilter');
         const deptFilter = document.getElementById('deptFilter');
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const addStaffBtn = document.getElementById('addStaffBtn');
+        
+        // Modal elements
+        const staffModal = document.getElementById('staffModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelModal = document.getElementById('cancelModal');
+        const staffForm = document.getElementById('staffForm');
+        const saveStaffBtn = document.getElementById('saveStaffBtn');
 
-        // State
-        let allStaff = [];                // raw data
-        let filteredStaff = [];           // after filter/search
-        let currentUserSchool = "EDUSKYLARK International School"; // fallback
+        // ========== STATE ==========
+        let currentUser = null;
+        let adminData = null;
+        let schoolIdentifier = null;
+        let allStaff = [];
+        let filteredStaff = [];
 
-        // --- AUTH STATE ---
+        // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                window.location.href = '/login.html';  // adjust if needed
-                return;
-            }
-            // Get school name from user doc
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists && userDoc.data().schoolName) {
-                    currentUserSchool = userDoc.data().schoolName;
-                } else {
-                    // fallback: try to get from custom claim or just use email domain
-                    currentUserSchool = "EDUSKYLARK · " + user.email.split('@')[1] || "School";
+            if (user) {
+                currentUser = user;
+                await loadAdminData(user);
+                if (!adminData) {
+                    showError('No admin record found. Please contact super admin.');
+                    return;
                 }
-            } catch (e) {
-                console.warn("Could not fetch school name, using default");
+                if (adminData.status !== 'Active') {
+                    alert('Your account is not active. Please contact super admin.');
+                    await auth.signOut();
+                    return;
+                }
+                updateUI();
+                
+                // Determine school identifier
+                if (adminData.schoolId) {
+                    schoolIdentifier = { type: 'schoolId', value: adminData.schoolId };
+                } else if (adminData.school) {
+                    schoolIdentifier = { type: 'school', value: adminData.school };
+                } else {
+                    showError('No school information found in your admin profile.');
+                    return;
+                }
+                
+                // Set up real-time listener for staff
+                setupStaffListener();
+            } else {
+                window.location.href = 'school-login.html';
             }
-            schoolNameSpan.textContent = currentUserSchool;
-
-            // Real-time listener for staff (filtered by school)
-            db.collection('staff')
-                .where('school', '==', currentUserSchool)
-                .onSnapshot(snapshot => {
-                    allStaff = [];
-                    snapshot.forEach(doc => {
-                        allStaff.push({ id: doc.id, ...doc.data() });
-                    });
-                    applyFilters(); // update UI
-                }, error => {
-                    console.error("Firestore error:", error);
-                    // fallback mock data for demo if permission denied
-                    if (error.code === 'permission-denied') {
-                        console.warn("Using mock data due to permissions");
-                        useMockData();
-                    }
-                });
         });
 
-        // Mock data in case Firestore is not set up (for demonstration)
-        function useMockData() {
-            allStaff = [
-                { id: '1', name: 'Emily Clarke', role: 'Teacher', department: 'Mathematics', email: 'e.clarke@eduskylark.edu', phone: '555-1201', school: currentUserSchool },
-                { id: '2', name: 'James Okonkwo', role: 'Teacher', department: 'Science', email: 'j.okonkwo@eduskylark.edu', phone: '555-1202', school: currentUserSchool },
-                { id: '3', name: 'Maria Santos', role: 'Admin', department: 'Administration', email: 'm.santos@eduskylark.edu', phone: '555-1301', school: currentUserSchool },
-                { id: '4', name: 'David Kim', role: 'Support', department: 'IT', email: 'd.kim@eduskylark.edu', phone: '555-1401', school: currentUserSchool },
-                { id: '5', name: 'Sophie Müller', role: 'Teacher', department: 'Languages', email: 's.muller@eduskylark.edu', phone: '555-1203', school: currentUserSchool },
-                { id: '6', name: 'John Agyekum', role: 'Support', department: 'Maintenance', email: 'j.agyekum@eduskylark.edu', phone: '555-1402', school: currentUserSchool },
-                { id: '7', name: 'Linda Zhang', role: 'Admin', department: 'Administration', email: 'l.zhang@eduskylark.edu', phone: '555-1302', school: currentUserSchool },
-            ];
-            applyFilters();
+        // ========== LOAD ADMIN DATA ==========
+        async function loadAdminData(user) {
+            try {
+                const adminsQuery = await db.collection('admins')
+                    .where('authUid', '==', user.uid)
+                    .limit(1)
+                    .get();
+
+                if (!adminsQuery.empty) {
+                    adminData = adminsQuery.docs[0].data();
+                    adminData.id = adminsQuery.docs[0].id;
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
         }
 
-        // Filter + render
+        // ========== UPDATE UI ==========
+        function updateUI() {
+            if (!adminData) return;
+            const fullName = adminData.name || 'School Administrator';
+            adminName.textContent = fullName.split(' ')[0] || 'Admin';
+            const schoolName = adminData.school || 'Your School';
+            schoolNameHeader.textContent = schoolName;
+            schoolNameSub.textContent = schoolName;
+        }
+
+        // ========== SETUP STAFF LISTENER ==========
+        function setupStaffListener() {
+            if (!schoolIdentifier) return;
+
+            let query;
+            if (schoolIdentifier.type === 'schoolId') {
+                query = db.collection('staff').where('schoolId', '==', schoolIdentifier.value);
+            } else {
+                query = db.collection('staff').where('school', '==', schoolIdentifier.value);
+            }
+
+            query.onSnapshot(snapshot => {
+                allStaff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                applyFilters();
+            }, error => {
+                console.error('Firestore error:', error);
+                // Show empty state
+                renderEmpty();
+            });
+        }
+
+        // ========== FILTER & RENDER ==========
         function applyFilters() {
             const role = roleFilter.value;
             const dept = deptFilter.value;
@@ -291,7 +453,9 @@
                 if (role !== 'all' && s.role !== role) return false;
                 if (dept !== 'all' && s.department !== dept) return false;
                 if (query) {
-                    return s.name?.toLowerCase().includes(query) || s.email?.toLowerCase().includes(query);
+                    return s.name?.toLowerCase().includes(query) || 
+                           s.email?.toLowerCase().includes(query) ||
+                           s.phone?.includes(query);
                 }
                 return true;
             });
@@ -300,7 +464,6 @@
             renderStaffGrid();
         }
 
-        // update stats cards
         function updateStats() {
             totalStaffSpan.textContent = filteredStaff.length;
             const teachers = filteredStaff.filter(s => s.role === 'Teacher').length;
@@ -311,7 +474,6 @@
             totalSupportSpan.textContent = support;
         }
 
-        // render cards
         function renderStaffGrid() {
             if (filteredStaff.length === 0) {
                 staffGrid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><h3>No staff found</h3><p>Try adjusting filters or add a new staff member.</p></div>`;
@@ -320,9 +482,7 @@
 
             let html = '';
             filteredStaff.forEach(s => {
-                // generate initials
                 const initials = s.name ? s.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'ST';
-                const roleColorClass = s.role === 'Teacher' ? 'badge-teacher' : (s.role === 'Admin' ? 'badge-department' : 'badge-teacher'); // just reuse
                 html += `
                     <div class="staff-card" data-id="${s.id}">
                         <div class="staff-avatar">${initials}</div>
@@ -334,8 +494,8 @@
                                 <span><i class="fas fa-envelope"></i> ${s.email || '—'}</span>
                             </div>
                             <div style="margin-top: 12px;">
-                                <span class="badge ${roleColorClass}">${s.role || 'Staff'}</span>
-                                <span class="badge badge-department"><i class="far fa-clock"></i> ${s.phone || 'no phone'}</span>
+                                <span class="badge badge-teacher">${s.role || 'Staff'}</span>
+                                <span class="badge badge-department"><i class="fas fa-phone"></i> ${s.phone || '—'}</span>
                             </div>
                         </div>
                         <button class="btn-view view-profile" data-id="${s.id}"><i class="fas fa-eye"></i> View</button>
@@ -344,42 +504,130 @@
             });
             staffGrid.innerHTML = html;
 
-            // attach event listeners to "view" buttons
+            // Attach view profile handlers
             document.querySelectorAll('.view-profile').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
-                    alert(`View profile for staff ID: ${id} (detail page would open). In production, navigate to profile.`);
-                    // you could redirect: window.location.href = `/staff-profile.html?id=${id}`;
+                    alert(`View profile for staff ID: ${id} (detail page would open)`);
                 });
             });
         }
 
-        // Event listeners for filters
+        function renderEmpty() {
+            staffGrid.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><h3>No staff found</h3><p>Add your first staff member using the button above.</p></div>`;
+        }
+
+        // ========== MODAL HANDLING ==========
+        addStaffBtn.addEventListener('click', () => {
+            staffModal.classList.add('active');
+        });
+
+        closeModal.addEventListener('click', () => {
+            staffModal.classList.remove('active');
+            staffForm.reset();
+        });
+
+        cancelModal.addEventListener('click', () => {
+            staffModal.classList.remove('active');
+            staffForm.reset();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === staffModal) {
+                staffModal.classList.remove('active');
+                staffForm.reset();
+            }
+        });
+
+        // ========== ADD STAFF FORM SUBMISSION ==========
+        staffForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            saveStaffBtn.disabled = true;
+            saveStaffBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+            try {
+                // Validate inputs
+                const name = document.getElementById('staffName').value.trim();
+                const email = document.getElementById('staffEmail').value.trim();
+                const password = document.getElementById('staffPassword').value;
+                const phone = document.getElementById('staffPhone').value.trim();
+                const role = document.getElementById('staffRole').value;
+                const department = document.getElementById('staffDept').value;
+
+                if (!name || !email || !password || !phone || !role || !department) {
+                    throw new Error('Please fill all required fields');
+                }
+                if (password.length < 6) {
+                    throw new Error('Password must be at least 6 characters');
+                }
+
+                // 1. Create Firebase Auth user
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const firebaseUser = userCredential.user;
+
+                // 2. Send password reset email (so they can set their own password)
+                await firebaseUser.sendPasswordResetEmail();
+
+                // 3. Prepare staff data
+                const staffData = {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    role: role,
+                    department: department,
+                    authUid: firebaseUser.uid,
+                    emailVerified: firebaseUser.emailVerified,
+                    status: 'Active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Add school identifier
+                if (schoolIdentifier.type === 'schoolId') {
+                    staffData.schoolId = schoolIdentifier.value;
+                } else {
+                    staffData.school = schoolIdentifier.value;
+                }
+
+                // 4. Save to Firestore
+                await db.collection('staff').add(staffData);
+
+                // 5. Close modal and reset
+                staffModal.classList.remove('active');
+                staffForm.reset();
+                alert('✅ Staff added successfully! Password reset email sent.');
+
+            } catch (error) {
+                console.error('Error adding staff:', error);
+                alert('❌ Error: ' + error.message);
+            } finally {
+                saveStaffBtn.disabled = false;
+                saveStaffBtn.innerHTML = 'Add Staff';
+            }
+        });
+
+        // ========== EVENT LISTENERS ==========
         roleFilter.addEventListener('change', applyFilters);
         deptFilter.addEventListener('change', applyFilters);
         searchBtn.addEventListener('click', applyFilters);
         searchInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') applyFilters(); });
 
-        // logout
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut().then(() => window.location.href = '/login.html');
+        logoutBtn.addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'school-login.html';
         });
 
-        // add staff (demo)
-        addStaffBtn.addEventListener('click', () => {
-            alert('Navigate to add staff form. You can implement a modal or separate page.\n(For demo, we might push to /add-staff.html)');
-            // e.g. window.location.href = '/add-staff.html';
-        });
-
-        // initial mock trigger if auth takes too long? but auth will handle.
-
-        // In case firestore is not available, we also call mock after 3 seconds as fallback (if allStaff remains empty)
+        // Fallback timeout for empty data
         setTimeout(() => {
             if (allStaff.length === 0) {
-                useMockData();
+                renderEmpty();
+                totalStaffSpan.textContent = '0';
+                totalTeachersSpan.textContent = '0';
+                totalAdminSpan.textContent = '0';
+                totalSupportSpan.textContent = '0';
             }
-        }, 4000);
+        }, 5000);
     </script>
 </body>
 </html>
