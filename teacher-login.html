@@ -335,50 +335,6 @@
             cursor: not-allowed;
         }
 
-        /* Demo Credentials */
-        .demo-card {
-            background: rgba(26, 188, 156, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 25px;
-            border: 1px dashed rgba(26, 188, 156, 0.3);
-            position: relative;
-            z-index: 2;
-        }
-
-        .demo-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--dark-blue);
-            margin-bottom: 15px;
-        }
-
-        .demo-title i {
-            color: var(--teal);
-        }
-
-        .demo-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .demo-item i {
-            width: 20px;
-            color: var(--teal);
-            font-size: 12px;
-        }
-
-        .demo-item strong {
-            color: var(--dark-blue);
-        }
-
         /* Help Section */
         .help-section {
             text-align: center;
@@ -580,28 +536,6 @@
                 </button>
             </form>
 
-            <!-- Demo Credentials -->
-            <div class="demo-card">
-                <div class="demo-title">
-                    <i class="fas fa-flask"></i> Demo Credentials (Testing)
-                </div>
-                <div class="demo-item">
-                    <i class="fas fa-school"></i>
-                    <span><strong>School:</strong> Nairobi Adventist Academy</span>
-                </div>
-                <div class="demo-item">
-                    <i class="fas fa-envelope"></i>
-                    <span><strong>Email:</strong> teacher@naa.edu</span>
-                </div>
-                <div class="demo-item">
-                    <i class="fas fa-key"></i>
-                    <span><strong>Password:</strong> teacher123</span>
-                </div>
-                <div style="font-size: 11px; color: #999; margin-top: 10px; text-align: center;">
-                    <i class="fas fa-info-circle"></i> Role must be 'Teacher' in staff collection
-                </div>
-            </div>
-
             <div class="help-section">
                 <div class="help-text">
                     <i class="fas fa-shield-alt" style="color: var(--teal);"></i> Authorized personnel only
@@ -617,7 +551,7 @@
     </div>
 
     <script>
-        // Firebase Config
+        // ========== FIREBASE CONFIG ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAz5knhlAxZwUATy3mtW66Z6lHBrv4tUog",
             authDomain: "toplink-edu.firebaseapp.com",
@@ -632,7 +566,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // DOM Elements
+        // ========== DOM ELEMENTS ==========
         const loginForm = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -643,22 +577,23 @@
         const togglePassword = document.getElementById('togglePassword');
         const rememberMe = document.getElementById('rememberMe');
         const forgotPasswordBtn = document.getElementById('forgotPassword');
+        const contactSupport = document.getElementById('contactSupport');
 
-        // Toggle Password Visibility
+        // ========== TOGGLE PASSWORD VISIBILITY ==========
         togglePassword.addEventListener('click', function() {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             this.innerHTML = type === 'password' ? '<i class="far fa-eye"></i>' : '<i class="far fa-eye-slash"></i>';
         });
 
-        // Show Error
+        // ========== SHOW ERROR MESSAGE ==========
         function showError(message) {
             errorMessage.textContent = message;
             errorToast.style.display = 'flex';
             setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
         }
 
-        // Show Success
+        // ========== SHOW SUCCESS MESSAGE ==========
         function showSuccess(message) {
             const toast = document.createElement('div');
             toast.className = 'error-toast';
@@ -668,7 +603,7 @@
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Check if already logged in - using staff collection
+        // ========== CHECK IF ALREADY LOGGED IN ==========
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
@@ -697,7 +632,7 @@
             }
         });
 
-        // Login Submission - using staff collection
+        // ========== LOGIN SUBMISSION ==========
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -780,6 +715,7 @@
                 // 8. Store teacher info in session for dashboard
                 sessionStorage.setItem('teacherId', staffDoc.id);
                 sessionStorage.setItem('teacherName', staffData.name);
+                sessionStorage.setItem('teacherEmail', staffData.email);
                 sessionStorage.setItem('teacherSchool', staffData.schoolId || staffData.school);
                 sessionStorage.setItem('teacherDepartment', staffData.department || '');
 
@@ -793,19 +729,19 @@
                 let friendlyMessage = 'Authentication failed.';
                 switch (error.code) {
                     case 'auth/user-not-found': 
-                        friendlyMessage = 'No account found with this email.'; 
+                        friendlyMessage = 'No account found with this email. Please check your email or contact your school admin.'; 
                         break;
                     case 'auth/wrong-password': 
-                        friendlyMessage = 'Incorrect password.'; 
+                        friendlyMessage = 'Incorrect password. Please try again.'; 
                         break;
                     case 'auth/invalid-email': 
                         friendlyMessage = 'Please enter a valid email address.'; 
                         break;
                     case 'auth/user-disabled': 
-                        friendlyMessage = 'This account has been disabled.'; 
+                        friendlyMessage = 'This account has been disabled. Please contact your school admin.'; 
                         break;
                     case 'auth/too-many-requests': 
-                        friendlyMessage = 'Too many attempts. Try again later.'; 
+                        friendlyMessage = 'Too many failed attempts. Please try again later.'; 
                         break;
                     default: 
                         friendlyMessage = error.message;
@@ -814,7 +750,7 @@
             }
         });
 
-        // Forgot Password
+        // ========== FORGOT PASSWORD ==========
         forgotPasswordBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             const email = emailInput.value.trim();
@@ -829,17 +765,22 @@
                 showSuccess('Password reset email sent! Check your inbox.');
             } catch (error) {
                 loadingOverlay.style.display = 'none';
-                showError('Could not send reset email.');
+                
+                let message = 'Could not send reset email.';
+                if (error.code === 'auth/user-not-found') {
+                    message = 'No account found with this email.';
+                }
+                showError(message);
             }
         });
 
-        // Contact Support
-        document.getElementById('contactSupport').addEventListener('click', (e) => {
+        // ========== CONTACT SUPPORT ==========
+        contactSupport.addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = 'mailto:support@eduskyark.com?subject=Teacher%20Login%20Support';
         });
 
-        // Remember Me
+        // ========== REMEMBER ME FUNCTIONALITY ==========
         if (localStorage.getItem('teacherEmail')) {
             emailInput.value = localStorage.getItem('teacherEmail');
             rememberMe.checked = true;
@@ -853,7 +794,7 @@
             }
         });
 
-        // Dark Mode Toggle
+        // ========== DARK MODE TOGGLE ==========
         document.querySelector('button[onclick*="dark"]').addEventListener('click', function() {
             document.documentElement.classList.toggle('dark');
             const icon = this.querySelector('i');
@@ -876,7 +817,6 @@
         .dark .login-card { background: rgba(44,62,80,0.95); color: #ecf0f1; }
         .dark .form-control { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white; }
         .dark .form-label, .dark .logo-wrapper h1 { color: #ecf0f1; }
-        .dark .demo-card { background: rgba(255,255,255,0.05); border-color: rgba(26,188,156,0.2); }
     </style>
 </body>
 </html>
