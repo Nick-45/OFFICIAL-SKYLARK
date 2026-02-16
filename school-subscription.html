@@ -89,6 +89,11 @@
             transition: all 0.3s;
         }
         .btn-upgrade:hover { background: var(--school-green); color: white; }
+        .btn-upgrade:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: transparent;
+        }
         .btn-current {
             width: 100%; padding: 14px; background: var(--school-green); color: white;
             border: none; border-radius: 30px; font-weight: 700; cursor: not-allowed; margin-top: 20px;
@@ -210,7 +215,7 @@
                         <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Email support</li>
                         <li style="margin-bottom: 12px;"><i class="fas fa-times" style="color: var(--red);"></i> API access</li>
                     </ul>
-                    <button class="btn-upgrade" id="basicPlanBtn">Downgrade</button>
+                    <button class="btn-upgrade" id="basicPlanBtn" data-plan="Basic">Downgrade</button>
                 </div>
                 <div class="plan-card recommended" id="standardPlanCard">
                     <span class="recommended-badge">RECOMMENDED</span>
@@ -223,7 +228,7 @@
                         <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Priority support</li>
                         <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Custom branding</li>
                     </ul>
-                    <button class="btn-upgrade" id="standardPlanBtn">Upgrade</button>
+                    <button class="btn-upgrade" id="standardPlanBtn" data-plan="Standard">Upgrade</button>
                 </div>
                 <div class="plan-card" id="premiumPlanCard">
                     <h4 style="font-size: 22px; font-weight: 700; margin-bottom: 10px;">Premium</h4>
@@ -236,7 +241,7 @@
                         <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> API access</li>
                         <li style="margin-bottom: 12px;"><i class="fas fa-check" style="color: var(--school-green);"></i> Dedicated account manager</li>
                     </ul>
-                    <button class="btn-current" id="premiumPlanBtn">Current Plan</button>
+                    <button class="btn-current" id="premiumPlanBtn" data-plan="Premium">Current Plan</button>
                 </div>
             </div>
         </div>
@@ -292,6 +297,7 @@
         let adminData = null;
         let schoolData = null;
         let schoolIdentifier = null; // Can be schoolId or school name
+        let schoolDocId = null; // Will store the actual document ID for updates
 
         // ========== AUTH STATE LISTENER ==========
         auth.onAuthStateChanged(async (user) => {
@@ -373,7 +379,7 @@
                     const schoolDoc = await db.collection('schools').doc(schoolIdentifier.value).get();
                     if (schoolDoc.exists) {
                         schoolData = schoolDoc.data();
-                        schoolData.id = schoolDoc.id;
+                        schoolDocId = schoolDoc.id;
                     }
                 } else {
                     // Fetch by school name field
@@ -384,7 +390,7 @@
                     
                     if (!schoolQuery.empty) {
                         schoolData = schoolQuery.docs[0].data();
-                        schoolData.id = schoolQuery.docs[0].id;
+                        schoolDocId = schoolQuery.docs[0].id;
                     }
                 }
                 
@@ -498,21 +504,27 @@
             // Reset all buttons
             basicPlanBtn.className = 'btn-upgrade';
             basicPlanBtn.textContent = 'Downgrade';
+            basicPlanBtn.disabled = false;
             standardPlanBtn.className = 'btn-upgrade';
             standardPlanBtn.textContent = 'Upgrade';
+            standardPlanBtn.disabled = false;
             premiumPlanBtn.className = 'btn-upgrade';
             premiumPlanBtn.textContent = 'Upgrade';
+            premiumPlanBtn.disabled = false;
             
             // Set current plan button
             if (currentPlan === 'Basic') {
                 basicPlanBtn.className = 'btn-current';
                 basicPlanBtn.textContent = 'Current Plan';
+                basicPlanBtn.disabled = true;
             } else if (currentPlan === 'Standard') {
                 standardPlanBtn.className = 'btn-current';
                 standardPlanBtn.textContent = 'Current Plan';
+                standardPlanBtn.disabled = true;
             } else if (currentPlan === 'Premium') {
                 premiumPlanBtn.className = 'btn-current';
                 premiumPlanBtn.textContent = 'Current Plan';
+                premiumPlanBtn.disabled = true;
             }
         }
 
@@ -577,6 +589,73 @@
             }
         }
 
+        // ========== UPDATE SCHOOL SUBSCRIPTION ==========
+        async function updateSchoolPlan(newPlan) {
+            if (!schoolDocId) {
+                showError('Cannot update plan: School document ID not found.');
+                return;
+            }
+
+            // Disable all plan buttons during update
+            basicPlanBtn.disabled = true;
+            standardPlanBtn.disabled = true;
+            premiumPlanBtn.disabled = true;
+            
+            // Update the button text to show loading
+            const clickedButton = 
+                newPlan === 'Basic' ? basicPlanBtn :
+                newPlan === 'Standard' ? standardPlanBtn :
+                premiumPlanBtn;
+            
+            const originalText = clickedButton.textContent;
+            clickedButton.textContent = 'Updating...';
+
+            try {
+                // Calculate new expiry date (1 month from now)
+                const newExpiry = new Date();
+                newExpiry.setMonth(newExpiry.getMonth() + 1);
+                
+                // Update the school document
+                await db.collection('schools').doc(schoolDocId).update({
+                    plan: newPlan,
+                    subscriptionExpiry: firebase.firestore.FieldValue.serverTimestamp(),
+                    // You could also set a specific date using: subscriptionExpiry: newExpiry
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Also update the admin's plan if needed
+                if (adminData && adminData.id) {
+                    await db.collection('admins').doc(adminData.id).update({
+                        plan: newPlan,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                // Show success message
+                alert(`✅ Plan successfully updated to ${newPlan}!`);
+
+                // Reload the data to reflect changes
+                await loadSchoolData();
+                await loadUsageStats();
+
+            } catch (error) {
+                console.error('Error updating plan:', error);
+                alert('❌ Error updating plan: ' + error.message);
+                
+                // Re-enable buttons on error
+                basicPlanBtn.disabled = false;
+                standardPlanBtn.disabled = false;
+                premiumPlanBtn.disabled = false;
+                clickedButton.textContent = originalText;
+            } finally {
+                // Re-enable buttons (except current plan)
+                if (schoolData?.plan !== 'Basic') basicPlanBtn.disabled = false;
+                if (schoolData?.plan !== 'Standard') standardPlanBtn.disabled = false;
+                if (schoolData?.plan !== 'Premium') premiumPlanBtn.disabled = false;
+                clickedButton.textContent = originalText;
+            }
+        }
+
         // ========== ERROR HANDLING ==========
         function showError(message) {
             loadingIndicator.style.display = 'none';
@@ -590,17 +669,26 @@
             window.location.href = 'school-admin-login.html';
         });
 
-        // Plan change buttons - would call a Cloud Function in production
+        // Plan change buttons - now update the school document
         basicPlanBtn.addEventListener('click', () => {
-            alert('Plan change requested to Basic. This would call a Cloud Function to update the school document.');
+            if (basicPlanBtn.classList.contains('btn-current')) return;
+            if (confirm('Are you sure you want to change to the Basic plan?')) {
+                updateSchoolPlan('Basic');
+            }
         });
 
         standardPlanBtn.addEventListener('click', () => {
-            alert('Plan change requested to Standard. This would call a Cloud Function to update the school document.');
+            if (standardPlanBtn.classList.contains('btn-current')) return;
+            if (confirm('Are you sure you want to change to the Standard plan?')) {
+                updateSchoolPlan('Standard');
+            }
         });
 
         premiumPlanBtn.addEventListener('click', () => {
-            alert('Plan change requested to Premium. This would call a Cloud Function to update the school document.');
+            if (premiumPlanBtn.classList.contains('btn-current')) return;
+            if (confirm('Are you sure you want to change to the Premium plan?')) {
+                updateSchoolPlan('Premium');
+            }
         });
 
         viewInvoicesBtn.addEventListener('click', () => {
